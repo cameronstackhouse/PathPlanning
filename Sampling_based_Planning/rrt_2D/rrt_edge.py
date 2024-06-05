@@ -19,10 +19,12 @@ class Edge:
 class RrtEdge(Rrt):
     """
     Modified implementation of RRT-Edge based on the 2017 paper by Correia et al.
-    https://ieeexplore.ieee.org/abstract/document/8215282
+    https://ieeexplore.ieee.org/abstract/document/8215282.
+
+    Key features of the algorithm involve a completley unbounded edge length alongside
     """
     def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
-        super().__init__(start, end, 1, goal_sample_rate, iter_max) 
+        super().__init__(start, end, float('inf'), goal_sample_rate, iter_max) 
         self.edges = []
         self.min_edge_length = min_edge_length
 
