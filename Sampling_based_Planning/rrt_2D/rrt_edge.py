@@ -53,6 +53,7 @@ class RrtEdge(Rrt):
         if nearest_edge_proj is not None and nearest_edge_dist < node_dist:
             new_node = Node(nearest_edge_proj)
             new_node.edge = nearest_edge
+            new_node.parent = nearest_edge.node_1
             return new_node
         else:
             return nearest_node
