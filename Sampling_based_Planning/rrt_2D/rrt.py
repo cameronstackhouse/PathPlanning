@@ -20,6 +20,7 @@ class Node:
         self.y = n[1]
         self.parent = None
         self.coords = np.array(n)
+        self.edge = None
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):

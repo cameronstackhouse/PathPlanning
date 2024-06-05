@@ -6,7 +6,6 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 "/../../Sampling_based_Planning/")
 
-from rrt_2D import env, plotting, utils
 from rrt import Node, Rrt
 
 class Edge:
@@ -15,69 +14,109 @@ class Edge:
         self.node_2 = node_2
 
 class RrtEdge(Rrt):
-    def __init__(self, start, end, goal_sample_rate, iter_max):
-        self.s_start = Node(start)
-        self.s_goal = Node(end)
-
-        self.goal_sample_rate = goal_sample_rate
-        self.iter_max = iter_max
-        self.nodes = [self.s_start]
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
+        super().__init__(start, end, 500, goal_sample_rate, iter_max) 
         self.edges = []
-
-        self.env = env.Env()
-        self.plotting = plotting.Plotting(start, end)
-        self.utils = utils.Utils()
-
-        self.x_range = self.env.x_range
-        self.y_range = self.env.y_range
-        self.obs_circle = self.env.obs_circle
-        self.obs_rectangle = self.env.obs_rectangle
-        self.obs_boundary = self.env.obs_boundary
+        self.min_edge_length = min_edge_length
 
     def planning(self):
         for _ in range(self.iter_max):
-            node_rand = self.generate_random_node(self.goal_sample_rate)
-            node_near = self.nearest_neighbor()
+            node_rand = self.generate_random_node()
+            node_near = self.nearest_neighbour(self.vertex, self.edges, node_rand)
+            node_new = self.new_state(node_near, node_rand)
+
+            if node_new and not self.utils.is_collision(node_near, node_new):
+                self.vertex.append(node_new)
+                self.edges.append(Edge(node_near, node_new))
+
+                if node_new.edge is not None:
+                    self.split(node_new)
+
+                # DIRECT TO END
+                if not self.utils.is_collision(node_new, self.s_goal):
+                    self.new_state(node_new, self.s_goal)
+                    return self.extract_path(node_new)
+        
+        return None
+    
+    def generate_random_node(self):
+        delta = self.utils.delta
+        return Node((np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
+                         np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta)))
     
     def nearest_neighbour(self, node_list, edge_list, n):
-        nearest_node = super.nearest_neigbour(node_list, n)
-        nearest_edge_dist, nearest_edge_proj = self.nearest_edge_projection(edge_list, n)
+        nearest_node = Rrt.nearest_neighbor(node_list, n)
+        nearest_edge_dist, nearest_edge_proj, nearest_edge = self.nearest_edge_projection(edge_list, n)
+
+        node_dist = math.hypot(nearest_node.x - n.x, nearest_node.y - n.y)
+
+        if nearest_edge_proj is not None and nearest_edge_dist < node_dist:
+            new_node = Node(nearest_edge_proj)
+            new_node.edge = nearest_edge
+            return new_node
+        else:
+            return nearest_node
         
     def nearest_edge_projection(self, edge_list, n):
         """"""
         min_distance = float('inf')
         proj = None
+        nearest_edge = None
         for edge in edge_list:
             proj_node_coords = self.orthogonal_projection(edge, n)
-            distance = np.linalg.norm(np.array(proj_node_coords - n.coords))
-            if distance < min_distance:
-                min_distance = distance
-                proj = proj_node_coords
+            if proj_node_coords is not None:
+                distance = math.hypot(proj_node_coords[0] - n.x, proj_node_coords[1] - n.y)
+                if distance < min_distance:
+                    min_distance = distance
+                    proj = proj_node_coords
+                    nearest_edge = edge
 
-        return min_distance, proj
+        return min_distance, proj, nearest_edge
 
     @staticmethod
     def orthogonal_projection(edge, new_node):
-        """
-        Projects the new node onto a given edge and returns the
-        coordinates of the projection in a 2D space.
-        """
         P1 = np.array([edge.node_1.x, edge.node_1.y])
         P2 = np.array([edge.node_2.x, edge.node_2.y])
-
         A = np.array([new_node.x, new_node.y])
 
         B = P2 - P1
+        B_norm_sq = np.dot(B, B)
+
         A_shifted = A - P1
 
-        B_T = np.transpose(B)
+        P_A = (np.dot(A_shifted, B) / B_norm_sq) * B
 
-        B_TB_inv = np.linalg.inv(np.dot(B_T, B))
+        # If the projection does not lie on the edge
+        if np.dot(P_A, B) < 0 or np.dot(P_A, B) > B_norm_sq:
+            return None
 
-        P_A = np.dot(np.dot(B, B_TB_inv), B_T)
-
-        res = np.dot(P_A, A_shifted)
-
-        proj_coords = res + P1
+        proj_coords = P_A + P1
 
         return proj_coords
+
+    def split(self, node):
+        """
+        Splits the edge that the node is on into two distinct edges
+        """
+        edge = node.edge
+        node.parent = edge.node_1
+        edge.node_2.parent = node
+        self.edges.remove(edge)
+        self.edges.append(Edge(edge.node_1, node))
+        self.edges.append(Edge(node, edge.node_2))
+        node.edge = None
+
+def main():
+    x_start = (2, 2)  # Starting node
+    x_goal = (49, 24)  # Goal node
+
+    rrt_edge = RrtEdge(x_start, x_goal, 0.15, 10000)
+    path = rrt_edge.planning()
+
+    if path:
+        rrt_edge.plotting.animation(rrt_edge.vertex, path, "RRT-Edge", True)
+    else:
+        print("No Path Found!")
+
+if __name__ == "__main__":
+    main()
