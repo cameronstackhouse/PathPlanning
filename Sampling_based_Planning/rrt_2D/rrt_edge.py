@@ -41,9 +41,43 @@ class RrtEdge(Rrt):
     
     def nearest_neighbour(self, node_list, edge_list, n):
         nearest_node = super.nearest_neigbour(node_list, n)
-        nearest_edge = self.nearest_edge_projection(edge_list, n)
+        nearest_edge_dist, nearest_edge_proj = self.nearest_edge_projection(edge_list, n)
         
+    def nearest_edge_projection(self, edge_list, n):
+        """"""
+        min_distance = float('inf')
+        proj = None
+        for edge in edge_list:
+            proj_node_coords = self.orthogonal_projection(edge, n)
+            distance = np.linalg.norm(np.array(proj_node_coords - n.coords))
+            if distance < min_distance:
+                min_distance = distance
+                proj = proj_node_coords
+
+        return min_distance, proj
 
     @staticmethod
-    def nearest_edge_projection(edge_list, n):
-        pass
+    def orthogonal_projection(edge, new_node):
+        """
+        Projects the new node onto a given edge and returns the
+        coordinates of the projection in a 2D space.
+        """
+        P1 = np.array([edge.node_1.x, edge.node_1.y])
+        P2 = np.array([edge.node_2.x, edge.node_2.y])
+
+        A = np.array([new_node.x, new_node.y])
+
+        B = P2 - P1
+        A_shifted = A - P1
+
+        B_T = np.transpose(B)
+
+        B_TB_inv = np.linalg.inv(np.dot(B_T, B))
+
+        P_A = np.dot(np.dot(B, B_TB_inv), B_T)
+
+        res = np.dot(P_A, A_shifted)
+
+        proj_coords = res + P1
+
+        return proj_coords
