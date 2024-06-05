@@ -13,6 +13,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
 
 from rrt_2D import env, plotting, utils
 
+from memory_profiler import profile
+
 
 class Node:
     def __init__(self, n):
@@ -32,6 +34,8 @@ class Rrt:
         self.vertex = [self.s_start]
 
         self.env = env.Env()
+        # self.env.x_range = (0, 1000)
+        # self.env.y_range = (0, 1000)
         self.plotting = plotting.Plotting(s_start, s_goal)
         self.utils = utils.Utils()
 
@@ -100,12 +104,14 @@ class Rrt:
 
 def main():
     x_start = (2, 2)  # Starting node
-    x_goal = (49, 24)  # Goal node
+    x_goal = (90, 24)  # Goal node
 
-    rrt = Rrt(x_start, x_goal, 0.5, 0.05, 10000)
+    rrt = Rrt(x_start, x_goal, 0.5, 0.05, 1000)
     path = rrt.planning()
 
     if path:
+        print(f"Nodes: {len(rrt.vertex)}")
+        print(f"Path cost: {utils.Utils.path_cost(path)}")
         rrt.plotting.animation(rrt.vertex, path, "RRT", True)
     else:
         print("No Path Found!")

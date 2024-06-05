@@ -131,3 +131,14 @@ class Utils:
     @staticmethod
     def get_dist(start, end):
         return math.hypot(end.x - start.x, end.y - start.y)
+    
+    @staticmethod
+    def euclidian_distance(p_1, p_2):
+        return math.sqrt((p_2[0] - p_1[0]) ** 2 + (p_2[1] - p_1[1]) ** 2)
+
+    @staticmethod
+    def path_cost(path):
+        total_distance = 0
+        for i in range(len(path) - 1):
+            total_distance += Utils.euclidian_distance(path[i], path[i+1])
+        return total_distance

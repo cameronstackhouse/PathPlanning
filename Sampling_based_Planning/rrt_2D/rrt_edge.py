@@ -6,20 +6,29 @@ import numpy as np
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 "/../../Sampling_based_Planning/")
 
-from rrt import Node, Rrt
+from rrt import Node, Rrt, utils
 
 class Edge:
+    """
+    An edge in the tree
+    """
     def __init__(self, node_1, node_2):
         self.node_1 = node_1
         self.node_2 = node_2
 
 class RrtEdge(Rrt):
+    """
+    Modified implementation of RRT-Edge based on the 2017 paper by Correia et al.
+    https://ieeexplore.ieee.org/abstract/document/8215282
+    """
     def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
-        super().__init__(start, end, 500, goal_sample_rate, iter_max) 
+        super().__init__(start, end, 1, goal_sample_rate, iter_max) 
         self.edges = []
         self.min_edge_length = min_edge_length
 
     def planning(self):
+        b_path = None
+        path_cost = float('inf')
         for _ in range(self.iter_max):
             node_rand = self.generate_random_node()
             node_near = self.nearest_neighbour(self.vertex, self.edges, node_rand)
@@ -32,12 +41,15 @@ class RrtEdge(Rrt):
                 if node_new.edge is not None:
                     self.split(node_new)
 
-                # DIRECT TO END
                 if not self.utils.is_collision(node_new, self.s_goal):
                     self.new_state(node_new, self.s_goal)
-                    return self.extract_path(node_new)
-        
-        return None
+                    path = self.extract_path(node_new)
+                    cost = utils.Utils.path_cost(path)
+                    if cost < path_cost:
+                        b_path = path
+                        path_cost = cost
+
+        return b_path
     
     def generate_random_node(self):
         delta = self.utils.delta
@@ -109,12 +121,14 @@ class RrtEdge(Rrt):
 
 def main():
     x_start = (2, 2)  # Starting node
-    x_goal = (49, 24)  # Goal node
+    x_goal = (30, 10)  # Goal node
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.15, 10000)
+    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 1000)
     path = rrt_edge.planning()
 
     if path:
+        print(f"Number of nodes: {len(rrt_edge.vertex)}")
+        print(f"Path length: {utils.Utils.path_cost(path)}")
         rrt_edge.plotting.animation(rrt_edge.vertex, path, "RRT-Edge", True)
     else:
         print("No Path Found!")
