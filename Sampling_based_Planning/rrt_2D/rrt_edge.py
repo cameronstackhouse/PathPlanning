@@ -23,10 +23,13 @@ class RrtEdge(Rrt):
 
     Key features of the algorithm involve a completley unbounded edge length alongside
     """
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=1):
         super().__init__(start, end, float('inf'), goal_sample_rate, iter_max) 
         self.edges = []
         self.min_edge_length = min_edge_length
+
+        self.env.x_range = (0, 100)
+        self.env.y_range = (0, 100)
 
     def planning(self):
         b_path = None
@@ -53,6 +56,20 @@ class RrtEdge(Rrt):
 
         return b_path
     
+    def new_state(self, node_start, node_end):
+        dist, theta = self.get_distance_and_angle(node_start, node_end)
+
+        # Scale up the distance if it's shorter than the minimum edge length
+        if dist < self.min_edge_length:
+            dist = self.min_edge_length
+
+        dist = min(self.step_len, dist)
+        node_new = Node((node_start.x + dist * math.cos(theta),
+                         node_start.y + dist * math.sin(theta)))
+        node_new.parent = node_start
+
+        return node_new
+
     def generate_random_node(self):
         delta = self.utils.delta
         return Node((np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
@@ -125,7 +142,7 @@ def main():
     x_start = (2, 2)  # Starting node
     x_goal = (30, 10)  # Goal node
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 1000)
+    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 5000)
     path = rrt_edge.planning()
 
     if path:
