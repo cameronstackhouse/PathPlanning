@@ -215,7 +215,7 @@ def main():
     plot = plotting.Plotting(s_start, s_goal)
 
     path, visited = astar.searching()
-    plot.animation(path, visited, "A*")  # animation
+    print(path)
 
     # path, visited = astar.searching_repeated_astar(2.5)               # initial weight e = 2.5
     # plot.animation_ara_star(path, visited, "Repeated A*")
@@ -223,3 +223,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    print("Bloody hell it works")
