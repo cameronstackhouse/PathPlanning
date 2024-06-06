@@ -5,6 +5,7 @@ Environment for rrt_2D
 
 
 class Env:
+    # TODO Add params
     def __init__(self):
         self.x_range = (0, 100)
         self.y_range = (0, 100)
@@ -25,6 +26,7 @@ class Env:
 
     @staticmethod
     def obs_rectangle():
+        # NOTE: 
         obs_rectangle = [
             [14, 12, 8, 2],
             [18, 22, 8, 3],
@@ -35,12 +37,20 @@ class Env:
 
     @staticmethod
     def obs_circle():
+        # NOTE: x,y,r
         obs_cir = [
             [7, 12, 3],
             [46, 20, 2],
             [15, 5, 2],
             [37, 7, 3],
-            [37, 23, 3]
+            [37, 23, 3],
+            [50, 50, 10],
+            [15, 57, 1],
+            [69, 10, 7],
+            [30, 78, 10],
+            [12, 45, 10],
+            [31, 44, 5],
+            [6.2, 24.1, 5]
         ]
 
         return obs_cir

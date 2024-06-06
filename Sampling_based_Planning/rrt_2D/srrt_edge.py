@@ -1,6 +1,6 @@
 import os
 import sys
-
+import math
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -14,10 +14,10 @@ from rrt_2D.rrt_edge import RrtEdge, Edge
 class SRrtEdge(RrtEdge):
     """
     Version of RRT Edge which performs K checks along the edge of a newly added
-    node to see if
+    node to see if the 
     """
 
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=10):
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
         super().__init__(start, end, goal_sample_rate, iter_max, min_edge_length)
 
     def planning(self):
@@ -48,7 +48,7 @@ class SRrtEdge(RrtEdge):
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
 
-                # # Checks for a direct path from each line partition to the goal
+                # Checks for a direct path from each line partition to the goal
                 for point in partition_points:
                     # Creates a new node
                     point_node = Node(point)
@@ -70,7 +70,12 @@ class SRrtEdge(RrtEdge):
         """
         TODO
         """
-        return 3
+        x1, x2 = edge.node_1.x, edge.node_2.x
+        y1, y2 = edge.node_1.y, edge.node_2.y
+        
+        edge_len = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
+        
+        return math.ceil(edge_len)
 
     def get_k_partitions(self, k, edge):
         x1, y1 = edge.node_1.coords
@@ -90,14 +95,16 @@ class SRrtEdge(RrtEdge):
 
 def main():
     x_start = (2, 2)
-    x_goal = (80, 10)
+    x_goal = (29, 91)
 
-    srrt_edge = SRrtEdge(x_start, x_goal, 0.4, 2000)
+    srrt_edge = SRrtEdge(x_start, x_goal, 0.4, 1000)
     path = srrt_edge.planning()
 
     if path:
         print(f"Path length: {utils.Utils.path_cost(path)}")
-        srrt_edge.plotting.animation(srrt_edge.vertex, path, "RRT-Edge", True)
+        srrt_edge.plotting.animation(srrt_edge.vertex, path, "SRRT-Edge", True)
+    else:
+        print("No Path Found!")
 
 
 if __name__ == "__main__":
