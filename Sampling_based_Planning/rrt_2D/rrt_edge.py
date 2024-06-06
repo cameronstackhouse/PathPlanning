@@ -142,7 +142,7 @@ def main():
     x_start = (2, 2)  # Starting node
     x_goal = (30, 10)  # Goal node
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 5000)
+    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 2000)
     path = rrt_edge.planning()
 
     if path:
