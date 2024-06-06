@@ -13,8 +13,6 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
 
 from rrt_2D import env, plotting, utils
 
-from memory_profiler import profile
-
 
 class Node:
     def __init__(self, n):
