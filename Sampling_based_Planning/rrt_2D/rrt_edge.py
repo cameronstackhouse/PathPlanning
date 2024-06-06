@@ -3,18 +3,22 @@ import sys
 import math
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../../Sampling_based_Planning/")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+)
 
 from rrt import Node, Rrt, utils
+
 
 class Edge:
     """
     An edge in the tree
     """
+
     def __init__(self, node_1, node_2):
         self.node_1 = node_1
         self.node_2 = node_2
+
 
 class RrtEdge(Rrt):
     """
@@ -23,8 +27,9 @@ class RrtEdge(Rrt):
 
     Key features of the algorithm involve a completley unbounded edge length alongside
     """
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=2):
-        super().__init__(start, end, float('inf'), goal_sample_rate, iter_max) 
+
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=10):
+        super().__init__(start, end, float("inf"), goal_sample_rate, iter_max)
         self.edges = []
         self.min_edge_length = min_edge_length
 
@@ -33,7 +38,7 @@ class RrtEdge(Rrt):
 
     def planning(self):
         b_path = None
-        path_cost = float('inf')
+        path_cost = float("inf")
         for _ in range(self.iter_max):
             node_rand = self.generate_random_node()
             node_near = self.nearest_neighbour(self.vertex, self.edges, node_rand)
@@ -56,7 +61,7 @@ class RrtEdge(Rrt):
                             path_cost = cost
 
         return b_path
-    
+
     def new_state(self, node_start, node_end):
         dist, theta = self.get_distance_and_angle(node_start, node_end)
 
@@ -65,20 +70,38 @@ class RrtEdge(Rrt):
             dist = self.min_edge_length
 
         dist = min(self.step_len, dist)
-        node_new = Node((node_start.x + dist * math.cos(theta),
-                         node_start.y + dist * math.sin(theta)))
+        node_new = Node(
+            (
+                node_start.x + dist * math.cos(theta),
+                node_start.y + dist * math.sin(theta),
+            )
+        )
         node_new.parent = node_start
+
+        if (
+            node_new.x > self.x_range[1]
+            or node_new.x < self.x_range[0]
+            or node_new.y > self.y_range[1]
+            or node_new.y < self.y_range[0]
+        ):
+            return None
 
         return node_new
 
     def generate_random_node(self):
         delta = self.utils.delta
-        return Node((np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
-                         np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta)))
-    
+        return Node(
+            (
+                np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
+                np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta),
+            )
+        )
+
     def nearest_neighbour(self, node_list, edge_list, n):
         nearest_node = Rrt.nearest_neighbor(node_list, n)
-        nearest_edge_dist, nearest_edge_proj, nearest_edge = self.nearest_edge_projection(edge_list, n)
+        nearest_edge_dist, nearest_edge_proj, nearest_edge = (
+            self.nearest_edge_projection(edge_list, n)
+        )
 
         node_dist = math.hypot(nearest_node.x - n.x, nearest_node.y - n.y)
 
@@ -89,16 +112,18 @@ class RrtEdge(Rrt):
             return new_node
         else:
             return nearest_node
-        
+
     def nearest_edge_projection(self, edge_list, n):
         """"""
-        min_distance = float('inf')
+        min_distance = float("inf")
         proj = None
         nearest_edge = None
         for edge in edge_list:
             proj_node_coords = self.orthogonal_projection(edge, n)
             if proj_node_coords is not None:
-                distance = math.hypot(proj_node_coords[0] - n.x, proj_node_coords[1] - n.y)
+                distance = math.hypot(
+                    proj_node_coords[0] - n.x, proj_node_coords[1] - n.y
+                )
                 if distance < min_distance:
                     min_distance = distance
                     proj = proj_node_coords
@@ -139,11 +164,12 @@ class RrtEdge(Rrt):
         self.edges.append(Edge(node, edge.node_2))
         node.edge = None
 
+
 def main():
     x_start = (2, 2)  # Starting node
-    x_goal = (36, 17)  # Goal node
+    x_goal = (97, 3)  # Goal node
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.1, 2000)
+    rrt_edge = RrtEdge(x_start, x_goal, 0.3, 1000)
     path = rrt_edge.planning()
 
     if path:
@@ -152,6 +178,7 @@ def main():
         rrt_edge.plotting.animation(rrt_edge.vertex, path, "RRT-Edge", True)
     else:
         print("No Path Found!")
+
 
 if __name__ == "__main__":
     main()
