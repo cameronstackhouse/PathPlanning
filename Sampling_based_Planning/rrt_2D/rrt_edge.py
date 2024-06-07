@@ -28,7 +28,7 @@ class RrtEdge(Rrt):
     Key features of the algorithm involve a completley unbounded edge length alongside
     """
 
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=4):
         super().__init__(start, end, float("inf"), goal_sample_rate, iter_max)
         self.edges = []
         self.min_edge_length = min_edge_length
@@ -166,10 +166,10 @@ class RrtEdge(Rrt):
 
 
 def main():
-    x_start = (2, 2)  # Starting node
-    x_goal = (655, 671)  # Goal node
+    x_start = (2, 2)
+    x_goal = (82, 77)
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.4, 1000)
+    rrt_edge = RrtEdge(x_start, x_goal, 0.05, 2000)
     path = rrt_edge.planning()
 
     if path:

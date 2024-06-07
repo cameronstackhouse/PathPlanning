@@ -18,7 +18,7 @@ class GuidedSRrtEdge(SRrtEdge):
     Ellipsoid-guided SRRT with dynamic adjustment of sampling space.
     """
 
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
+    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, iter_max, min_edge_length)
         self.ellipsoid = None
         self.best_path_cost = float("inf")
@@ -31,7 +31,7 @@ class GuidedSRrtEdge(SRrtEdge):
         if path_length < self.best_path_cost:
             self.best_path_cost = path_length
             center = np.mean(np.array(path), axis=0)
-            radii = np.array([path_length / 2] * 2)
+            radii = np.array([path_length / 3] * 2)
             self.ellipsoid = (center, radii)
 
     def generate_random_node(self):
@@ -99,8 +99,8 @@ class GuidedSRrtEdge(SRrtEdge):
 
 
 def main():
-    x_start = (2, 2)
-    x_goal = (27, 20)
+    x_start = (466, 270)
+    x_goal = (500, 716)
 
     srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 2000)
     path = srrt_edge.planning()
@@ -108,7 +108,7 @@ def main():
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {utils.Utils.path_cost(path)}")
-        srrt_edge.plotting.animation(srrt_edge.vertex, path, "SRRT-Edge", True)
+        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Guided SRRT-Edge", True)
     else:
         print("No Path Found!")
 
