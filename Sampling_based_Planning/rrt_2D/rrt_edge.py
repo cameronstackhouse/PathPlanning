@@ -33,8 +33,8 @@ class RrtEdge(Rrt):
         self.edges = []
         self.min_edge_length = min_edge_length
 
-        self.env.x_range = (0, 100)
-        self.env.y_range = (0, 100)
+        self.env.x_range = (0, 1000)
+        self.env.y_range = (0, 1000)
 
     def planning(self):
         b_path = None
@@ -167,7 +167,7 @@ class RrtEdge(Rrt):
 
 def main():
     x_start = (2, 2)  # Starting node
-    x_goal = (29, 91)  # Goal node
+    x_goal = (655, 671)  # Goal node
 
     rrt_edge = RrtEdge(x_start, x_goal, 0.4, 1000)
     path = rrt_edge.planning()

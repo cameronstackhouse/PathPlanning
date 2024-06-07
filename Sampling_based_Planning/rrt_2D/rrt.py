@@ -21,6 +21,7 @@ class Node:
         self.parent = None
         self.coords = np.array(n)
         self.edge = None
+        self.cost = 0
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):
@@ -101,10 +102,10 @@ class Rrt:
 
 
 def main():
-    x_start = (2, 2)  # Starting node
-    x_goal = (90, 24)  # Goal node
+    x_start = (2, 2)
+    x_goal = (102, 911)
 
-    rrt = Rrt(x_start, x_goal, 0.5, 0.05, 1000)
+    rrt = Rrt(x_start, x_goal, 0.5, 0.05, 2000)
     path = rrt.planning()
 
     if path:
