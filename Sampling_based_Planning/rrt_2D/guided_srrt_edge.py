@@ -100,9 +100,9 @@ class GuidedSRrtEdge(SRrtEdge):
 
 def main():
     x_start = (466, 270)
-    x_goal = (500, 716)
+    x_goal = (54, 22)
 
-    srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 2000)
+    srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 1000)
     path = srrt_edge.planning()
 
     if path:
