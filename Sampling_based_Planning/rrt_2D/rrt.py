@@ -102,10 +102,10 @@ class Rrt:
 
 
 def main():
-    x_start = (2, 2)
-    x_goal = (102, 911)
+    x_start = (466, 270)
+    x_goal = (967, 963)
 
-    rrt = Rrt(x_start, x_goal, 0.5, 0.05, 2000)
+    rrt = Rrt(x_start, x_goal, 0.5, 0.15, 10000)
     path = rrt.planning()
 
     if path:

@@ -13,7 +13,7 @@ from rrt_2D.rrt_edge import Edge
 from rrt_2D.guided_srrt_edge import GuidedSRrtEdge
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=2.0, mem=100, min_edge_length=4):
+    def __init__(self, start, end, goal_sample_rate, time=.43, mem=100, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
@@ -79,7 +79,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 def main():
     x_start = (466, 270)
-    x_goal = (25.3, 33.8)
+    x_goal = (967, 963)
 
     srrt_edge = MBGuidedSRrtEdge(x_start, x_goal, 0.05)
     path = srrt_edge.planning()
@@ -87,7 +87,7 @@ def main():
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {utils.Utils.path_cost(path)}")
-        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Guided SRRT-Edge", True)
+        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", True)
     else:
         print("No Path Found!")
 
