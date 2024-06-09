@@ -30,8 +30,18 @@ class GuidedSRrtEdge(SRrtEdge):
         path_length = utils.Utils.path_cost(path)
         if path_length < self.best_path_cost:
             self.best_path_cost = path_length
-            center = np.mean(np.array(path), axis=0)
-            radii = np.array([path_length / 3] * 2)
+
+            path_array = np.array(path)
+        
+            min_point = np.min(path_array, axis=0)
+            max_point = np.max(path_array, axis=0)
+        
+            center = (min_point + max_point) / 2
+        
+            margin = 0.1  
+            radii = (max_point - min_point) / 2 + margin
+        
+        # Update the ellipsoid
             self.ellipsoid = (center, radii)
 
     def generate_random_node(self):
@@ -100,7 +110,7 @@ class GuidedSRrtEdge(SRrtEdge):
 
 def main():
     x_start = (466, 270)
-    x_goal = (54, 22)
+    x_goal = (51.5, 17)
 
     srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 1000)
     path = srrt_edge.planning()

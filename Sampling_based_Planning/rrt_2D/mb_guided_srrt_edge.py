@@ -13,7 +13,7 @@ from rrt_2D.rrt_edge import Edge
 from rrt_2D.guided_srrt_edge import GuidedSRrtEdge
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=.43, mem=100, min_edge_length=4):
+    def __init__(self, start, end, goal_sample_rate, time=.05, mem=100, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
@@ -79,7 +79,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 def main():
     x_start = (466, 270)
-    x_goal = (967, 963)
+    x_goal = (60.3, 25)
 
     srrt_edge = MBGuidedSRrtEdge(x_start, x_goal, 0.05)
     path = srrt_edge.planning()
