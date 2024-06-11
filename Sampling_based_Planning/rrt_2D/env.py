@@ -5,7 +5,6 @@ Environment for rrt_2D
 
 
 class Env:
-    # TODO Add params
     def __init__(self):
         self.x_range = (0, 1000)
         self.y_range = (0, 1000)
@@ -62,3 +61,27 @@ class Env:
         ]
 
         return obs_cir
+
+
+class CustomEnv(Env):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+        self.obs_rectangle = self.gen_rectangles()
+
+    def gen_rectangles(self):
+        """
+        Method which creates individual rectangles for each point
+        """
+        grid = self.data["grid"]
+        rectangles = []
+        rows = len(grid)
+        cols = len(grid[0])
+        
+        for i in range(rows):
+            for j in range(cols):
+                if grid[i][j] == 1.0:
+                    # Each 1.0 point is a small rectangle of size 1x1
+                    rectangles.append([j, i, 1, 1])
+        
+        return rectangles
