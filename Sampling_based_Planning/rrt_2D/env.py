@@ -72,18 +72,37 @@ class CustomEnv(Env):
         print(len(self.obs_rectangle))
 
     def gen_rectangles(self):
+        # TODO. save this stuff so it doesnt have to be recalculated each time, reduces collision checking
         """
-        Method which creates individual rectangles for each point
+        Method which creates larger rectangles by grouping adjacent 1.0 points
         """
         grid = self.data["grid"]
-        rectangles = []
         rows = len(grid)
         cols = len(grid[0])
-        
+        visited = [[False for _ in range(cols)] for _ in range(rows)]
+        rectangles = []
+
+        def dfs(x, y):
+            stack = [(x, y)]
+            min_x, max_x = x, x
+            min_y, max_y = y, y
+            while stack:
+                cx, cy = stack.pop()
+                if 0 <= cx < rows and 0 <= cy < cols and grid[cx][cy] == 1.0 and not visited[cx][cy]:
+                    visited[cx][cy] = True
+                    min_x = min(min_x, cx)
+                    max_x = max(max_x, cx)
+                    min_y = min(min_y, cy)
+                    max_y = max(max_y, cy)
+                    neighbors = [(cx+1, cy), (cx-1, cy), (cx, cy+1), (cx, cy-1)]
+                    for nx, ny in neighbors:
+                        stack.append((nx, ny))
+            return min_x, min_y, max_x - min_x + 1, max_y - min_y + 1
+
         for i in range(rows):
             for j in range(cols):
-                if grid[i][j] == 1.0:
-                    # Each 1.0 point is a small rectangle of size 1x1
-                    rectangles.append([j, i, 1, 1])
-        
+                if grid[i][j] == 1.0 and not visited[i][j]:
+                    rect = dfs(i, j)
+                    rectangles.append([rect[1], rect[0], rect[3], rect[2]])  # x, y, width, height
+
         return rectangles

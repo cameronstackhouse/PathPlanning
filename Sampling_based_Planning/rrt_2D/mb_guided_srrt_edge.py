@@ -19,8 +19,8 @@ sys.path.append(
 from load_map import create_custom_env
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=0.5, mem=10000, min_edge_length=4):
-        super().__init__(start, end, goal_sample_rate, float('inf'), 0.5)
+    def __init__(self, start, end, goal_sample_rate, time=5.55, mem=10000, min_edge_length=4):
+        super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
     
@@ -85,7 +85,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 def main():
     x_start = (601, 7)
-    x_goal = (384, 585)
+    x_goal = (524, 861)
 
     srrt_edge = MBGuidedSRrtEdge(x_start, x_goal, 0.05)
     srrt_edge.env = create_custom_env("Evaluation/Maps/2D/block_map_1/0.json")
@@ -102,15 +102,12 @@ def main():
 
     path = srrt_edge.planning()
 
-    print(len(srrt_edge.vertex))
-
 
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {srrt_edge.utils.path_cost(path)}")
         srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False)
     else:
-        srrt_edge.plotting.animation(srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False)
         print("No Path Found!")
 
 
