@@ -19,6 +19,3 @@ def create_custom_env(filepath):
 
 if __name__ == "__main__":
     d = create_custom_env("Evaluation/Maps/2D/uniform_random_fill_2D_10_perc/10_perc_2.json")
-
-    
-    

@@ -68,6 +68,8 @@ class CustomEnv(Env):
         super().__init__()
         self.data = data
         self.obs_rectangle = self.gen_rectangles()
+        self.obs_circle = []
+        print(len(self.obs_rectangle))
 
     def gen_rectangles(self):
         """
