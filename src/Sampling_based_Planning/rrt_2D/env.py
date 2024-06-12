@@ -69,7 +69,6 @@ class CustomEnv(Env):
         self.data = data
         self.obs_rectangle = self.gen_rectangles()
         self.obs_circle = []
-        print(len(self.obs_rectangle))
 
     def gen_rectangles(self):
         # TODO. save this stuff so it doesnt have to be recalculated each time, reduces collision checking
