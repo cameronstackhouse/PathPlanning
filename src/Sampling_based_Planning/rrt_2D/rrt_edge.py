@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 sys.path.append(
-    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+    os.path.dirname(os.path.abspath(__file__)) + "../Sampling_based_Planning/"
 )
 
 from rrt import Node, Rrt, utils

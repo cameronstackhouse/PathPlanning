@@ -83,28 +83,28 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 def main():
     srrt_edge = MBGuidedSRrtEdge((0,0), (0,0), 0.05)
-    srrt_edge.eval("Evaluation/Maps/2D/block_map_1/0.json")
-    # srrt_edge.env = create_custom_env("Evaluation/Maps/2D/block_map_1/0.json")
-    # # TODO CHANGE, MAKE NICER
-    # srrt_edge.plotting.env = srrt_edge.env
-    # srrt_edge.plotting.obs_bound = srrt_edge.env.obs_boundary
-    # srrt_edge.plotting.obs_circle = srrt_edge.env.obs_circle
-    # srrt_edge.plotting.obs_rectangle = srrt_edge.env.obs_rectangle
 
-    # srrt_edge.utils.env = srrt_edge.env
-    # srrt_edge.utils.obs_boundary = srrt_edge.env.obs_boundary
-    # srrt_edge.utils.obs_circle = srrt_edge.env.obs_circle
-    # srrt_edge.utils.obs_rectangle = srrt_edge.env.obs_rectangle
+    srrt_edge.env = create_custom_env("Evaluation/Maps/2D/block_map_1/0.json")
+    # TODO CHANGE, MAKE NICER
+    srrt_edge.plotting.env = srrt_edge.env
+    srrt_edge.plotting.obs_bound = srrt_edge.env.obs_boundary
+    srrt_edge.plotting.obs_circle = srrt_edge.env.obs_circle
+    srrt_edge.plotting.obs_rectangle = srrt_edge.env.obs_rectangle
 
-    # path = srrt_edge.planning()
+    srrt_edge.utils.env = srrt_edge.env
+    srrt_edge.utils.obs_boundary = srrt_edge.env.obs_boundary
+    srrt_edge.utils.obs_circle = srrt_edge.env.obs_circle
+    srrt_edge.utils.obs_rectangle = srrt_edge.env.obs_rectangle
+
+    path = srrt_edge.planning()
 
 
-    # if path:
-    #     print(f"Number of nodes: {len(srrt_edge.vertex)}")
-    #     print(f"Path length: {srrt_edge.utils.path_cost(path)}")
-    #     srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False)
-    # else:
-    #     print("No Path Found!")
+    if path:
+        print(f"Number of nodes: {len(srrt_edge.vertex)}")
+        print(f"Path length: {srrt_edge.utils.path_cost(path)}")
+        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False)
+    else:
+        print("No Path Found!")
 
 
 if __name__ == "__main__":

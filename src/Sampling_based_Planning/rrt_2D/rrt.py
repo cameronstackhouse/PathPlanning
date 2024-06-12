@@ -15,7 +15,6 @@ from rrt_2D import env, plotting, utils
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/"
 )
-from load_map import create_custom_env
 
 class Node:
     def __init__(self, n):
