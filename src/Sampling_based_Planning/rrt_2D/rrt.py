@@ -10,9 +10,12 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 "/../../Sampling_based_Planning/")
-
 from rrt_2D import env, plotting, utils
 
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/"
+)
+from load_map import create_custom_env
 
 class Node:
     def __init__(self, n):
@@ -99,8 +102,7 @@ class Rrt:
         dx = node_end.x - node_start.x
         dy = node_end.y - node_start.y
         return math.hypot(dx, dy), math.atan2(dy, dx)
-
-
+    
 def main():
     x_start = (466, 270)
     x_goal = (967, 963)
