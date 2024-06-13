@@ -12,7 +12,6 @@ def load(filepath):
         return data
     
 def create_custom_env(filepath):
-    
     d = load(filepath)
     return CustomEnv(d)
     

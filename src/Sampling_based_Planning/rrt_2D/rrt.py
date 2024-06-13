@@ -3,6 +3,7 @@ RRT_2D
 @author: huiming zhou
 """
 
+import json
 import os
 import sys
 import math
@@ -101,6 +102,29 @@ class Rrt:
         dx = node_end.x - node_start.x
         dy = node_end.y - node_start.y
         return math.hypot(dx, dy), math.atan2(dy, dx)
+    
+    def change_env(self, map_name):
+        """
+        Method which changes the env based on custom map input
+        """
+        data = None
+        with open(map_name) as f:
+            data = json.load(f)
+
+        if data:
+            self.s_start = Node()
+            self.s_goal = Node()
+            self.vertex = [self.s_start]
+            self.env = env.CustomEnv(data)
+            self.plotting.env = self.env
+            self.plotting.obs_bound = self.env.obs_boundary
+            self.plotting.obs_circle = self.env.obs_circle
+            self.plotting.obs_rectangle = self.env.obs_rectangle
+
+            self.utils.env = self.env
+            self.utils.obs_boundary = self.env.obs_boundary
+            self.utils.obs_circle = self.env.obs_circle
+            self.utils.obs_rectangle = self.env.obs_rectangle
     
 def main():
     x_start = (466, 270)

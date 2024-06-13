@@ -17,7 +17,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/"
 )
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=1.10, mem=10000, min_edge_length=4):
+    def __init__(self, start, end, goal_sample_rate, time=0.50, mem=10000, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
