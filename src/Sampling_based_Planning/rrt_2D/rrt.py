@@ -105,18 +105,21 @@ class Rrt:
     
     def change_env(self, map_name):
         """
-        Method which changes the env based on custom map input
+        Method which changes the env based on custom map input.
         """
         data = None
         with open(map_name) as f:
             data = json.load(f)
 
         if data:
-            self.s_start = Node()
-            self.s_goal = Node()
+            self.s_start = Node(data["agent"])
+            self.s_goal = Node(data["goal"])
             self.vertex = [self.s_start]
             self.env = env.CustomEnv(data)
+            
             self.plotting.env = self.env
+            self.plotting.xI = data["agent"]
+            self.plotting.xG = data["goal"]
             self.plotting.obs_bound = self.env.obs_boundary
             self.plotting.obs_circle = self.env.obs_circle
             self.plotting.obs_rectangle = self.env.obs_rectangle
