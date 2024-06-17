@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -16,8 +17,10 @@ from rrt_2D.guided_srrt_edge import GuidedSRrtEdge
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/"
 )
+from load_map import create_custom_env
+
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=0.50, mem=10000, min_edge_length=4):
+    def __init__(self, start, end, goal_sample_rate, time=20.50, mem=100000, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
@@ -84,17 +87,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 def main():
     srrt_edge = MBGuidedSRrtEdge((0,0), (0,0), 0.05)
 
-    srrt_edge.env = create_custom_env("Evaluation/Maps/2D/block_map_1/0.json")
-    # TODO CHANGE, MAKE NICER
-    srrt_edge.plotting.env = srrt_edge.env
-    srrt_edge.plotting.obs_bound = srrt_edge.env.obs_boundary
-    srrt_edge.plotting.obs_circle = srrt_edge.env.obs_circle
-    srrt_edge.plotting.obs_rectangle = srrt_edge.env.obs_rectangle
-
-    srrt_edge.utils.env = srrt_edge.env
-    srrt_edge.utils.obs_boundary = srrt_edge.env.obs_boundary
-    srrt_edge.utils.obs_circle = srrt_edge.env.obs_circle
-    srrt_edge.utils.obs_rectangle = srrt_edge.env.obs_rectangle
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/10.json")
 
     path = srrt_edge.planning()
 
@@ -102,9 +95,11 @@ def main():
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {srrt_edge.utils.path_cost(path)}")
-        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False)
+        srrt_edge.plotting.animation(srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", True)
     else:
         print("No Path Found!")
+        srrt_edge.plotting.animation(srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False)
+
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -32,26 +33,39 @@ class GuidedSRrtEdge(SRrtEdge):
             self.best_path_cost = path_length
 
             path_array = np.array(path)
-        
-            min_point = np.min(path_array, axis=0)
-            max_point = np.max(path_array, axis=0)
-        
-            center = (min_point + max_point) / 2
-        
-            margin = 0.1  
-            radii = (max_point - min_point) / 2 + margin
-        
-        # Update the ellipsoid
-            self.ellipsoid = (center, radii)
+
+            start_point = path_array[0]
+            end_point = path_array[-1]
+
+            center = (start_point + end_point) / 2
+            direction = end_point - start_point
+            distance = np.linalg.norm(direction)
+            margin = 0.1 * distance
+
+            # Calculate the width of the path
+            max_distance_to_line = max(
+                np.abs(np.cross(direction, (point - start_point)) / np.linalg.norm(direction))
+                for point in path_array
+            )
+
+            # Set the radii of the ellipsoid
+            radii = np.array([distance / 2 + margin, max_distance_to_line + margin])
+
+            # Calculate rotation angle
+            angle = np.arctan2(direction[1], direction[0])
+            rotation_matrix = R.from_euler('z', angle).as_matrix()[:2, :2]  # 2D rotation matrix
+
+            self.ellipsoid = (center, radii, rotation_matrix)
 
     def generate_random_node(self):
         """
         Generate a random node within the ellipsoid if defined, otherwise in the entire space.
         """
         if self.ellipsoid:
-            center, radii = self.ellipsoid
+            center, radii, rotation_matrix = self.ellipsoid
             while True:
-                point = np.random.randn(2) * radii + center
+                point = np.random.randn(2) * radii
+                point = np.dot(rotation_matrix, point) + center
                 if np.sum(((point - center) ** 2) / (radii**2)) <= 1:
                     return Node(point)
         else:

@@ -142,3 +142,47 @@ class Utils:
         for i in range(len(path) - 1):
             total_distance += Utils.euclidian_distance(path[i], path[i+1])
         return total_distance
+
+    @staticmethod
+    def calc_energy(power, time):
+        return power * time
+    
+    @staticmethod
+    def turn_energy(turn_power, degrees, speed):
+        """
+        Calculates the energy consumption of turning given
+        the power required to turn per second, the number of degrees to turn,
+        and the speed of turning of the UAV.
+        """
+        return turn_power * (degrees / speed)
+
+    @staticmethod
+    def path_energy(path) -> float:
+        """
+        Calculates the energy used to traverse a path based on a UAV energy model.
+
+        Takeoff + climb + cruise + descent
+        """
+        # TODO look at how to calculate these
+        TAKEOFF_TIME = 5.0
+        LANDING_TIME = 5.0
+        HOVER_POWER = 16326.53
+        CRUISE_POWER = 16329.59
+        LANDING_POWER = 0.9 * HOVER_POWER
+        SPEED = 10.0
+
+        total = (Utils.calc_energy(HOVER_POWER, TAKEOFF_TIME)) + (Utils.calc_energy(LANDING_POWER, LANDING_TIME))
+        
+        for i in range(len(path) - 1):
+            distance = Utils.euclidian_distance(path[i], path[i+1])
+            travel_time = distance / SPEED
+
+            if i == len(path) - 2:
+                power = LANDING_POWER
+            else:
+                power = CRUISE_POWER
+            
+            segment_energy = Utils.calc_energy(power, travel_time)
+            total += segment_energy
+        
+        return total / 3600

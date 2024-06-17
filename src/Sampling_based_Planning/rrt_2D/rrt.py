@@ -25,6 +25,7 @@ class Node:
         self.coords = np.array(n)
         self.edge = None
         self.cost = 0
+        self.time_waited = 0
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):

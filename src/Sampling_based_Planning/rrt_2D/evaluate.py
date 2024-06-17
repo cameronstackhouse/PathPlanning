@@ -49,15 +49,16 @@ def gen_report(MAP_DIR):
         RrtStar(START, END, 4, 0.05, 5, 2000),
     ]
 
-    # TODO metrics
+    # Measured metrics
     avg_path_len = 0
     avg_time = 0
+    avg_energy = 0
     success = 0
 
     # Load and evaluate each map
     for map in map_name_list:
         # TODO run multiple algorithms
-        alg = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 0.6)
+        alg = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 0.3)
 
         alg.change_env(map)
 
@@ -68,9 +69,9 @@ def gen_report(MAP_DIR):
         if path:
             success += 1
             avg_path_len += alg.utils.path_cost(path)
+            avg_energy += alg.utils.path_energy(path)
             avg_time += total_time
-
-        # alg.plotting.animation(alg.vertex, path, f"Bounded Guided SRRT-Edge {map}", False)
+            print(map)
 
     # TODO Gen report here
     # for algorithm in algorithms:
@@ -78,10 +79,11 @@ def gen_report(MAP_DIR):
 
     avg_path_len /= success
     avg_time /= success
+    avg_energy /= success
     success /= NUM_MAPS
 
     print(f"Success percentage: {success * 100}%")
-    print(f"Cost: {avg_path_len}. Time: {avg_time}")
+    print(f"Cost: {avg_path_len}.\nTime: {avg_time}.\nEnergy: {avg_energy}.")
 
 
 def main():
