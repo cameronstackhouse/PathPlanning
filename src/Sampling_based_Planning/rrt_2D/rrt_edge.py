@@ -164,6 +164,10 @@ class RrtEdge(Rrt):
         self.edges.append(Edge(node, edge.node_2))
         node.edge = None
 
+    def change_env(self, map_name):
+        super().change_env(map_name)
+        self.edges = []
+
 
 def main():
     x_start = (2, 2)

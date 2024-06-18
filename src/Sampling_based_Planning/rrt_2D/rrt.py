@@ -116,8 +116,12 @@ class Rrt:
             self.s_start = Node(data["agent"])
             self.s_goal = Node(data["goal"])
             self.vertex = [self.s_start]
+
+            # Initialize the new custom environment
             self.env = env.CustomEnv(data)
-            
+
+            # Update plotting with new environment details
+            self.plotting = plotting.Plotting(data["agent"], data["goal"])
             self.plotting.env = self.env
             self.plotting.xI = data["agent"]
             self.plotting.xG = data["goal"]
@@ -125,11 +129,23 @@ class Rrt:
             self.plotting.obs_circle = self.env.obs_circle
             self.plotting.obs_rectangle = self.env.obs_rectangle
 
+            # Update utilities with new environment details
+            self.utils = utils.Utils()
             self.utils.env = self.env
             self.utils.obs_boundary = self.env.obs_boundary
             self.utils.obs_circle = self.env.obs_circle
             self.utils.obs_rectangle = self.env.obs_rectangle
-    
+
+            # Update environment properties
+            self.x_range = self.env.x_range
+            self.y_range = self.env.y_range
+            self.obs_circle = self.env.obs_circle
+            self.obs_rectangle = self.env.obs_rectangle
+            self.obs_boundary = self.env.obs_boundary
+
+        else:
+            print("Error, map not found")
+
 def main():
     x_start = (466, 270)
     x_goal = (967, 963)

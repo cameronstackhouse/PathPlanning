@@ -123,6 +123,10 @@ class GuidedSRrtEdge(SRrtEdge):
                                 self.update_ellipsoid(path)
 
         return b_path
+    
+    def change_env(self, map_name):
+        super().change_env(map_name)
+        self.ellipsoid = None
 
 
 def main():

@@ -35,7 +35,7 @@ def evaluate(MAP_DIR: str) -> dict:
 
     # TODO algorithms and A*
     algorithms = [
-        MBGuidedSRrtEdge(START, END, 0.05, 0.1),
+        MBGuidedSRrtEdge(START, END, 0.05, 0.5),
         #RrtEdge(START, END, 0.05, 2000),
         Rrt(START, END, 4, 0.05, 2000),
         # RrtStar(START, END, 4, 0.05, 5, 2000),
@@ -51,13 +51,21 @@ def evaluate(MAP_DIR: str) -> dict:
         success = 0
 
         # Load and evaluate each map
-        for map in map_name_list:
+        for map in map_name_list[3:]:
             print(map)
             algorithm.change_env(map)
 
             start_time = time.time()
             path = algorithm.planning()
             total_time = time.time() - start_time
+
+            if path:
+                print(f"Number of nodes: {len(algorithm.vertex)}")
+                algorithm.plotting.animation(algorithm.vertex, path, "Bounded Guided SRRT-Edge", False)
+            else:
+                print("No Path Found!")
+                algorithm.plotting.animation(algorithm.vertex, [], "Bounded Guided SRRT-Edge", False)
+
 
             if path:
                 success += 1
@@ -96,12 +104,11 @@ def bar_chart_compare(res1, res2, key, y_label, title):
     data1 = [0 if v is None else v for v in data1]
     data2 = [0 if v is None else v for v in data2]
 
-    map_names_int = list(map(int, map_names))
-    sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
-    
-    data1 = [data1[i] for i in sorted_indices]
-    data2 = [data2[i] for i in sorted_indices]
-    map_names = [map_names[i] for i in sorted_indices]
+    # map_names_int = list(map(int, map_names))
+    # sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
+    # data1 = [data1[i] for i in sorted_indices]
+    # data2 = [data2[i] for i in sorted_indices]
+    # map_names = [map_names[i] for i in sorted_indices]
 
     bar_width = 0.35
     index = range(len(data1))
@@ -118,10 +125,12 @@ def bar_chart_compare(res1, res2, key, y_label, title):
 def main():
     results = evaluate("src/Evaluation/Maps/2D/block_map_25")
     data_mb = results[0]
+    print(data_mb["Success Rate"])
     data_rrt = results[1]
-    KEY = "Time Taken To Calculate"
+    KEY = "Energy To Traverse"
+    UNIT = "(W)"
 
-    bar_chart_compare(data_mb, data_rrt, KEY, "Path Length", f"Comparison of {KEY}")
+    bar_chart_compare(data_mb, data_rrt, KEY, KEY + UNIT, f"Comparison of {KEY}")
 
 
 if __name__ == "__main__":
