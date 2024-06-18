@@ -19,6 +19,12 @@ from rrt_2D.rrt_edge import RrtEdge
 from rrt_2D.rrt import Rrt
 from rrt_2D.rrt_star import RrtStar
 
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
+)
+
+from Search_2D.Astar import AStar
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
 from load_map import create_custom_env
 from stats import Stats
@@ -36,13 +42,14 @@ def evaluate(MAP_DIR: str) -> dict:
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
+    a_star = AStar(START, END, "euclidean")
 
     # TODO algorithms and A*
     algorithms = [
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
         RrtEdge(START, END, 0.05, 2000),
         # RrtStar(START, END, 4, 0.05, 5, 2000),
-        #Rrt(START, END, 4, 0.05, 2000),
+        # Rrt(START, END, 4, 0.05, 2000),
     ]
     results = []
 
@@ -59,6 +66,10 @@ def evaluate(MAP_DIR: str) -> dict:
         # Load and evaluate each map
         for map in map_name_list:
             print(map)
+            a_star.change_env(map)
+            optimal_path, _ = a_star.searching()
+            print(algorithm.utils.path_cost(optimal_path))
+
             algorithm.change_env(map)
 
             start_time = time.time()
@@ -68,6 +79,7 @@ def evaluate(MAP_DIR: str) -> dict:
             if path:
                 success += 1
                 path_len.append(algorithm.utils.path_cost(path))
+                print(algorithm.utils.path_cost(path))
                 energy.append(algorithm.utils.path_energy(path))
                 times.append(total_time)
             else:
