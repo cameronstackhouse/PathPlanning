@@ -26,7 +26,11 @@ from stats import Stats
 from glob import glob
 from pathlib import Path
 
+
 def evaluate(MAP_DIR: str) -> dict:
+    """
+    TODO
+    """
     START = (0, 0)
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
@@ -35,10 +39,10 @@ def evaluate(MAP_DIR: str) -> dict:
 
     # TODO algorithms and A*
     algorithms = [
-        MBGuidedSRrtEdge(START, END, 0.05, 1.0),
-        #RrtEdge(START, END, 0.05, 2000),
-        Rrt(START, END, 4, 0.05, 2000),
+        MBGuidedSRrtEdge(START, END, 0.05, 1.5),
+        RrtEdge(START, END, 0.05, 2000),
         # RrtStar(START, END, 4, 0.05, 5, 2000),
+        #Rrt(START, END, 4, 0.05, 2000),
     ]
     results = []
 
@@ -46,6 +50,7 @@ def evaluate(MAP_DIR: str) -> dict:
         print(algorithm)
         # Measured metrics
         path_len = []
+        optimal_len = []
         times = []
         energy = []
         nodes = []
@@ -69,7 +74,7 @@ def evaluate(MAP_DIR: str) -> dict:
                 path_len.append(None)
                 energy.append(None)
                 times.append(None)
-            
+
             nodes.append(len(algorithm.vertex))
 
         success /= NUM_MAPS
@@ -78,19 +83,19 @@ def evaluate(MAP_DIR: str) -> dict:
             "Map Names": map_names,
             "Success Rate": success,
             "Path Length": path_len,
+            "Optimal Length": optimal_len,
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
-            "Number of Nodes": nodes
+            "Number of Nodes": nodes,
         }
 
         results.append(result)
 
     return results
 
+
 def bar_chart_compare(res1, res2, key, y_label, title):
-    """
-    
-    """
+    """ """
     sns.set_style("dark")
 
     data1 = res1[key]
@@ -109,14 +114,15 @@ def bar_chart_compare(res1, res2, key, y_label, title):
     bar_width = 0.35
     index = range(len(data1))
     plt.figure(figsize=(10, 5))
-    plt.bar(index, data1, bar_width, label="Data Set 1")
-    plt.bar([i + bar_width for i in index], data2, bar_width, label="Data Set 2")
+    plt.bar(index, data1, bar_width, label="Algorithm 1")
+    plt.bar([i + bar_width for i in index], data2, bar_width, label="Algorithm 2")
     plt.title(title)
     plt.xticks([i + bar_width / 2 for i in index], map_names, rotation=30, ha="center")
     plt.xlabel("Map Number")
     plt.ylabel(y_label)
     plt.legend()
     plt.show()
+
 
 def main():
     results = evaluate("src/Evaluation/Maps/2D/block_map_25")

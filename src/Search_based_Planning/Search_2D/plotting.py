@@ -24,7 +24,7 @@ class Plotting:
 
     def animation(self, path, visited, name):
         self.plot_grid(name)
-        self.plot_visited(visited)
+        #self.plot_visited(visited)
         self.plot_path(path)
         plt.show()
 

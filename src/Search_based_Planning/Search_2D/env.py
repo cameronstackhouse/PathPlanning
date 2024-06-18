@@ -6,10 +6,18 @@ Env 2D
 
 class Env:
     def __init__(self):
-        self.x_range = 51  # size of background
-        self.y_range = 31
-        self.motions = [(-1, 0), (-1, 1), (0, 1), (1, 1),
-                        (1, 0), (1, -1), (0, -1), (-1, -1)]
+        self.x_range = 1000  # size of background
+        self.y_range = 1000
+        self.motions = [
+            (-1, 0),
+            (-1, 1),
+            (0, 1),
+            (1, 1),
+            (1, 0),
+            (1, -1),
+            (0, -1),
+            (-1, -1),
+        ]
         self.obs = self.obs_map()
 
     def update_obs(self, obs):
@@ -44,5 +52,22 @@ class Env:
             obs.add((30, i))
         for i in range(16):
             obs.add((40, i))
+
+        return obs
+
+
+class CustomEnv(Env):
+    def __init__(self, data):
+        super().__init__()
+        self.data = data
+        self.obs = self.gen_obs()
+
+    def gen_obs(self):
+        obs = set()
+        grid = self.data["grid"]
+        for i in range(len(grid)):
+            for j in range(len(grid[0])):
+                if grid[i][j] == 1:
+                    obs.add((i, j))
 
         return obs
