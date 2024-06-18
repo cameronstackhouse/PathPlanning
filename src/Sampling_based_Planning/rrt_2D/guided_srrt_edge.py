@@ -22,52 +22,55 @@ class GuidedSRrtEdge(SRrtEdge):
     def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, iter_max, min_edge_length)
         self.ellipsoid = None
-        self.best_path_cost = float("inf")
 
     def update_ellipsoid(self, path):
         """
         Update the parameters of the ellipsoid based on the best path found.
         """
-        path_length = utils.Utils.path_cost(path)
-        if path_length < self.best_path_cost:
-            self.best_path_cost = path_length
 
-            path_array = np.array(path)
+        x1, y1 = path[0]
+        x2, y2 = path[-1]
 
-            start_point = path_array[0]
-            end_point = path_array[-1]
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
 
-            center = (start_point + end_point) / 2
-            direction = end_point - start_point
-            distance = np.linalg.norm(direction)
-            margin = 0.1 * distance
+        angle = np.arctan2(y2 - y1, x2 - x1)
 
-            # Calculate the width of the path
-            max_distance_to_line = max(
-                np.abs(np.cross(direction, (point - start_point)) / np.linalg.norm(direction))
-                for point in path_array
-            )
+        # Calculate the semi-major axis length
+        semi_major_axis = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) / 2
 
-            # Set the radii of the ellipsoid
-            radii = np.array([distance / 2 + margin, max_distance_to_line + margin])
+        max_distance = max(
+            np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2) for x, y in path
+        )
 
-            # Calculate rotation angle
-            angle = np.arctan2(direction[1], direction[0])
-            rotation_matrix = R.from_euler('z', angle).as_matrix()[:2, :2]  # 2D rotation matrix
+        # Set the semi-minor axis length
+        semi_minor_axis = max_distance
 
-            self.ellipsoid = (center, radii, rotation_matrix)
+        self.ellipsoid = (center_x, center_y, semi_major_axis, semi_minor_axis, angle)
 
     def generate_random_node(self):
         """
         Generate a random node within the ellipsoid if defined, otherwise in the entire space.
         """
         if self.ellipsoid:
-            center, radii, rotation_matrix = self.ellipsoid
+            center_x, center_y, semi_major_axis, semi_minor_axis, angle = self.ellipsoid
             while True:
-                point = np.random.randn(2) * radii
-                point = np.dot(rotation_matrix, point) + center
-                if np.sum(((point - center) ** 2) / (radii**2)) <= 1:
-                    return Node(point)
+                # Samples a point within a unit circle
+                u, v = np.random.uniform(-1, 1, 2)
+                if u**2 + v**2 <= 1:
+                    break
+            x_scaled = semi_major_axis * u
+            y_scaled = semi_minor_axis * v
+
+            # Rotate the point by the given angle
+            x_rotated = x_scaled * np.cos(angle) - y_scaled * np.sin(angle)
+            y_rotated = x_scaled * np.sin(angle) + y_scaled * np.cos(angle)
+
+            # Translate the point to the ellipse center
+            x = center_x + x_rotated
+            y = center_y + y_rotated
+
+            return Node((x, y))
         else:
             return super().generate_random_node()
 
@@ -124,9 +127,9 @@ class GuidedSRrtEdge(SRrtEdge):
 
 def main():
     x_start = (771, 110)
-    x_goal = (881, 518)
+    x_goal = (62, 968)
 
-    srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 1000)
+    srrt_edge = GuidedSRrtEdge(x_start, x_goal, 0.05, 500)
     path = srrt_edge.planning()
 
     if path:
