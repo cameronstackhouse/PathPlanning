@@ -7,6 +7,9 @@ import math
 import numpy as np
 import os
 import sys
+import matplotlib.pyplot as plt
+from scipy.integrate import quad
+from numpy.polynomial import polynomial
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 "/../../Sampling_based_Planning/")
@@ -142,10 +145,22 @@ class Utils:
         for i in range(len(path) - 1):
             total_distance += Utils.euclidian_distance(path[i], path[i+1])
         return total_distance
-
+    
     @staticmethod
-    def calc_energy(power, time):
-        return power * time
+    def calculate_turn_angle(p_1, p_2, p_3):
+        v1 = np.array(p_1) - np.array(p_2)
+        v2 = np.array(p_3) - np.array(p_2)
+
+        dot_product = np.dot(v1, v2)
+        mag_v1 = np.linalg.norm(v1)
+        mag_v2 = np.linalg.norm(v2)
+
+        cos_angle = dot_product / (mag_v1 * mag_v2)
+        cos_angle = np.clip(cos_angle, -1.0, 1.0)
+
+        angle = np.arccos(cos_angle)
+
+        return angle
     
     @staticmethod
     def turn_energy(turn_power, degrees, speed):
@@ -159,30 +174,52 @@ class Utils:
     @staticmethod
     def path_energy(path) -> float:
         """
-        Calculates the energy used to traverse a path based on a UAV energy model.
+        Calculates the energy used to traverse a path based on a UAV energy model and values
+        calculated by ding et al.
 
-        Takeoff + climb + cruise + descent
+        https://www.researchgate.net/publication/331264690_Energy-Efficient_Min-Max_Planning_of_Heterogeneous_Tasks_with_Multiple_UAVs?enrichId=rgreq-fa09167b1c97a83f7ec66c8af7c0e062-XXX&enrichSource=Y292ZXJQYWdlOzMzMTI2NDY5MDtBUzo5NzEyMDAzNzMyMjM0MjVAMTYwODU2MzYyMTUzNA%3D%3D&el=1_x_3
         """
-        # TODO look at how to calculate these
-        TAKEOFF_TIME = 5.0
-        LANDING_TIME = 5.0
-        HOVER_POWER = 16326.53
-        CRUISE_POWER = 16329.59
-        LANDING_POWER = 0.9 * HOVER_POWER
-        SPEED = 10.0
+        x = np.array([0, 2, 4, 6])
+        # Power required (W) for each at 0, 2, 4, 6 m/s
+        P_acc = np.array([242, 235, 239, 249])
+        P_dec = np.array([245, 232, 230, 239])
+        P_v = [242, 245, 246, 268]
+        TURN_POWER = 260
+        TURN_SPEED = 2.07
 
-        total = (Utils.calc_energy(HOVER_POWER, TAKEOFF_TIME)) + (Utils.calc_energy(LANDING_POWER, LANDING_TIME))
-        
-        for i in range(len(path) - 1):
-            distance = Utils.euclidian_distance(path[i], path[i+1])
-            travel_time = distance / SPEED
+        # Fits curve and defines integrand
+        cubic_coeffs_acc = np.polyfit(x, P_acc, 3)
+        cubic_poly_acc = np.poly1d(cubic_coeffs_acc)
 
-            if i == len(path) - 2:
-                power = LANDING_POWER
-            else:
-                power = CRUISE_POWER
-            
-            segment_energy = Utils.calc_energy(power, travel_time)
-            total += segment_energy
+        cubic_coeffs_dec = np.polyfit(x, P_dec, 3)
+        cubic_poly_dec = np.poly1d(cubic_coeffs_dec)
+
+        def integrand_acc(x):
+            return cubic_poly_acc(x)
         
-        return total / 3600
+        def integrand_dec(x):
+            return cubic_poly_dec(x)
+
+        fixed_speed = 6 # 6 m/s
+        total_energy = 0
+
+        for i in range(1, len(path)):
+            p_1 = path[i-1]
+            p_2 = path[i]
+
+            distance = Utils.euclidian_distance(p_1, p_2)
+            time_uniform = distance / fixed_speed
+
+            # Accelerate -> uniform -> Decelerate -> Turn if needed
+            energy_acc, _ = quad(integrand_acc, 0, fixed_speed)
+            energy_unform, _ = quad(integrand_dec, 0, fixed_speed)
+            energy_dec = time_uniform * P_v[-1]
+
+            total_energy += energy_acc + energy_unform + energy_dec
+
+            if i < len(path) - 1:
+                p_3 = path[i+1]
+                angle = Utils.calculate_turn_angle(p_1, p_2, p_3)
+                total_energy += Utils.turn_energy(TURN_POWER, angle, TURN_SPEED)
+        
+        return total_energy
