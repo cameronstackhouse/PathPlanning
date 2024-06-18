@@ -20,7 +20,7 @@ sys.path.append(
 from load_map import create_custom_env
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
-    def __init__(self, start, end, goal_sample_rate, time=20.50, mem=100000, min_edge_length=4):
+    def __init__(self, start, end, goal_sample_rate, time=0.50, mem=100000, min_edge_length=4):
         super().__init__(start, end, goal_sample_rate, float('inf'), min_edge_length)
         self.mem = mem
         self.time = time
@@ -87,7 +87,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 def main():
     srrt_edge = MBGuidedSRrtEdge((0,0), (0,0), 0.05)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/10.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/24.json")
 
     path = srrt_edge.planning()
 

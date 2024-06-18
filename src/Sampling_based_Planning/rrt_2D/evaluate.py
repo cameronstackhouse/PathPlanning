@@ -8,6 +8,7 @@ import sys
 import time
 import psutil
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -29,9 +30,10 @@ def evaluate(MAP_DIR: str) -> dict:
     START = (0, 0)
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
+    map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
-    # TODO algorithms
+    # TODO algorithms and A*
     algorithms = [
         MBGuidedSRrtEdge(START, END, 0.05, 0.1),
         #RrtEdge(START, END, 0.05, 2000),
@@ -68,7 +70,9 @@ def evaluate(MAP_DIR: str) -> dict:
                 times.append(None)
         
         success /= NUM_MAPS
+        # TODO record CPU load + memory usage too
         result = {
+            "Map Names": map_names,
             "Success Rate": success,
             "Path Length": path_len,
             "Time Taken To Calculate": times,
@@ -79,23 +83,34 @@ def evaluate(MAP_DIR: str) -> dict:
 
     return results
 
-def bar_chart_compare(res1, res2, key, x_label, y_label, title):
+def bar_chart_compare(res1, res2, key, y_label, title):
     """
     
     """
+    sns.set_style("dark")
+
     data1 = res1[key]
     data2 = res2[key]
+    map_names = res1["Map Names"]
 
     data1 = [0 if v is None else v for v in data1]
     data2 = [0 if v is None else v for v in data2]
+
+    map_names_int = list(map(int, map_names))
+    sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
+    
+    data1 = [data1[i] for i in sorted_indices]
+    data2 = [data2[i] for i in sorted_indices]
+    map_names = [map_names[i] for i in sorted_indices]
+
     bar_width = 0.35
     index = range(len(data1))
     plt.figure(figsize=(10, 5))
     plt.bar(index, data1, bar_width, label="Data Set 1")
     plt.bar([i + bar_width for i in index], data2, bar_width, label="Data Set 2")
     plt.title(title)
-    # plt.xticks() TODO
-    plt.xlabel(x_label)
+    plt.xticks([i + bar_width / 2 for i in index], map_names, rotation=30, ha="center")
+    plt.xlabel("Map Number")
     plt.ylabel(y_label)
     plt.legend()
     plt.show()
@@ -104,8 +119,9 @@ def main():
     results = evaluate("src/Evaluation/Maps/2D/block_map_25")
     data_mb = results[0]
     data_rrt = results[1]
+    KEY = "Time Taken To Calculate"
 
-    bar_chart_compare(data_mb, data_rrt, "Energy To Traverse", "Map", "Energy Used During Traversal (W)", "Comparison of Energy Usage")
+    bar_chart_compare(data_mb, data_rrt, KEY, "Path Length", f"Comparison of {KEY}")
 
 
 if __name__ == "__main__":
