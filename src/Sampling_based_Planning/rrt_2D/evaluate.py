@@ -35,7 +35,7 @@ def evaluate(MAP_DIR: str) -> dict:
 
     # TODO algorithms and A*
     algorithms = [
-        MBGuidedSRrtEdge(START, END, 0.05, 0.5),
+        MBGuidedSRrtEdge(START, END, 0.05, 1.0),
         #RrtEdge(START, END, 0.05, 2000),
         Rrt(START, END, 4, 0.05, 2000),
         # RrtStar(START, END, 4, 0.05, 5, 2000),
@@ -48,24 +48,17 @@ def evaluate(MAP_DIR: str) -> dict:
         path_len = []
         times = []
         energy = []
+        nodes = []
         success = 0
 
         # Load and evaluate each map
-        for map in map_name_list[3:]:
+        for map in map_name_list:
             print(map)
             algorithm.change_env(map)
 
             start_time = time.time()
             path = algorithm.planning()
             total_time = time.time() - start_time
-
-            if path:
-                print(f"Number of nodes: {len(algorithm.vertex)}")
-                algorithm.plotting.animation(algorithm.vertex, path, "Bounded Guided SRRT-Edge", False)
-            else:
-                print("No Path Found!")
-                algorithm.plotting.animation(algorithm.vertex, [], "Bounded Guided SRRT-Edge", False)
-
 
             if path:
                 success += 1
@@ -76,7 +69,9 @@ def evaluate(MAP_DIR: str) -> dict:
                 path_len.append(None)
                 energy.append(None)
                 times.append(None)
-        
+            
+            nodes.append(len(algorithm.vertex))
+
         success /= NUM_MAPS
         # TODO record CPU load + memory usage too
         result = {
@@ -84,7 +79,8 @@ def evaluate(MAP_DIR: str) -> dict:
             "Success Rate": success,
             "Path Length": path_len,
             "Time Taken To Calculate": times,
-            "Energy To Traverse": energy
+            "Energy To Traverse": energy,
+            "Number of Nodes": nodes
         }
 
         results.append(result)
@@ -104,11 +100,11 @@ def bar_chart_compare(res1, res2, key, y_label, title):
     data1 = [0 if v is None else v for v in data1]
     data2 = [0 if v is None else v for v in data2]
 
-    # map_names_int = list(map(int, map_names))
-    # sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
-    # data1 = [data1[i] for i in sorted_indices]
-    # data2 = [data2[i] for i in sorted_indices]
-    # map_names = [map_names[i] for i in sorted_indices]
+    map_names_int = list(map(int, map_names))
+    sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
+    data1 = [data1[i] for i in sorted_indices]
+    data2 = [data2[i] for i in sorted_indices]
+    map_names = [map_names[i] for i in sorted_indices]
 
     bar_width = 0.35
     index = range(len(data1))
