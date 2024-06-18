@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import psutil
+import matplotlib.pyplot as plt
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -24,18 +25,7 @@ from stats import Stats
 from glob import glob
 from pathlib import Path
 
-
-def comapare(algo_1, algo_2):
-    """
-    TODO
-    """
-    pass
-
-
-def gen_report(MAP_DIR):
-    """
-    TODO
-    """
+def evaluate(MAP_DIR: str) -> dict:
     START = (0, 0)
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
@@ -44,51 +34,79 @@ def gen_report(MAP_DIR):
     # TODO algorithms
     algorithms = [
         MBGuidedSRrtEdge(START, END, 0.05, 0.1),
-        RrtEdge(START, END, 0.05, 2000),
+        #RrtEdge(START, END, 0.05, 2000),
         Rrt(START, END, 4, 0.05, 2000),
-        RrtStar(START, END, 4, 0.05, 5, 2000),
+        # RrtStar(START, END, 4, 0.05, 5, 2000),
     ]
+    results = []
 
-    # Measured metrics
-    avg_path_len = 0
-    avg_time = 0
-    avg_energy = 0
-    success = 0
+    for algorithm in algorithms:
+        print(algorithm)
+        # Measured metrics
+        path_len = []
+        times = []
+        energy = []
+        success = 0
 
-    # Load and evaluate each map
-    for map in map_name_list:
-        # TODO run multiple algorithms
-        alg = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 0.3)
-
-        alg.change_env(map)
-
-        start_time = time.time()
-        path = alg.planning()
-        total_time = time.time() - start_time
-
-        if path:
-            success += 1
-            avg_path_len += alg.utils.path_cost(path)
-            avg_energy += alg.utils.path_energy(path)
-            avg_time += total_time
+        # Load and evaluate each map
+        for map in map_name_list:
             print(map)
+            algorithm.change_env(map)
 
-    # TODO Gen report here
-    # for algorithm in algorithms:
-    #     pass
+            start_time = time.time()
+            path = algorithm.planning()
+            total_time = time.time() - start_time
 
-    avg_path_len /= success
-    avg_time /= success
-    avg_energy /= success
-    success /= NUM_MAPS
+            if path:
+                success += 1
+                path_len.append(algorithm.utils.path_cost(path))
+                energy.append(algorithm.utils.path_energy(path))
+                times.append(total_time)
+            else:
+                path_len.append(None)
+                energy.append(None)
+                times.append(None)
+        
+        success /= NUM_MAPS
+        result = {
+            "Success Rate": success,
+            "Path Length": path_len,
+            "Time Taken To Calculate": times,
+            "Energy To Traverse": energy
+        }
 
-    print(f"Success percentage: {success * 100}%")
-    print(f"Cost: {avg_path_len}.\nTime: {avg_time}.\nEnergy: {avg_energy}.")
+        results.append(result)
 
+    return results
+
+def bar_chart_compare(res1, res2, key, x_label, y_label, title):
+    """
+    
+    """
+    data1 = res1[key]
+    data2 = res2[key]
+
+    data1 = [0 if v is None else v for v in data1]
+    data2 = [0 if v is None else v for v in data2]
+    bar_width = 0.35
+    index = range(len(data1))
+    plt.figure(figsize=(10, 5))
+    plt.bar(index, data1, bar_width, label="Data Set 1")
+    plt.bar([i + bar_width for i in index], data2, bar_width, label="Data Set 2")
+    plt.title(title)
+    # plt.xticks() TODO
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend()
+    plt.show()
 
 def main():
-    return 0
+    results = evaluate("src/Evaluation/Maps/2D/block_map_25")
+    data_mb = results[0]
+    data_rrt = results[1]
+
+    bar_chart_compare(data_mb, data_rrt, "Energy To Traverse", "Map", "Energy Used During Traversal (W)", "Comparison of Energy Usage")
 
 
 if __name__ == "__main__":
-    gen_report("src/Evaluation/Maps/2D/block_map_25")
+    main()
