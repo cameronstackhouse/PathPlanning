@@ -20,12 +20,20 @@ from load_map import create_custom_env
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
     def __init__(
-        self, start, end, goal_sample_rate, time=0.55, mem=100000, min_edge_length=4
+        self, start, end, goal_sample_rate, time=5, mem=100000, min_edge_length=4
     ):
         super().__init__(start, end, goal_sample_rate, float("inf"), min_edge_length)
         self.name = "MB-SRRT-Edge"
         self.mem = mem
         self.time = time
+    
+    def clear_tree(self):
+        self.vertex = [self.s_start]
+        self.edges = []
+    
+    def update_ellipsoid(self, path):
+        super().update_ellipsoid(path)
+        self.clear_tree()
 
     def planning(self):
         b_path = None
@@ -92,9 +100,9 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.55)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 30)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/2.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/24.json")
 
     path = srrt_edge.planning()
 
@@ -102,7 +110,7 @@ def main():
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {srrt_edge.utils.path_cost(path)}")
         srrt_edge.plotting.animation(
-            srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", True
+            srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False
         )
     else:
         print("No Path Found!")
