@@ -29,6 +29,7 @@ class Node:
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):
+        self.name = "RRT"
         self.s_start = Node(s_start)
         self.s_goal = Node(s_goal)
         self.step_len = step_len

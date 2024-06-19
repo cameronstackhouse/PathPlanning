@@ -30,6 +30,7 @@ class RrtEdge(Rrt):
 
     def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=4):
         super().__init__(start, end, float("inf"), goal_sample_rate, iter_max)
+        self.name = "RRT-Edge"
         self.edges = []
         self.min_edge_length = min_edge_length
 

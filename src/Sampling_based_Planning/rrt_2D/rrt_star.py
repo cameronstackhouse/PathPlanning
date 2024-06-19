@@ -24,6 +24,7 @@ class Node:
 class RrtStar:
     def __init__(self, x_start, x_goal, step_len,
                  goal_sample_rate, search_radius, iter_max):
+        self.name = "RRT*"
         self.s_start = Node(x_start)
         self.s_goal = Node(x_goal)
         self.step_len = step_len

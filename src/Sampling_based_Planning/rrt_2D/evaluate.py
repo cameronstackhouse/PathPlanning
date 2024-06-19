@@ -47,8 +47,8 @@ def evaluate(MAP_DIR: str) -> dict:
         AStar(START, END, "euclidean"),
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
         RrtEdge(START, END, 0.05, 2000),
-        # RrtStar(START, END, 4, 0.05, 5, 2000),
-        # Rrt(START, END, 4, 0.05, 2000),
+        RrtStar(START, END, 6, 0.05, 5, 2000),
+        Rrt(START, END, 6, 0.05, 2000),
     ]
     results = []
 
@@ -73,7 +73,6 @@ def evaluate(MAP_DIR: str) -> dict:
             if path:
                 success += 1
                 path_len.append(algorithms[1].utils.path_cost(path))
-                print(algorithms[1].utils.path_cost(path))
                 energy.append(algorithms[1].utils.path_energy(path))
                 times.append(total_time)
             else:
@@ -86,6 +85,7 @@ def evaluate(MAP_DIR: str) -> dict:
         success /= NUM_MAPS
         # TODO record CPU load + memory usage too
         result = {
+            "Algorithm": algorithm.name,
             "Map Names": map_names,
             "Success Rate": success,
             "Path Length": path_len,
@@ -97,7 +97,6 @@ def evaluate(MAP_DIR: str) -> dict:
         results.append(result)
 
     return results
-
 
 def bar_chart_compare(res1, res2, key, y_label, title):
     """ """
@@ -128,17 +127,15 @@ def bar_chart_compare(res1, res2, key, y_label, title):
     plt.legend()
     plt.show()
 
+def save_results(results, name):
+    with open(name, 'w') as file:
+        json.dump(results, file, indent=4)
+    
+    print(f"Results saved to {name}")
 
 def main():
     results = evaluate("src/Evaluation/Maps/2D/block_map_25")
-    data_mb = results[0]
-    print(data_mb["Success Rate"])
-    data_rrt = results[1]
-    KEY = "Energy To Traverse"
-    UNIT = "(W)"
-
-    bar_chart_compare(data_mb, data_rrt, KEY, KEY + UNIT, f"Comparison of {KEY}")
-
+    save_results(results, "evaluation_results.json")
 
 if __name__ == "__main__":
     main()
