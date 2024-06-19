@@ -44,10 +44,10 @@ def evaluate(MAP_DIR: str) -> dict:
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        AStar(START, END, "euclidean"),
+        #AStar(START, END, "euclidean"),
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
         RrtEdge(START, END, 0.05, 2000),
-        RrtStar(START, END, 6, 0.05, 5, 2000),
+        #RrtStar(START, END, 6, 0.05, 5, 2000),
         Rrt(START, END, 6, 0.05, 2000),
     ]
     results = []

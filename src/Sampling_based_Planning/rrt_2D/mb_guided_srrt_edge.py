@@ -100,9 +100,9 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 30)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 10)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/24.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/4.json")
 
     path = srrt_edge.planning()
 
