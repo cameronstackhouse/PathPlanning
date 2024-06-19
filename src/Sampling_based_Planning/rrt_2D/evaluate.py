@@ -42,10 +42,9 @@ def evaluate(MAP_DIR: str) -> dict:
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
-    a_star = AStar(START, END, "euclidean")
 
-    # TODO algorithms and A*
     algorithms = [
+        AStar(START, END, "euclidean"),
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
         RrtEdge(START, END, 0.05, 2000),
         # RrtStar(START, END, 4, 0.05, 5, 2000),
@@ -57,7 +56,6 @@ def evaluate(MAP_DIR: str) -> dict:
         print(algorithm)
         # Measured metrics
         path_len = []
-        optimal_len = []
         times = []
         energy = []
         nodes = []
@@ -66,10 +64,6 @@ def evaluate(MAP_DIR: str) -> dict:
         # Load and evaluate each map
         for map in map_name_list:
             print(map)
-            a_star.change_env(map)
-            optimal_path, _ = a_star.searching()
-            print(algorithm.utils.path_cost(optimal_path))
-
             algorithm.change_env(map)
 
             start_time = time.time()
@@ -78,16 +72,16 @@ def evaluate(MAP_DIR: str) -> dict:
 
             if path:
                 success += 1
-                path_len.append(algorithm.utils.path_cost(path))
-                print(algorithm.utils.path_cost(path))
-                energy.append(algorithm.utils.path_energy(path))
+                path_len.append(algorithms[1].utils.path_cost(path))
+                print(algorithms[1].utils.path_cost(path))
+                energy.append(algorithms[1].utils.path_energy(path))
                 times.append(total_time)
             else:
                 path_len.append(None)
                 energy.append(None)
                 times.append(None)
 
-            nodes.append(len(algorithm.vertex))
+            #nodes.append(len(algorithm.vertex))
 
         success /= NUM_MAPS
         # TODO record CPU load + memory usage too
@@ -95,7 +89,6 @@ def evaluate(MAP_DIR: str) -> dict:
             "Map Names": map_names,
             "Success Rate": success,
             "Path Length": path_len,
-            "Optimal Length": optimal_len,
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
             "Number of Nodes": nodes,

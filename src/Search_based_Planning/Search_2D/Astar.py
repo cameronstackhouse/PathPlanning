@@ -57,7 +57,7 @@ class AStar:
         else:
             print("Error, map not found")
 
-    def searching(self):
+    def planning(self):
         """
         A_star Searching.
         :return: path, visited order
@@ -86,7 +86,7 @@ class AStar:
                     self.PARENT[s_n] = s
                     heapq.heappush(self.OPEN, (self.f_value(s_n), s_n))
 
-        return self.extract_path(self.PARENT), self.CLOSED
+        return self.extract_path(self.PARENT)
 
     def searching_repeated_astar(self, e):
         """
@@ -237,7 +237,7 @@ def main():
     astar = AStar(s_start, s_goal, "euclidean")
     astar.change_env("Evaluation/Maps/2D/block_map_25/23.json")
 
-    path, visited = astar.searching()
+    path, visited = astar.planning()
     astar.plot.animation(path, visited, "A* Path")
 
 if __name__ == "__main__":
