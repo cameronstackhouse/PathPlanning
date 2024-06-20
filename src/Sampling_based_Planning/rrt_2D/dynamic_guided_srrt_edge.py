@@ -1,3 +1,4 @@
+import math
 import os
 import sys
 
@@ -30,9 +31,13 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         super().__init__(
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
+        self.agent_pos = self.s_start
         self.dynamic_objects = []
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
+        self.current_edge = None
+        self.speed = 6
+        self.edge_traversal_time = None
 
     def run(self):
         # Find initial global path
@@ -40,31 +45,81 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         if global_path:
             # Traverse the path
-            current_pos = global_path[0]
-            current_index = 0
-            while current_pos != global_path[-1]:
-                next_pos = global_path[current_index + 1]
-
-                # Check for obstacles between now and next waypoint
-                if self.utils.is_collision(Node(current_pos), Node(next_pos)):
+            time = 0
+            current = global_path[0]
+            GOAL = global_path[-1]
+            # While the final node has not been reached
+            while current != GOAL:
+                self.update_object_positions()
+                # Update agents view
+                new_coords = self.move()
+                if new_coords == [None, None]:
+                    # TODO reroute and move
                     pass
-
-                    # If some exist and collide, split the path into two partitions and invalidate tree edges/nodes
-                    # see if waiting for one time step would clear it
-                    # Otherwise attempt to regrow tree to connect to disconnected tree with a time bound and reroute
                 else:
-                    current_index += 1
-                    current_pos = next_pos
+                    current = new_coords
         else:
             print("No path found")
     
-    def update_object_positions(self):
-        # TODO
-        pass
+    def move(self, mps=6) -> bool:
+        """
+        TODO. NOTE: Make sure it doesnt overshoot 
+        Attempts to move the agent forward by a fixed amount of meters per second.
+        """
+        if not self.edge_traversal_time:
+            # Calculate the time it would take to travel the edge using
+            dist = self.utils.euclidian_distance(self.current_edge.node_1, self.current_edge.node_2)
+            time = dist / self.speed
+            self.edge_traversal_time = math.ceil(time)
+
+        # TODO check to see if UAV can move and not get hit
+        if tuple(self.current_edge) in self.invalidated_edges:
+            return [None, None]
+        else:
+            return "Coords"
+    
+    def update_object_positions(self, time_steps=1):
+        """
+        Updates the position of dynamic objects over one timestep.
+        The object moves in a fixed direction and comes to an immediate stop
+        if a fixed object is detected.
+
+        :param: time_steps: the number of time steps in the future to predict the object positions.
+        """
+        for object in self.dynamic_objects:
+            # Attempt to move in direction of travel
+            velocity = object.velocity
+            new_pos = object.current_pos + (velocity * time_steps)
+            # TODO check for fixed object (or just allow to pass through)
+
+            object.current_pos = new_pos
 
     def update_world_view(self):
-        # TODO
-        pass
+        """
+        Discovers dynamic objects within the vicinity of the UAV.
+        """
+        VISION = 30
+        pos = self.agent_pos
+
+        for obj in self.dynamic_objects:
+            obj_pos, obj_size = obj
+            obj_center_x = obj_pos[0]
+            obj_center_y = obj_pos[1]
+            obj_half_height = obj_size[0] / 2
+            obj_half_width = obj_size[1] / 2
+            
+            # Calculate the distance from the UAV to the edges of the object's bounding box
+            nearest_x = max(obj_center_x - obj_half_width, min(pos[0], obj_center_x + obj_half_width))
+            nearest_y = max(obj_center_y - obj_half_height, min(pos[1], obj_center_y + obj_half_height))
+            
+            distance = math.sqrt((nearest_x - pos[0]) ** 2 + (nearest_y - pos[1]) ** 2)
+            
+            # Check if the object is within the UAV's vision radius
+            if distance <= VISION:
+                obj.known = True
+            else:
+                obj.known = False
+
 
     def in_dynamic_obj(self, node, obj):
         """
@@ -81,8 +136,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         """
         # Check if nodes exist lie within the current object
         for node in self.vertex:
-            x, y = node.coords
-
             if self.in_dynamic_obj(node, obj):
                 self.invalidated_nodes.add(tuple(node))
         
@@ -125,13 +178,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         pass
 
     def reconnect(self):
-        # Reassess the validity of nodes
-        for node in self.invalidated_nodes:
-            pass
-
-        # Reassess the validity of edges
-        for edge in self.invalidated_edges:
-            pass
+        # TODO
+        pass
 
 
 if __name__ == "__main__":
