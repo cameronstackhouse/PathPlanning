@@ -8,6 +8,7 @@ sys.path.append(
 )
 
 from rrt_2D.mb_guided_srrt_edge import MBGuidedSRrtEdge
+from rrt_2D.rrt import Node
 
 
 class DynamicObj:
@@ -32,7 +33,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         super().__init__(
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
-        self.agent_pos = self.s_start
+        self.agent_pos = self.s_start.coords
         self.dynamic_objects = []
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
@@ -40,26 +41,31 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.current_index = 0
 
     def run(self):
+        """
+        Attempts to run the algorithm to initially find a global path
+        and then traverse the environment while avoiding dynamic objects
+        """
+        taken_path = []
         # Find initial global path
         global_path = self.planning()
 
         if global_path:
-            # Traverse the path
-            time = 0
             current = global_path[self.current_index]
             GOAL = global_path[-1]
             # While the final node has not been reached
             while current != GOAL:
                 self.update_object_positions()
-                # Update agents view
-                new_coords = self.move()
+                self.update_world_view()
+                new_coords = self.move(global_path)
                 if new_coords == [None, None]:
                     # TODO reroute and move
                     pass
                 else:
                     current = new_coords
+                    self.agent_pos = new_coords
+            return False
         else:
-            print("No path found")
+            return True
 
     def move(self, path, mps=6) -> bool:
         """
@@ -72,8 +78,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         next_node = path[self.current_index + 1]
 
         # Checks for collision between current point and the waypoint node
-        # TODO need to make a one-step-ahead check
-        if self.utils.is_collision(current_pos, next_node):
+        # TODO need to make a one-step-ahead check Might need to change based on implementation
+        if self.utils.is_collision(Node(current_pos), Node(next_node)):
             return [None, None]
 
         seg_distance = self.utils.euclidian_distance(current_pos, next_node)
@@ -92,7 +98,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
             self.agent_pos = next_node
             self.current_index += 1
-            return path[self.current_index].coords
+            return next_node
 
         return new_pos
 
@@ -205,7 +211,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
 
 if __name__ == "__main__":
-    start = (900, 900)
+    start = (100, 900)
     end = (901, 900)
     goal_sample_rate = 5
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
