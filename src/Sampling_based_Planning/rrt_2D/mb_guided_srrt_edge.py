@@ -20,7 +20,7 @@ from load_map import create_custom_env
 
 class MBGuidedSRrtEdge(GuidedSRrtEdge):
     def __init__(
-        self, start, end, goal_sample_rate, time=5, mem=100000, min_edge_length=4
+        self, start, end, goal_sample_rate, time=0.05, mem=100000, min_edge_length=4
     ):
         super().__init__(start, end, goal_sample_rate, float("inf"), min_edge_length)
         self.name = "MB-SRRT-Edge"
@@ -100,7 +100,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 10)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 0.55)
 
     srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/4.json")
 

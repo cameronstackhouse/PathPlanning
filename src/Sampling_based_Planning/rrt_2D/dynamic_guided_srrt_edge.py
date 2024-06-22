@@ -35,6 +35,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         )
         self.agent_pos = self.s_start.coords
         self.dynamic_objects = []
+        self.init_dynamic_obs(1)
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
         self.speed = 6
@@ -59,7 +60,12 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 new_coords = self.move(global_path)
                 if new_coords == [None, None]:
                     # TODO reroute and move
-                    pass
+                    if self.reconnect():
+                        pass
+                    else:
+                        new_path = self.regrow()
+                        if not new_path:
+                            return False
                 else:
                     current = new_coords
                     self.agent_pos = new_coords
@@ -102,6 +108,21 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         return new_pos
 
+    def init_dynamic_obs(self, n_obs):
+        """
+        TODO
+        """
+        for _ in range(n_obs):
+            new_obj = DynamicObj()
+            new_obj.velocity = [
+                2,
+                5,
+            ]
+            new_obj.size = [10, 2]
+            new_obj.current_pos = [0, 0]
+
+            self.dynamic_objects.append(new_obj)
+
     def update_object_positions(self, time_steps=1):
         """
         Updates the position of dynamic objects over one timestep.
@@ -113,7 +134,10 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         for object in self.dynamic_objects:
             # Attempt to move in direction of travel
             velocity = object.velocity
-            new_pos = object.current_pos + (velocity * time_steps)
+            new_pos = [
+                object.current_pos[0] + (velocity[0] * time_steps),
+                object.current_pos[1] + (velocity[1] * time_steps),
+            ]
             # TODO check for fixed object (or just allow to pass through)
 
             object.current_pos = new_pos
@@ -126,7 +150,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         pos = self.agent_pos
 
         for obj in self.dynamic_objects:
-            obj_pos, obj_size = obj
+            obj_pos, obj_size = obj.current_pos, obj.size
             obj_center_x = obj_pos[0]
             obj_center_y = obj_pos[1]
             obj_half_height = obj_size[0] / 2
@@ -176,6 +200,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             if self.utils.is_collision(n1, n2):
                 self.invalidated_edges.add(tuple(edge))
 
+    def invalidated_graph_after_n_steps(self, n=1):
+        pass
+
     def revalidate(self):
         """
         Assesses invalidated nodes and edges to see if they are no longer invalidated by
@@ -202,16 +229,47 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 self.invalidated_edges.remove(tuple(edge))
 
     def regrow(self):
-        # TODO
-        pass
+        """
+        TODO.
+        Regrows the tree to try and find path from current to end node.
+        Maybe try clearing the tree and regrowing?
+        """
+        current_pos_node = Node(self.agent_pos)
+
+        for node in self.invalidated_nodes:
+            if node in self.vertex:
+                self.vertex.remove(node)
+
+        for edge in self.invalidated_edges:
+            if edge in self.edges:
+                self.edges.remove(edge)
+
+        self.invalidated_nodes.clear()
+        self.invalidated_edges.clear()
+
+        self.s_start = current_pos_node
+        self.vertex = [self.s_start]
+        self.edges = []
+
+        new_path = self.planning()
+
+        if new_path:
+            self.current_index = 0
+            return new_path
+        else:
+            return None
 
     def reconnect(self):
-        # TODO
-        pass
+        """ """
+        # TODO see if wating for one time period would clear it, AKA the edge is valid
+        current_pos = self.agent_pos
+        goal_pos = self.path[self.current_index + 1]
+        # TODO go one timestep ahead
+        return not self.utils.is_collision(current_pos, goal_pos)
 
 
 if __name__ == "__main__":
-    start = (100, 900)
+    start = (200, 900)
     end = (901, 900)
     goal_sample_rate = 5
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)

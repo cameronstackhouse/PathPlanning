@@ -9,13 +9,13 @@ import sys
 import math
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../../Sampling_based_Planning/")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+)
 from rrt_2D import env, plotting, utils
 
-sys.path.append(
-    os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/"
-)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
+
 
 class Node:
     def __init__(self, n):
@@ -26,6 +26,7 @@ class Node:
         self.edge = None
         self.cost = 0
         self.time_waited = 0
+
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):
@@ -59,7 +60,9 @@ class Rrt:
                 self.vertex.append(node_new)
                 dist, _ = self.get_distance_and_angle(node_new, self.s_goal)
 
-                if dist <= self.step_len and not self.utils.is_collision(node_new, self.s_goal):
+                if dist <= self.step_len and not self.utils.is_collision(
+                    node_new, self.s_goal
+                ):
                     self.new_state(node_new, self.s_goal)
                     return self.extract_path(node_new)
 
@@ -69,22 +72,31 @@ class Rrt:
         delta = self.utils.delta
 
         if np.random.random() > goal_sample_rate:
-            return Node((np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
-                         np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta)))
+            return Node(
+                (
+                    np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
+                    np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta),
+                )
+            )
 
         return self.s_goal
 
     @staticmethod
     def nearest_neighbor(node_list, n):
-        return node_list[int(np.argmin([math.hypot(nd.x - n.x, nd.y - n.y)
-                                        for nd in node_list]))]
+        return node_list[
+            int(np.argmin([math.hypot(nd.x - n.x, nd.y - n.y) for nd in node_list]))
+        ]
 
     def new_state(self, node_start, node_end):
         dist, theta = self.get_distance_and_angle(node_start, node_end)
 
         dist = min(self.step_len, dist)
-        node_new = Node((node_start.x + dist * math.cos(theta),
-                         node_start.y + dist * math.sin(theta)))
+        node_new = Node(
+            (
+                node_start.x + dist * math.cos(theta),
+                node_start.y + dist * math.sin(theta),
+            )
+        )
         node_new.parent = node_start
 
         return node_new
@@ -99,12 +111,20 @@ class Rrt:
 
         return path
 
+    def extract_path_a_to_b(self, node_start, node_end):
+        path = [(self.s_goal.x, self.s_goal.y)]
+        node_now = node_end
+
+        while node_now.parent is not None and node_now is not node_start:
+            node_now = node_now.parent
+            path.append((node_now.x, node_now.y))
+
     @staticmethod
     def get_distance_and_angle(node_start, node_end):
         dx = node_end.x - node_start.x
         dy = node_end.y - node_start.y
         return math.hypot(dx, dy), math.atan2(dy, dx)
-    
+
     def change_env(self, map_name):
         """
         Method which changes the env based on custom map input.
@@ -147,6 +167,7 @@ class Rrt:
         else:
             print("Error, map not found")
 
+
 def main():
     x_start = (466, 270)
     x_goal = (967, 963)
@@ -162,5 +183,5 @@ def main():
         print("No Path Found!")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
