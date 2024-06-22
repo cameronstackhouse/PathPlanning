@@ -6,6 +6,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
 
+from rrt_2D.plotting import DynamicPlotting
 from rrt_2D.mb_guided_srrt_edge import MBGuidedSRrtEdge
 from rrt_2D.rrt import Node
 
@@ -17,6 +18,19 @@ class DynamicObj:
         self.known = False
         self.current_pos = []
         self.index = 0
+
+    def update_pos(self):
+        """
+        TODO improve
+        """
+        velocity = self.velocity
+        new_pos = [
+            self.current_pos[0] + (velocity[0]),
+            self.current_pos[1] + (velocity[1]),
+        ]
+
+        self.current_pos = new_pos
+        return new_pos
 
 
 class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
@@ -40,6 +54,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.invalidated_edges = set()
         self.speed = 6
         self.current_index = 0
+        self.path = []
 
     def run(self):
         """
@@ -69,6 +84,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 else:
                     current = new_coords
                     self.agent_pos = new_coords
+            self.path = global_path
             return True
         else:
             return False
@@ -140,14 +156,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         """
         for object in self.dynamic_objects:
             # Attempt to move in direction of travel
-            velocity = object.velocity
-            new_pos = [
-                object.current_pos[0] + (velocity[0] * time_steps),
-                object.current_pos[1] + (velocity[1] * time_steps),
-            ]
-            # TODO check for fixed object (or just allow to pass through)
-
-            object.current_pos = new_pos
+            new_pos = object.update_pos()
 
             self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
 
@@ -283,4 +292,10 @@ if __name__ == "__main__":
     goal_sample_rate = 5
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
     success = rrt.run()
-    print(success)
+
+    dynamic_objects = rrt.dynamic_objects
+    nodelist = rrt.vertex
+    path = rrt.path
+
+    plotter = DynamicPlotting(start, end, dynamic_objects)
+    plotter.animation(nodelist, path, "Test", animation=False)
