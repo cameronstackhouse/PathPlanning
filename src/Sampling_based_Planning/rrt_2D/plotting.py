@@ -8,8 +8,9 @@ import matplotlib.patches as patches
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../../Sampling_based_Planning/")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+)
 
 from rrt_2D import env
 
@@ -35,33 +36,24 @@ class Plotting:
     def plot_grid(self, name):
         fig, ax = plt.subplots()
 
-        for (ox, oy, w, h) in self.obs_bound:
+        for ox, oy, w, h in self.obs_bound:
             ax.add_patch(
                 patches.Rectangle(
-                    (ox, oy), w, h,
-                    edgecolor='black',
-                    facecolor='black',
-                    fill=True
+                    (ox, oy), w, h, edgecolor="black", facecolor="black", fill=True
                 )
             )
 
-        for (ox, oy, w, h) in self.obs_rectangle:
+        for ox, oy, w, h in self.obs_rectangle:
             ax.add_patch(
                 patches.Rectangle(
-                    (ox, oy), w, h,
-                    edgecolor='black',
-                    facecolor='gray',
-                    fill=True
+                    (ox, oy), w, h, edgecolor="black", facecolor="gray", fill=True
                 )
             )
 
-        for (ox, oy, r) in self.obs_circle:
+        for ox, oy, r in self.obs_circle:
             ax.add_patch(
                 patches.Circle(
-                    (ox, oy), r,
-                    edgecolor='black',
-                    facecolor='gray',
-                    fill=True
+                    (ox, oy), r, edgecolor="black", facecolor="gray", fill=True
                 )
             )
 
@@ -79,9 +71,10 @@ class Plotting:
                 count += 1
                 if node.parent:
                     plt.plot([node.parent.x, node.x], [node.parent.y, node.y], "-g")
-                    plt.gcf().canvas.mpl_connect('key_release_event',
-                                                 lambda event:
-                                                 [exit(0) if event.key == 'escape' else None])
+                    plt.gcf().canvas.mpl_connect(
+                        "key_release_event",
+                        lambda event: [exit(0) if event.key == "escape" else None],
+                    )
                     if count % 10 == 0:
                         plt.pause(0.001)
         else:
@@ -101,8 +94,10 @@ class Plotting:
                 if V2[k].parent:
                     plt.plot([V2[k].x, V2[k].parent.x], [V2[k].y, V2[k].parent.y], "-g")
 
-            plt.gcf().canvas.mpl_connect('key_release_event',
-                                         lambda event: [exit(0) if event.key == 'escape' else None])
+            plt.gcf().canvas.mpl_connect(
+                "key_release_event",
+                lambda event: [exit(0) if event.key == "escape" else None],
+            )
 
             if k % 2 == 0:
                 plt.pause(0.001)
@@ -112,6 +107,58 @@ class Plotting:
     @staticmethod
     def plot_path(path):
         if len(path) != 0:
-            plt.plot([x[0] for x in path], [x[1] for x in path], '-r', linewidth=2)
+            plt.plot([x[0] for x in path], [x[1] for x in path], "-r", linewidth=2)
             plt.pause(0.01)
         plt.show()
+
+class DynamicObj:
+    def __init__(self, start_pos, velocity, size):
+        self.current_pos = start_pos
+        self.velocity = velocity
+        self.size = size
+
+    def update_position(self):
+        self.current_pos[0] += self.velocity[0]
+        self.current_pos[1] += self.velocity[1]
+
+class DynamicPlotting(Plotting):
+    def __init__(self, x_start, x_goal, dynamic_objects):
+        super().__init__(x_start, x_goal)
+        self.dynamic_objects = dynamic_objects
+
+    def update_dynamic_objects(self):
+        for obj in self.dynamic_objects:
+            obj.update_position()
+
+    def plot_dynamic_objects(self):
+        for obj in self.dynamic_objects:
+            rect = patches.Rectangle((obj.current_pos[0], obj.current_pos[1]),
+                                     obj.size[0], obj.size[1],
+                                     edgecolor='red', facecolor='red', fill=True)
+            plt.gca().add_patch(rect)
+
+    def animation(self, nodelist, path, name, animation=False):
+        fig, ax = plt.subplots()
+        plt.ion()
+        for _ in range(50):
+            plt.cla()
+            self.plot_grid(name)
+            self.plot_visited(nodelist, animation)
+            self.plot_dynamic_objects()
+            self.plot_path(path)
+            self.update_dynamic_objects()
+            plt.pause(0.1)
+        plt.ioff()
+        plt.show()
+
+
+if __name__ == "__main__":
+    start = (200, 900)
+    end = (901, 900)
+    dynamic_objects = [DynamicObj([0, 0], [2, 5], [10, 2])]
+
+    plotter = DynamicPlotting(start, end, dynamic_objects)
+    nodelist = []
+    path = [] 
+
+    plotter.animation(nodelist, path, "Dynamic Environment", animation=True)
