@@ -16,6 +16,7 @@ class DynamicObj:
         self.size = []
         self.known = False
         self.current_pos = []
+        self.index = 0
 
 
 class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
@@ -54,14 +55,14 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             GOAL = global_path[-1]
             # While the final node has not been reached
             while current != GOAL:
+                current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
                 new_coords = self.move(global_path)
+                # If the UAV can't move to the next position
                 if new_coords == [None, None]:
-                    # TODO reroute and move
-                    if self.reconnect():
-                        pass
-                    else:
+                    # Attempt to reconnect
+                    if not self.reconnect():
                         new_path = self.regrow()
                         if not new_path:
                             return False
@@ -109,7 +110,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def init_dynamic_obs(self, n_obs):
         """
-        TODO
+        TODO, add also to set of all objects
         """
         for _ in range(n_obs):
             new_obj = DynamicObj()
@@ -120,6 +121,13 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             new_obj.size = [10, 2]
             new_obj.current_pos = [0, 0]
 
+            self.env.add_rect(
+                new_obj.current_pos[0],
+                new_obj.current_pos[1],
+                new_obj.size[0],
+                new_obj.size[1],
+            )
+            new_obj.index = len(self.env.obs_rectangle) - 1
             self.dynamic_objects.append(new_obj)
 
     def update_object_positions(self, time_steps=1):
@@ -140,6 +148,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             # TODO check for fixed object (or just allow to pass through)
 
             object.current_pos = new_pos
+
+            self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
 
     def update_world_view(self):
         """
@@ -272,4 +282,5 @@ if __name__ == "__main__":
     end = (901, 900)
     goal_sample_rate = 5
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
-    print(rrt.run())
+    success = rrt.run()
+    print(success)

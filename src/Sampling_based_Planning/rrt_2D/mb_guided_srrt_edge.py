@@ -26,11 +26,12 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         self.name = "MB-SRRT-Edge"
         self.mem = mem
         self.time = time
-    
+        self.cpu_data = []
+
     def clear_tree(self):
         self.vertex = [self.s_start]
         self.edges = []
-    
+
     def update_ellipsoid(self, path):
         super().update_ellipsoid(path)
         self.clear_tree()
@@ -42,7 +43,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         while True:
             elapsed_time = time.time() - start_time
 
-            process = psutil.Process()
+            process = psutil.Process(os.getpid())
             memory_usage = (process.memory_info().rss) / (1024 * 1024)
 
             if elapsed_time > self.time or memory_usage > self.mem:
@@ -100,11 +101,13 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 0.55)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.5, 0.55)
 
     srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/4.json")
 
     path = srrt_edge.planning()
+    
+    print(srrt_edge.cpu_data)
 
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")

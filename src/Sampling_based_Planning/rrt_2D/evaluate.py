@@ -67,7 +67,7 @@ def evaluate(MAP_DIR: str) -> dict:
             algorithm.change_env(map)
 
             start_time = time.time()
-            path, cpu_usage = meaure_cpu_usage(algorithm.planning())
+            path = algorithm.planning()
             total_time = time.time() - start_time
 
             if path:
@@ -91,6 +91,7 @@ def evaluate(MAP_DIR: str) -> dict:
             "Path Length": path_len,
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
+            "CPU Usgae": cpu_usage,
             "Number of Nodes": nodes,
         }
 
@@ -107,6 +108,9 @@ def save_results(results, name):
 
 
 def meaure_cpu_usage(func, *args, **kwargs):
+    """
+    Measures the user, system, and idle cpu usage of a given function.
+    """
     start_cpu_times = psutil.cpu_times_percent(interval=None)
 
     result = func(*args, **kwargs)

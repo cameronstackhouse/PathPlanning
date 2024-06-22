@@ -16,27 +16,27 @@ class Env:
         x_min, x_max = self.x_range
         y_min, y_max = self.y_range
         obs_boundary = [
-            [x_min, y_min, x_max - x_min, 1], 
-            [x_min, y_max - 1, x_max - x_min, 1], 
-            [x_min, y_min, 1, y_max - y_min], 
-            [x_max - 1, y_min, 1, y_max - y_min] 
+            [x_min, y_min, x_max - x_min, 1],
+            [x_min, y_max - 1, x_max - x_min, 1],
+            [x_min, y_min, 1, y_max - y_min],
+            [x_max - 1, y_min, 1, y_max - y_min],
         ]
         return obs_boundary
 
     @staticmethod
     def obs_rectangle():
-        # NOTE: 
+        # NOTE:
         obs_rectangle = [
             [14, 12, 8, 2],
             [18, 22, 8, 3],
             [26, 7, 2, 12],
-            [32, 14, 10, 2]
+            [32, 14, 10, 2],
         ]
         return obs_rectangle
 
     @staticmethod
     def obs_circle():
-        # NOTE: x,y,r
+        # NOTE: x,y,r
         obs_cir = [
             [7, 12, 3],
             [46, 20, 2],
@@ -57,10 +57,20 @@ class Env:
             [737, 183, 50],
             [796, 375, 50],
             [382, 146, 100],
-            [125, 532, 50]
+            [125, 532, 50],
         ]
 
         return obs_cir
+
+    def add_rect(self, x, y, height, width):
+        self.obs_rectangle.append([x, y, width, height])
+
+    def update_obj_pos(self, index, new_x, new_y):
+        if 0 <= index < len(self.obs_rectangle):
+            rect = self.obs_rectangle[index]
+            self.obs_rectangle[index] = [new_x, new_y, rect[2], rect[3]]
+        else:
+            print("Error")
 
 
 class CustomEnv(Env):
@@ -87,13 +97,18 @@ class CustomEnv(Env):
             min_y, max_y = y, y
             while stack:
                 cx, cy = stack.pop()
-                if 0 <= cx < rows and 0 <= cy < cols and grid[cx][cy] == 1.0 and not visited[cx][cy]:
+                if (
+                    0 <= cx < rows
+                    and 0 <= cy < cols
+                    and grid[cx][cy] == 1.0
+                    and not visited[cx][cy]
+                ):
                     visited[cx][cy] = True
                     min_x = min(min_x, cx)
                     max_x = max(max_x, cx)
                     min_y = min(min_y, cy)
                     max_y = max(max_y, cy)
-                    neighbors = [(cx+1, cy), (cx-1, cy), (cx, cy+1), (cx, cy-1)]
+                    neighbors = [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)]
                     for nx, ny in neighbors:
                         stack.append((nx, ny))
             return min_x, min_y, max_x - min_x + 1, max_y - min_y + 1
@@ -102,6 +117,8 @@ class CustomEnv(Env):
             for j in range(cols):
                 if grid[i][j] == 1.0 and not visited[i][j]:
                     rect = dfs(i, j)
-                    rectangles.append([rect[1], rect[0], rect[3], rect[2]])  # x, y, width, height
+                    rectangles.append(
+                        [rect[1], rect[0], rect[3], rect[2]]
+                    )  # x, y, width, height
 
         return rectangles
