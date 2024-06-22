@@ -44,10 +44,10 @@ def evaluate(MAP_DIR: str) -> dict:
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        #AStar(START, END, "euclidean"),
+        # AStar(START, END, "euclidean"),
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
         RrtEdge(START, END, 0.05, 2000),
-        #RrtStar(START, END, 6, 0.05, 5, 2000),
+        # RrtStar(START, END, 6, 0.05, 5, 2000),
         Rrt(START, END, 6, 0.05, 2000),
     ]
     results = []
@@ -67,7 +67,7 @@ def evaluate(MAP_DIR: str) -> dict:
             algorithm.change_env(map)
 
             start_time = time.time()
-            path = algorithm.planning()
+            path, cpu_usage = meaure_cpu_usage(algorithm.planning())
             total_time = time.time() - start_time
 
             if path:
@@ -80,7 +80,7 @@ def evaluate(MAP_DIR: str) -> dict:
                 energy.append(None)
                 times.append(None)
 
-            #nodes.append(len(algorithm.vertex))
+            # nodes.append(len(algorithm.vertex))
 
         success /= NUM_MAPS
         # TODO record CPU load + memory usage too
@@ -98,44 +98,33 @@ def evaluate(MAP_DIR: str) -> dict:
 
     return results
 
-def bar_chart_compare(res1, res2, key, y_label, title):
-    """ """
-    sns.set_style("dark")
-
-    data1 = res1[key]
-    data2 = res2[key]
-    map_names = res1["Map Names"]
-
-    data1 = [0 if v is None else v for v in data1]
-    data2 = [0 if v is None else v for v in data2]
-
-    map_names_int = list(map(int, map_names))
-    sorted_indices = sorted(range(len(map_names)), key=lambda i: map_names_int[i])
-    data1 = [data1[i] for i in sorted_indices]
-    data2 = [data2[i] for i in sorted_indices]
-    map_names = [map_names[i] for i in sorted_indices]
-
-    bar_width = 0.35
-    index = range(len(data1))
-    plt.figure(figsize=(10, 5))
-    plt.bar(index, data1, bar_width, label="Algorithm 1")
-    plt.bar([i + bar_width for i in index], data2, bar_width, label="Algorithm 2")
-    plt.title(title)
-    plt.xticks([i + bar_width / 2 for i in index], map_names, rotation=30, ha="center")
-    plt.xlabel("Map Number")
-    plt.ylabel(y_label)
-    plt.legend()
-    plt.show()
 
 def save_results(results, name):
-    with open(name, 'w') as file:
+    with open(name, "w") as file:
         json.dump(results, file, indent=4)
-    
+
     print(f"Results saved to {name}")
+
+
+def meaure_cpu_usage(func, *args, **kwargs):
+    start_cpu_times = psutil.cpu_times_percent(interval=None)
+
+    result = func(*args, **kwargs)
+    end_cpu_times = psutil.cpu_times_percent(interval=None)
+
+    cpu_usage = {
+        "user": end_cpu_times.user - start_cpu_times.user,
+        "system": end_cpu_times.system - start_cpu_times.system,
+        "idle": end_cpu_times.idle - start_cpu_times.idle,
+    }
+
+    return result, cpu_usage
+
 
 def main():
     results = evaluate("src/Evaluation/Maps/2D/block_map_25")
     save_results(results, "evaluation_results.json")
+
 
 if __name__ == "__main__":
     main()

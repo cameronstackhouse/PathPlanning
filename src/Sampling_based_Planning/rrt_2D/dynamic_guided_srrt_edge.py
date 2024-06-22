@@ -2,7 +2,6 @@ import math
 import os
 import sys
 
-
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
@@ -69,9 +68,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 else:
                     current = new_coords
                     self.agent_pos = new_coords
-            return False
-        else:
             return True
+        else:
+            return False
 
     def move(self, path, mps=6) -> bool:
         """
@@ -273,4 +272,4 @@ if __name__ == "__main__":
     end = (901, 900)
     goal_sample_rate = 5
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
-    rrt.run()
+    print(rrt.run())
