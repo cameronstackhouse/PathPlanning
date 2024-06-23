@@ -18,6 +18,7 @@ class DynamicObj:
         self.known = False
         self.current_pos = []
         self.index = 0
+        self.init_pos = None
 
     def update_pos(self):
         """
@@ -49,12 +50,12 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         )
         self.agent_pos = self.s_start.coords
         self.dynamic_objects = []
-        self.init_dynamic_obs(1)
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
         self.speed = 6
         self.current_index = 0
         self.path = []
+        self.time_steps = 0
 
     def run(self):
         """
@@ -64,18 +65,23 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         taken_path = []
         # Find initial global path
         global_path = self.planning()
+        self.init_dynamic_obs(1)
 
         if global_path:
             current = global_path[self.current_index]
             GOAL = global_path[-1]
             # While the final node has not been reached
             while current != GOAL:
+                # print(
+                #     f"Timestep: {self.time_steps}\ninvlaidated edges: {len(self.invalidated_edges)}\nInvalidated nodes: {len(self.invalidated_nodes)}"
+                # )
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
                 new_coords = self.move(global_path)
                 # If the UAV can't move to the next position
                 if new_coords == [None, None]:
+                    print("HERE")
                     # Attempt to reconnect
                     if not self.reconnect():
                         new_path = self.regrow()
@@ -84,6 +90,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 else:
                     current = new_coords
                     self.agent_pos = new_coords
+                self.time_steps += 1
             self.path = global_path
             return True
         else:
@@ -126,16 +133,17 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def init_dynamic_obs(self, n_obs):
         """
-        TODO, add also to set of all objects
+        TODO, tidy
         """
         for _ in range(n_obs):
             new_obj = DynamicObj()
             new_obj.velocity = [
-                2,
-                5,
+                0,
+                30,
             ]
-            new_obj.size = [10, 2]
-            new_obj.current_pos = [0, 0]
+            new_obj.size = [50, 50]
+            new_obj.current_pos = [504, 589]
+            new_obj.init_pos = new_obj.current_pos
 
             self.env.add_rect(
                 new_obj.current_pos[0],
@@ -145,6 +153,24 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             )
             new_obj.index = len(self.env.obs_rectangle) - 1
             self.dynamic_objects.append(new_obj)
+
+        new_obj = DynamicObj()
+        new_obj.velocity = [
+            4,
+            0,
+        ]
+        new_obj.size = [50, 50]
+        new_obj.current_pos = [0, 100]
+        new_obj.init_pos = new_obj.current_pos
+
+        self.env.add_rect(
+            new_obj.current_pos[0],
+            new_obj.current_pos[1],
+            new_obj.size[0],
+            new_obj.size[1],
+        )
+        new_obj.index = len(self.env.obs_rectangle) - 1
+        self.dynamic_objects.append(new_obj)
 
     def update_object_positions(self, time_steps=1):
         """
@@ -162,12 +188,15 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def update_world_view(self):
         """
-        Discovers dynamic objects within the vicinity of the UAV.
+        Discovers dynamic objects within the vicinity of the UAV and updates
+        validated and invalidated edges.
         """
+        self.revalidate()
         VISION = 30
         pos = self.agent_pos
 
         for obj in self.dynamic_objects:
+            self.invalidate(obj)
             obj_pos, obj_size = obj.current_pos, obj.size
             obj_center_x = obj_pos[0]
             obj_center_y = obj_pos[1]
@@ -204,11 +233,12 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
     def invalidate(self, obj):
         """
         Invalidates nodes and edges which have been blocked by a dynamic object.
+
         """
         # Check if nodes exist lie within the current object
         for node in self.vertex:
             if self.in_dynamic_obj(node, obj):
-                self.invalidated_nodes.add(tuple(node))
+                self.invalidated_nodes.add(node)
 
         # Check if any part of an edge lies within the object
         for edge in self.edges:
@@ -216,7 +246,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             n2 = edge.node_2
 
             if self.utils.is_collision(n1, n2):
-                self.invalidated_edges.add(tuple(edge))
+                self.invalidated_edges.add(edge)
 
     def invalidated_graph_after_n_steps(self, n=1):
         pass
@@ -225,8 +255,10 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         """
         Assesses invalidated nodes and edges to see if they are no longer invalidated by
         dynamic objects.
+        TODO, NOT CALLED ANYWHERE
         """
         # Check nodes
+        nodes_to_remove = []
         for node in self.invalidated_nodes:
             # Check if a node is still inside one of the dynamic objects
             blocked = False
@@ -236,15 +268,22 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     break
 
             if not blocked:
-                self.invalidated_nodes.remove(tuple(node))
+                nodes_to_remove.append(node)
+
+        for node in nodes_to_remove:
+            self.invalidated_nodes.remove(node)
 
         # Check edges
+        edges_to_remove = []
         for edge in self.invalidated_edges:
             n1 = edge.node_1
             n2 = edge.node_2
 
             if not self.utils.is_collision(n1, n2):
-                self.invalidated_edges.remove(tuple(edge))
+                edges_to_remove.append(edge)
+
+        for edge in edges_to_remove:
+            self.invalidated_edges.remove((edge))
 
     def regrow(self):
         """
@@ -289,7 +328,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 if __name__ == "__main__":
     start = (200, 900)
     end = (901, 900)
-    goal_sample_rate = 5
+    goal_sample_rate = 0.05
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
     success = rrt.run()
 
@@ -297,5 +336,5 @@ if __name__ == "__main__":
     nodelist = rrt.vertex
     path = rrt.path
 
-    plotter = DynamicPlotting(start, end, dynamic_objects)
+    plotter = DynamicPlotting(start, end, dynamic_objects, rrt.time_steps)
     plotter.animation(nodelist, path, "Test", animation=False)

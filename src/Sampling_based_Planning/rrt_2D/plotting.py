@@ -117,9 +117,12 @@ class Plotting:
 
 
 class DynamicPlotting(Plotting):
-    def __init__(self, x_start, x_goal, dynamic_objects):
+    def __init__(self, x_start, x_goal, dynamic_objects, t):
         super().__init__(x_start, x_goal)
         self.dynamic_objects = dynamic_objects
+        self.t = t
+        for obj in self.dynamic_objects:
+            obj.current_pos = obj.init_pos
 
     def update_dynamic_objects(self):
         for obj in self.dynamic_objects:
@@ -148,7 +151,7 @@ class DynamicPlotting(Plotting):
         plt.pause(1)
         plt.close(fig)
 
-        for _ in range(50):
+        for _ in range(self.t):
             plt.cla()
             self.plot_grid(name)
             self.plot_visited(nodelist, animation)
@@ -159,15 +162,3 @@ class DynamicPlotting(Plotting):
             plt.close(fig)
         plt.ioff()
         plt.show()
-
-
-if __name__ == "__main__":
-    start = (200, 900)
-    end = (901, 900)
-    dynamic_objects = [DynamicObjPlot([0, 0], [20, 5], [10, 2])]
-
-    plotter = DynamicPlotting(start, end, dynamic_objects)
-    nodelist = []
-    path = []
-
-    plotter.animation(nodelist, path, "Dynamic Environment", animation=True)
