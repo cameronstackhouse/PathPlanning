@@ -64,7 +64,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         """
         taken_path = []
         # Find initial global path
-        global_path = self.planning()
+        global_path = self.planning()[::-1]
         self.init_dynamic_obs(1)
 
         if global_path:
@@ -72,6 +72,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             GOAL = global_path[-1]
             # While the final node has not been reached
             while current != GOAL:
+                print(len(self.invalidated_edges))
                 # print(
                 #     f"Timestep: {self.time_steps}\ninvlaidated edges: {len(self.invalidated_edges)}\nInvalidated nodes: {len(self.invalidated_nodes)}"
                 # )
@@ -79,6 +80,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 self.update_object_positions()
                 self.update_world_view()
                 new_coords = self.move(global_path)
+                print(f"Agent loc: {new_coords}")
                 # If the UAV can't move to the next position
                 if new_coords == [None, None]:
                     print("HERE")
@@ -139,10 +141,10 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             new_obj = DynamicObj()
             new_obj.velocity = [
                 0,
-                30,
+                0,
             ]
             new_obj.size = [50, 50]
-            new_obj.current_pos = [504, 589]
+            new_obj.current_pos = [533, 890]
             new_obj.init_pos = new_obj.current_pos
 
             self.env.add_rect(
@@ -305,7 +307,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.invalidated_edges.clear()
 
         self.s_start = current_pos_node
-        self.vertex = [self.s_start]
+        self.vertex = [current_pos_node]
         self.edges = []
 
         new_path = self.planning()
@@ -336,5 +338,5 @@ if __name__ == "__main__":
     nodelist = rrt.vertex
     path = rrt.path
 
-    plotter = DynamicPlotting(start, end, dynamic_objects, rrt.time_steps)
-    plotter.animation(nodelist, path, "Test", animation=False)
+    # plotter = DynamicPlotting(start, end, dynamic_objects, rrt.time_steps)
+    # plotter.animation(nodelist, path, "Test", animation=False)
