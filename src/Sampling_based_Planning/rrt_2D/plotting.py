@@ -117,10 +117,11 @@ class Plotting:
 
 
 class DynamicPlotting(Plotting):
-    def __init__(self, x_start, x_goal, dynamic_objects, t):
+    def __init__(self, x_start, x_goal, dynamic_objects, t, agent_pos):
         super().__init__(x_start, x_goal)
         self.dynamic_objects = dynamic_objects
         self.t = t
+        self.agent_pos = agent_pos
         for obj in self.dynamic_objects:
             obj.current_pos = obj.init_pos
 
@@ -140,6 +141,9 @@ class DynamicPlotting(Plotting):
             )
             plt.gca().add_patch(rect)
 
+    def plot_agent(self, agent_pos):
+        plt.plot(agent_pos[0], agent_pos[1], "bo")
+
     def animation(self, nodelist, path, name, animation=False):
         plt.ion()
 
@@ -151,12 +155,13 @@ class DynamicPlotting(Plotting):
         plt.pause(1)
         plt.close(fig)
 
-        for _ in range(self.t):
+        for i in range(self.t):
             plt.cla()
             self.plot_grid(name)
             self.plot_visited(nodelist, animation)
             self.plot_dynamic_objects()
             self.plot_path(path)
+            self.plot_agent(self.agent_pos[i])
             self.update_dynamic_objects()
             plt.pause(0.1)
             plt.close(fig)

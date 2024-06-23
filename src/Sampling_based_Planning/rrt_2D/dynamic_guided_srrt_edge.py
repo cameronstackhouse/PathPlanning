@@ -56,6 +56,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.current_index = 0
         self.path = []
         self.time_steps = 0
+        self.agent_positions = [self.s_start.coords]
 
     def run(self):
         """
@@ -80,7 +81,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 self.update_object_positions()
                 self.update_world_view()
                 new_coords = self.move(global_path)
-                print(f"Agent loc: {new_coords}")
+                self.agent_positions.append(new_coords)
                 # If the UAV can't move to the next position
                 if new_coords == [None, None]:
                     print("HERE")
@@ -338,5 +339,7 @@ if __name__ == "__main__":
     nodelist = rrt.vertex
     path = rrt.path
 
-    # plotter = DynamicPlotting(start, end, dynamic_objects, rrt.time_steps)
-    # plotter.animation(nodelist, path, "Test", animation=False)
+    plotter = DynamicPlotting(
+        start, end, dynamic_objects, rrt.time_steps, rrt.agent_positions
+    )
+    plotter.animation(nodelist, path, "Test", animation=False)
