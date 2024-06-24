@@ -48,17 +48,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         super().__init__(
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
-        self.agent_pos = self.s_start.coords
-        self.dynamic_objects = []
-        self.invalidated_nodes = set()
-        self.invalidated_edges = set()
-        self.speed = 60
-        self.current_index = 0
         self.path = []
-        self.initial_path = []
-        self.time_steps = 0
-        self.agent_positions = [self.s_start.coords]
-        self.time = global_time
 
     def run(self):
         """
@@ -175,8 +165,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             0,
             0,
         ]
-        new_obj.size = [300, 300]
-        new_obj.current_pos = [730, 418]
+        new_obj.size = [100, 100]
+        new_obj.current_pos = [543, 779]
         new_obj.init_pos = new_obj.current_pos
 
         self.env.add_rect(
@@ -312,10 +302,11 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def regrow(self):
         """
-        TODO.
+        TODO:
         Regrows the tree to try and find path from current to end node.
-        Maybe try clearing the tree and regrowing?
         """
+        self.vertex.clear()
+        self.edges.clear()
         current_pos_node = Node(self.agent_pos)
 
         for node in self.invalidated_nodes:
@@ -369,4 +360,7 @@ if __name__ == "__main__":
         rrt.agent_positions,
         rrt.initial_path,
     )
+
+    plotter.env = rrt.env
+
     plotter.animation(nodelist, path, "Test", animation=False)

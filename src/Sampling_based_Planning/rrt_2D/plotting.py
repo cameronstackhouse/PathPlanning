@@ -28,7 +28,6 @@ class Plotting:
         self.plot_grid(name)
         self.plot_visited(nodelist, animation)
         self.plot_path(path)
-        plt.close(fig)
 
     def animation_connect(self, V1, V2, path, name):
         fig, ax = self.plot_grid(name)
@@ -37,8 +36,9 @@ class Plotting:
         self.plot_path(path)
         plt.close(fig)
 
-    def plot_grid(self, name):
-        fig, ax = plt.subplots()
+    def plot_grid(self, name, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
 
         for ox, oy, w, h in self.obs_bound:
             ax.add_patch(
@@ -66,6 +66,7 @@ class Plotting:
 
         plt.title(name)
         plt.axis("equal")
+        return ax
 
     @staticmethod
     def plot_visited(nodelist, animation):
@@ -115,15 +116,35 @@ class Plotting:
             plt.pause(0.01)
         plt.show()
 
+    @staticmethod
+    def plot_original_path(original_path):
+        if len(original_path) != 0:
+            plt.plot(
+                [x[0] for x in original_path],
+                [x[1] for x in original_path],
+                "-p",
+                linewidth=2,
+            )
+            plt.pause(0.01)
+        plt.show()
+
 
 class DynamicPlotting(Plotting):
-    def __init__(self, x_start, x_goal, dynamic_objects, t, agent_pos):
+    def __init__(self, x_start, x_goal, dynamic_objects, t, agent_pos, initial_path):
         super().__init__(x_start, x_goal)
         self.dynamic_objects = dynamic_objects
         self.t = t
         self.agent_pos = agent_pos
+        self.initial_path = initial_path
         for obj in self.dynamic_objects:
             obj.current_pos = obj.init_pos
+
+    def animation_connect(self, V1, V2, path, name):
+        fig, ax = self.plot_grid(name)
+        self.plot_visited_connect(V1, V2)
+        self.plot_path(path)
+        self.plot_original_path(self.initial_path)
+        plt.close()
 
     def update_dynamic_objects(self):
         for obj in self.dynamic_objects:
@@ -149,21 +170,22 @@ class DynamicPlotting(Plotting):
 
         # Plot initial path
         fig, ax = plt.subplots()
-        self.plot_grid(name)
-        self.plot_visited(nodelist, animation)
+        self.plot_grid(name, ax)
         self.plot_path(path)
+        self.plot_original_path(self.initial_path)
         plt.pause(1)
-        plt.close(fig)
 
         for i in range(self.t):
-            plt.cla()
-            self.plot_grid(name)
-            self.plot_visited(nodelist, animation)
+            ax.clear()
+            self.plot_grid(name, ax)
             self.plot_dynamic_objects()
             self.plot_path(path)
+            self.plot_original_path(self.initial_path)
             self.plot_agent(self.agent_pos[i])
             self.update_dynamic_objects()
+
+            fig.canvas.draw()
             plt.pause(0.1)
-            plt.close(fig)
+
         plt.ioff()
         plt.show()

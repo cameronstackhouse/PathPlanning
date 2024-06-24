@@ -60,6 +60,17 @@ class Rrt:
         self.obs_rectangle = self.env.obs_rectangle
         self.obs_boundary = self.env.obs_boundary
 
+        # Data associated with traversal of the found path
+        self.initial_path = []
+        self.current_index = 0
+        self.dynamic_objects = []
+        self.invalidated_nodes = set()
+        self.invalidated_edges = set()
+        self.speed = 60
+        self.time_steps = 0
+        self.agent_positions = [self.s_start.coords]
+        self.agent_pos = self.s_start.coords
+
     def planning(self):
         for i in range(self.iter_max):
             node_rand = self.generate_random_node(self.goal_sample_rate)
@@ -176,6 +187,24 @@ class Rrt:
 
         else:
             print("Error, map not found")
+
+    def run(self):
+        """
+        Attempts to run the algorithm to intitially find a global path and
+        then traverse the environment while avoiding dynamic objects.
+        TODO.
+        """
+        global_path = self.planning()[::-1]
+        self.initial_path = global_path
+
+        # TODO init dynamic obs
+
+        if global_path:
+            current = global_path[self.current_index]
+            GOAL = global_path[-1]
+
+            while current != GOAL:
+                current = global_path[self.current_index]
 
 
 def main():

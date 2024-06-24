@@ -1,12 +1,37 @@
 {
     "objects": [
         {
-            "position": [],
-            "velocity": []
+            "position": [
+                10,
+                30
+            ],
+            "velocity": [
+                0,
+                0
+            ],
+            "size": [
+                10,
+                10
+            ]
+        },
+        {
+            "position": [
+                30,
+                20
+            ],
+            "velocity": [
+                8,
+                8
+            ],
+            "size": [
+                10,
+                10
+            ]
         },
         {
             "position": [],
-            "velocity": []
+            "velocity": [],
+            "size": []
         }
     ]
 }
