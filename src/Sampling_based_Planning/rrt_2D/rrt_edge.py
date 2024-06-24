@@ -19,6 +19,29 @@ class Edge:
         self.node_1 = node_1
         self.node_2 = node_2
 
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and (
+            (
+                getattr(other, "node_1", None) == self.node_1
+                and getattr(other, "node_2", None) == self.node_2
+            )
+            or (
+                getattr(other, "node_1", None) == self.node_2
+                and getattr(other, "node_2", None) == self.node_1
+            )
+        )
+
+    def __hash__(self):
+        return hash(
+            str(self.node_1.x)
+            + ","
+            + str(self.node_1.y)
+            + ":"
+            + str(self.node_2.x)
+            + ","
+            + str(self.node_2.y)
+        )
+
 
 class RrtEdge(Rrt):
     """

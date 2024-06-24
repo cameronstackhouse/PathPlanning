@@ -27,6 +27,16 @@ class Node:
         self.cost = 0
         self.time_waited = 0
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, self.__class__)
+            and getattr(other, "x", None) == self.x
+            and getattr(other, "y", None) == self.y
+        )
+
+    def __hash__(self):
+        return hash(str(self.x) + "," + str(self.y))
+
 
 class Rrt:
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):

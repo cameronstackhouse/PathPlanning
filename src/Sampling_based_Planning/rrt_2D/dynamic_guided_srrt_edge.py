@@ -40,7 +40,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         start,
         end,
         goal_sample_rate,
-        global_time=1.0,
+        global_time=2.0,
         local_time=0.05,
         mem=100000,
         min_edge_length=4,
@@ -52,11 +52,13 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.dynamic_objects = []
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
-        self.speed = 6
+        self.speed = 60
         self.current_index = 0
         self.path = []
+        self.initial_path = []
         self.time_steps = 0
         self.agent_positions = [self.s_start.coords]
+        self.time = global_time
 
     def run(self):
         """
@@ -64,8 +66,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         and then traverse the environment while avoiding dynamic objects
         """
         taken_path = []
-        # Find initial global path
+        # Find initial global path without knowledge of dynamic objects
         global_path = self.planning()[::-1]
+        self.initial_path = global_path
         self.init_dynamic_obs(1)
 
         if global_path:
@@ -73,27 +76,28 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             GOAL = global_path[-1]
             # While the final node has not been reached
             while current != GOAL:
-                print(len(self.invalidated_edges))
                 # print(
                 #     f"Timestep: {self.time_steps}\ninvlaidated edges: {len(self.invalidated_edges)}\nInvalidated nodes: {len(self.invalidated_nodes)}"
                 # )
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
-                new_coords = self.move(global_path)
-                self.agent_positions.append(new_coords)
+                new_coords = self.move(global_path, self.speed)
                 # If the UAV can't move to the next position
                 if new_coords == [None, None]:
-                    print("HERE")
                     # Attempt to reconnect
                     if not self.reconnect():
                         new_path = self.regrow()
                         if not new_path:
                             return False
+                        else:
+                            global_path = new_path[::-1]
                 else:
+                    self.agent_positions.append(new_coords)
                     current = new_coords
                     self.agent_pos = new_coords
                 self.time_steps += 1
+            # TODO update
             self.path = global_path
             return True
         else:
@@ -145,7 +149,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 0,
             ]
             new_obj.size = [50, 50]
-            new_obj.current_pos = [533, 890]
+            new_obj.current_pos = [643, 793]
             new_obj.init_pos = new_obj.current_pos
 
             self.env.add_rect(
@@ -154,16 +158,25 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 new_obj.size[0],
                 new_obj.size[1],
             )
+
+            # TODO THIS IS THE KEY!
+            self.utils.env.add_rect(
+                new_obj.current_pos[0],
+                new_obj.current_pos[1],
+                new_obj.size[0],
+                new_obj.size[1],
+            )
+
             new_obj.index = len(self.env.obs_rectangle) - 1
             self.dynamic_objects.append(new_obj)
 
         new_obj = DynamicObj()
         new_obj.velocity = [
-            4,
+            0,
             0,
         ]
-        new_obj.size = [50, 50]
-        new_obj.current_pos = [0, 100]
+        new_obj.size = [300, 300]
+        new_obj.current_pos = [730, 418]
         new_obj.init_pos = new_obj.current_pos
 
         self.env.add_rect(
@@ -172,6 +185,14 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             new_obj.size[0],
             new_obj.size[1],
         )
+
+        self.utils.env.add_rect(
+            new_obj.current_pos[0],
+            new_obj.current_pos[1],
+            new_obj.size[0],
+            new_obj.size[1],
+        )
+
         new_obj.index = len(self.env.obs_rectangle) - 1
         self.dynamic_objects.append(new_obj)
 
@@ -188,6 +209,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             new_pos = object.update_pos()
 
             self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
+            self.utils.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
 
     def update_world_view(self):
         """
@@ -323,13 +345,13 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         """ """
         # TODO see if wating for one time period would clear it, AKA the edge is valid
         current_pos = self.agent_pos
-        goal_pos = self.path[self.current_index + 1]
+        goal_pos = self.initial_path[self.current_index + 1]
         # TODO go one timestep ahead
-        return not self.utils.is_collision(current_pos, goal_pos)
+        return not self.utils.is_collision(Node(current_pos), Node(goal_pos))
 
 
 if __name__ == "__main__":
-    start = (200, 900)
+    start = (216, 404)
     end = (901, 900)
     goal_sample_rate = 0.05
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
@@ -340,6 +362,11 @@ if __name__ == "__main__":
     path = rrt.path
 
     plotter = DynamicPlotting(
-        start, end, dynamic_objects, rrt.time_steps, rrt.agent_positions
+        start,
+        end,
+        dynamic_objects,
+        rrt.time_steps,
+        rrt.agent_positions,
+        rrt.initial_path,
     )
     plotter.animation(nodelist, path, "Test", animation=False)
