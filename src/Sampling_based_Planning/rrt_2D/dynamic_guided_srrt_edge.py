@@ -8,30 +8,7 @@ sys.path.append(
 
 from rrt_2D.plotting import DynamicPlotting
 from rrt_2D.mb_guided_srrt_edge import MBGuidedSRrtEdge
-from rrt_2D.rrt import Node
-
-
-class DynamicObj:
-    def __init__(self) -> None:
-        self.velocity = []
-        self.size = []
-        self.known = False
-        self.current_pos = []
-        self.index = 0
-        self.init_pos = None
-
-    def update_pos(self):
-        """
-        TODO improve
-        """
-        velocity = self.velocity
-        new_pos = [
-            self.current_pos[0] + (velocity[0]),
-            self.current_pos[1] + (velocity[1]),
-        ]
-
-        self.current_pos = new_pos
-        return new_pos
+from rrt_2D.rrt import Node, DynamicObj
 
 
 class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
@@ -139,7 +116,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 0,
             ]
             new_obj.size = [50, 50]
-            new_obj.current_pos = [643, 793]
+            new_obj.current_pos = [707, 610]
             new_obj.init_pos = new_obj.current_pos
 
             self.env.add_rect(
@@ -166,7 +143,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             0,
         ]
         new_obj.size = [100, 100]
-        new_obj.current_pos = [543, 779]
+        new_obj.current_pos = [787, 635]
         new_obj.init_pos = new_obj.current_pos
 
         self.env.add_rect(
@@ -342,10 +319,11 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
 
 if __name__ == "__main__":
-    start = (216, 404)
+    start = (582, 230)
     end = (901, 900)
     goal_sample_rate = 0.05
     rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
+
     success = rrt.run()
 
     dynamic_objects = rrt.dynamic_objects

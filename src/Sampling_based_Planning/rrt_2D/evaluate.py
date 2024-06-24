@@ -26,20 +26,25 @@ sys.path.append(
 from Search_2D.Astar import AStar
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
-from load_map import create_custom_env
+from load_map import load_dynamic_obs
 from stats import Stats
 
 from glob import glob
 from pathlib import Path
 
 
-def evaluate(MAP_DIR: str) -> dict:
+def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
     """
     TODO
     """
     START = (0, 0)
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
+
+    if OBJ_DIR:
+        obj_name_list = list(Path(OBJ_DIR).glob("*.json"))
+        obj_names = [obj.stem for obj in obj_name_list]
+
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
@@ -62,9 +67,13 @@ def evaluate(MAP_DIR: str) -> dict:
         success = 0
 
         # Load and evaluate each map
-        for map in map_name_list:
+        for i, map in enumerate(map_name_list):
             print(map)
-            algorithm.change_env(map)
+            # Checks if the algorithm is to be evaluated dynamically
+            if OBJ_DIR:
+                algorithm.change_env(map, obj_name_list[i])
+            else:
+                algorithm.change_env(map)
 
             start_time = time.time()
             path = algorithm.planning()

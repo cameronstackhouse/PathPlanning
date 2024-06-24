@@ -17,6 +17,29 @@ from rrt_2D import env, plotting, utils
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
 
 
+class DynamicObj:
+    def __init__(self) -> None:
+        self.velocity = []
+        self.size = []
+        self.known = False
+        self.current_pos = []
+        self.index = 0
+        self.init_pos = None
+
+    def update_pos(self):
+        """
+        TODO improve
+        """
+        velocity = self.velocity
+        new_pos = [
+            self.current_pos[0] + (velocity[0]),
+            self.current_pos[1] + (velocity[1]),
+        ]
+
+        self.current_pos = new_pos
+        return new_pos
+
+
 class Node:
     def __init__(self, n):
         self.x = n[0]
@@ -146,7 +169,7 @@ class Rrt:
         dy = node_end.y - node_start.y
         return math.hypot(dx, dy), math.atan2(dy, dx)
 
-    def change_env(self, map_name):
+    def change_env(self, map_name, obs_name=None):
         """
         Method which changes the env based on custom map input.
         """
@@ -185,8 +208,36 @@ class Rrt:
             self.obs_rectangle = self.env.obs_rectangle
             self.obs_boundary = self.env.obs_boundary
 
+            if obs_name:
+                # TODO
+                self.set_dynamic_obs(obs_name)
+
         else:
             print("Error, map not found")
+
+    def set_dynamic_obs(self, filename):
+        """
+        Adds dynamic objects to the environment given a JSON filename
+        containing the data of the dynamic objects.
+        """
+        # Loads the objects
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        # Adds each object to the environment
+        if obj_json:
+            for obj in obj_json:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.size = obj["size"]
+
+                new_obj.index = len(self.env.obs_rectangle) - 1
+                self.dynamic_objects.append(new_obj)
+
+        else:
+            print("Error, dynamic objects could not be loaded")
 
     def run(self):
         """

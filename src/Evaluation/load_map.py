@@ -6,7 +6,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from Sampling_based_Planning.rrt_2D.env import CustomEnv
-# from Sampling_based_Planning.rrt_2D.dynamic_guided_srrt_edge import DynamicObj
 
 
 def load(filepath):
@@ -20,28 +19,12 @@ def create_custom_env(filepath):
     return CustomEnv(d)
 
 
-def create_custom_dynamic_env(filepath, obs_path):
+def load_dynamic_obs(filepath):
     """
-    TODO
+    Loads dynamic objects from a file.
     """
-    map = load(filepath)
-    objects = load(filepath)
-
-    env = CustomEnv(map)
-
-    dynamic_obs = []
-
-    for json_obj in objects:
-        obj = DynamicObj()
-        obj.velocity = json_obj["velocity"]
-        obj.size = json_obj["size"]
-        obj.init_pos = json_obj["position"]
-
-        dynamic_obs.append(obj)
-
-        env.add_rect(obj)
-
-    return env, dynamic_obs
+    d = load(filepath)
+    return d
 
 
 if __name__ == "__main__":
