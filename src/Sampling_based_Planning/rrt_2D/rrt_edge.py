@@ -138,7 +138,9 @@ class RrtEdge(Rrt):
             return nearest_node
 
     def nearest_edge_projection(self, edge_list, n):
-        """"""
+        """
+        TODO description
+        """
         min_distance = float("inf")
         proj = None
         nearest_edge = None

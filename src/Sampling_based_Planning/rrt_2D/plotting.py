@@ -67,6 +67,7 @@ class Plotting:
         plt.title(name)
         plt.axis("equal")
         return ax
+        #plt.show()
 
     @staticmethod
     def plot_visited(nodelist, animation):

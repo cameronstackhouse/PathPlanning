@@ -208,8 +208,8 @@ class Rrt:
             self.obs_rectangle = self.env.obs_rectangle
             self.obs_boundary = self.env.obs_boundary
 
+            # Add dynamic obs if needed
             if obs_name:
-                # TODO
                 self.set_dynamic_obs(obs_name)
 
         else:
@@ -256,7 +256,7 @@ class Rrt:
 
             while current != GOAL:
                 current = global_path[self.current_index]
-
+    
 
 def main():
     x_start = (466, 270)

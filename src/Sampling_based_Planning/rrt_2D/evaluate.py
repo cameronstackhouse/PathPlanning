@@ -135,7 +135,7 @@ def meaure_cpu_usage(func, *args, **kwargs):
 
 
 def main():
-    results = evaluate("src/Evaluation/Maps/2D/block_map_25")
+    results = evaluate("src/Evaluation/Maps/2D/block_map_21")
     save_results(results, "evaluation_results.json")
 
 
