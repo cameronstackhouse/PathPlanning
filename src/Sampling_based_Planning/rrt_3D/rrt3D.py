@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import os
 import sys
 
+import psutil
+
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
@@ -67,14 +69,14 @@ class rrt:
                     self.Path, D = path(self)
                     print("Total distance = " + str(D))
                     break
-                visualization(self)
+                # visualization(self)
                 self.i += 1
             self.ind += 1
             # if the goal is really reached
 
         self.done = True
-        visualization(self)
-        plt.show()
+        # visualization(self)
+        # plt.show()
 
     def change_env(self):
         """
