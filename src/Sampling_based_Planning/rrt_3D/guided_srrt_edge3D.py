@@ -1,0 +1,183 @@
+import math
+import os
+import sys
+import time
+from matplotlib import pyplot as plt
+import numpy as np
+
+
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "../Sampling_based_Planning/"
+)
+
+from rrt_edge3D import Edge
+from srrt_edge3D import SRrtEdge
+from rrt_3D.env3D import env
+from rrt_3D.utils3D import (
+    getDist,
+    sampleFree,
+    steer,
+    isCollide,
+    visualization,
+    path_from_point,
+)
+
+
+class GuidedSrrtEdge(SRrtEdge):
+    """
+    TODO
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.ellipsoid = None
+        self.maxiter = 200
+
+    def update_ellipsoid(self, path):
+        """
+        TODO
+        """
+        self.E = []
+        self.V = [self.x0]
+        unique_points = set()
+        for segment in path:
+            for point in segment:
+                unique_points.add(tuple(point))
+        unique_points = list(unique_points)
+
+        x1, y1, z1 = unique_points[0]
+        x2, y2, z2 = unique_points[-1]
+
+        center_x = (x1 + x2) / 2
+        center_y = (y1 + y2) / 2
+        center_z = (z1 + z2) / 2
+
+        angle_xy = np.arctan2(y2 - y1, x2 - x1)
+        angle_xz = np.arctan2(z2 - z1, x2 - x1)
+        angle_yz = np.arctan2(z2 - z1, y2 - y1)
+
+        semi_major_axis = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2) / 2
+
+        max_distance = max(
+            np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2 + (z - center_z) ** 2)
+            for x, y, z in unique_points
+        )
+
+        # Set the semi-minor axis length
+        semi_minor_axis = max_distance
+
+        self.ellipsoid = (
+            center_x,
+            center_y,
+            center_z,
+            semi_major_axis,
+            semi_minor_axis,
+            angle_xy,
+            angle_xz,
+            angle_yz,
+        )
+
+    def sampleFree(self):
+        """
+        TODO
+        """
+        if self.ellipsoid:
+            (
+                center_x,
+                center_y,
+                center_z,
+                semi_major_axis,
+                semi_minor_axis,
+                angle_xy,
+                angle_xz,
+                angle_yz,
+            ) = self.ellipsoid
+            while True:
+                # Sample a point within a unit sphere
+                u, v, w = np.random.uniform(-1, 1, 3)
+                if u**2 + v**2 + w**2 <= 1:
+                    break
+                x_scaled = semi_major_axis * u
+                y_scaled = semi_minor_axis * v
+                z_scaled = semi_minor_axis * w
+
+                # Rotate the point by the given angles
+                x_rotated = x_scaled * np.cos(angle_xy) - y_scaled * np.sin(angle_xy)
+                y_rotated = x_scaled * np.sin(angle_xy) + y_scaled * np.cos(angle_xy)
+                z_rotated = z_scaled * np.cos(angle_xz) - x_scaled * np.sin(angle_xz)
+                z_rotated = z_scaled * np.cos(angle_yz) - y_scaled * np.sin(angle_yz)
+
+                # Translate the point to the ellipsoid center
+                x = center_x + x_rotated
+                y = center_y + y_rotated
+                z = center_z + z_rotated
+
+                return (x, y, z)
+
+        else:
+            return sampleFree(self)
+
+    def run(self):
+        self.V.append(self.x0)
+        best_path = None
+        best_path_dist = float("inf")
+        for _ in range(self.maxiter):
+            # Sample new node
+            xrand = sampleFree(self)
+            xnearest = self.nearest(xrand, self.E)
+            xnew, dist = steer(self, xnearest, xrand)
+            collide, _ = isCollide(self, xnearest, xnew, dist=dist)
+            if not collide:
+                new_edge = Edge(xnearest, xnew)
+                self.E.append(new_edge)
+                self.V.append(xnew)
+                self.wireup(tuple(xnew), tuple(xnearest))
+
+                goal_dist = getDist(xnew, self.xt)
+                goal_collide, _ = isCollide(self, xnew, self.xt, goal_dist)
+                if not goal_collide:
+                    self.wireup(tuple(self.xt), tuple(xnew))
+                    current_path, D = path_from_point(self, tuple(xnew))
+
+                    if D < best_path_dist:
+                        self.Path = current_path
+                        best_path = current_path
+                        best_path_dist = D
+                        self.update_ellipsoid(best_path)
+
+                # Checks for direct path from points along the added edge to the goal
+                k = self.calculate_k(new_edge)
+                partition_points = self.get_k_partitions(k, new_edge)
+                for partition_point in partition_points:
+                    self.Parent[tuple(partition_point)] = tuple(new_edge.node_1)
+                    goal_partition_collide, _ = isCollide(
+                        self, partition_point, self.xt, goal_dist
+                    )
+                    if not goal_partition_collide:
+                        self.wireup(tuple(self.xt), tuple(partition_point))
+                        current_path, D = path_from_point(self, tuple(partition_point))
+
+                        if D < best_path_dist:
+                            self.Path = current_path
+                            best_path = current_path
+                            best_path_dist = D
+                            self.update_ellipsoid(best_path)
+
+                # visualization(self)
+                self.i += 1
+
+        self.done = True
+        visualization(self)
+        plt.show()
+
+        print(best_path_dist)
+
+        if self.Path:
+            return True
+        else:
+            return False
+
+
+if __name__ == "__main__":
+    p = GuidedSrrtEdge()
+    p.run()

@@ -76,6 +76,12 @@ class rrt:
         visualization(self)
         plt.show()
 
+    def change_env(self):
+        """
+        TODO
+        """
+        pass
+
 
 if __name__ == "__main__":
     p = rrt()
