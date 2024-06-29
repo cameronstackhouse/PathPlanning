@@ -6,8 +6,8 @@ Env 2D
 
 class Env:
     def __init__(self):
-        self.x_range = 1000  # size of background
-        self.y_range = 1000
+        self.x_range = 100  # size of background
+        self.y_range = 100
         self.motions = [
             (-1, 0),
             (-1, 1),

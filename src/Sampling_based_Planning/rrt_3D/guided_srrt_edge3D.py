@@ -24,19 +24,12 @@ from rrt_3D.utils3D import (
 
 
 class GuidedSrrtEdge(SRrtEdge):
-    """
-    TODO
-    """
-
     def __init__(self):
         super().__init__()
         self.ellipsoid = None
         self.maxiter = 200
 
     def update_ellipsoid(self, path):
-        """
-        TODO
-        """
         self.E = []
         self.V = [self.x0]
         unique_points = set()
@@ -78,9 +71,6 @@ class GuidedSrrtEdge(SRrtEdge):
         )
 
     def sampleFree(self):
-        """
-        TODO
-        """
         if self.ellipsoid:
             (
                 center_x,
