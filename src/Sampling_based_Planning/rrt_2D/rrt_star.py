@@ -279,6 +279,8 @@ class RrtStar:
             self.obs_rectangle = self.env.obs_rectangle
             self.obs_boundary = self.env.obs_boundary
 
+            self.agent_pos = data["agent"]
+
             # Add dynamic obs if needed
             if obs_name:
                 self.set_dynamic_obs(obs_name)
@@ -352,8 +354,8 @@ class RrtStar:
         for _ in range(n_obs):
             new_obj = DynamicObj()
             new_obj.velocity = [
-                0,
-                0,
+                1000,
+                1000,
             ]
             new_obj.size = [50, 50]
             new_obj.current_pos = [707, 610]
@@ -379,8 +381,8 @@ class RrtStar:
 
         new_obj = DynamicObj()
         new_obj.velocity = [
-            0,
-            0,
+            1000,
+            1000,
         ]
         new_obj.size = [100, 100]
         new_obj.current_pos = [787, 635]
@@ -522,13 +524,15 @@ class RrtStar:
         global_path = self.planning()[::-1]
         self.initial_path = global_path
 
-        self.init_dynamic_obs(1)
+        # self.init_dynamic_obs(1)
 
         if global_path:
             current = global_path[self.current_index]
             GOAL = global_path[-1]
 
             while current != GOAL:
+                print(self.agent_pos)
+                
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
@@ -536,9 +540,11 @@ class RrtStar:
 
                 if new_coords == [None, None]:
                     # Rerun rrt from the current position
-                    self.vertex = [current]
+                    self.vertex = [Node(current)]
                     self.s_start = Node(current)
-                    self.planning()
+                    
+                    global_path = self.planning()[::-1]
+                    self.current_index = 0
                 else:
                     self.agent_positions.append(new_coords)
                     current = new_coords
@@ -556,8 +562,8 @@ def main():
     x_goal = (37, 18)  # Goal node
 
     rrt_star = RrtStar(x_start, x_goal, 10, 0.10, 20, 2000)
-    rrt_star.change_env("Evaluation/Maps/2D/block_map_25/0.json")
-    path = rrt_star.run()
+    rrt_star.change_env("Evaluation/Maps/2D/block_map_25/20.json")
+    path = rrt_star.planning() # .run()
 
     if path:
         print(f"Number of nodes: {len(rrt_star.vertex)}")

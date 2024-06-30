@@ -29,7 +29,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
     TODO
     """
 
-    def __init__(self, t=5.5, m=1000):
+    def __init__(self, t=0.1, m=1000):
         super().__init__()
         self.t = t
         self.m = m
@@ -90,7 +90,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                             best_path_dist = D
                             self.update_ellipsoid(best_path)
 
-                #visualization(self)
+                # visualization(self)
                 self.i += 1
 
         self.done = True
@@ -106,6 +106,6 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 
 
 if __name__ == "__main__":
-    TIME = 0.1
+    TIME = 2.03
     p = MbGuidedSrrtEdge(TIME)
     p.run()

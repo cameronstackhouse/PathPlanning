@@ -65,6 +65,7 @@ class Rrt:
     """
     TODO STORE EDGES
     """
+
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):
         self.name = "RRT"
         self.s_start = Node(s_start)
@@ -93,13 +94,13 @@ class Rrt:
         self.dynamic_objects = []
         self.invalidated_nodes = set()
         self.invalidated_edges = set()
-        self.speed = 60
+        self.speed = 600
         self.time_steps = 0
         self.agent_positions = [self.s_start.coords]
         self.agent_pos = self.s_start.coords
 
     def planning(self):
-        for i in range(self.iter_max):
+        for _ in range(self.iter_max):
             node_rand = self.generate_random_node(self.goal_sample_rate)
             node_near = self.nearest_neighbor(self.vertex, node_rand)
             node_new = self.new_state(node_near, node_rand)
@@ -216,6 +217,8 @@ class Rrt:
             if obs_name:
                 self.set_dynamic_obs(obs_name)
 
+            self.agent_pos = data["agent"]
+
         else:
             print("Error, map not found")
 
@@ -253,8 +256,8 @@ class Rrt:
                 0,
                 0,
             ]
-            new_obj.size = [50, 50]
-            new_obj.current_pos = [707, 610]
+            new_obj.size = [150, 150]
+            new_obj.current_pos = [177, 29]
             new_obj.init_pos = new_obj.current_pos
 
             self.env.add_rect(
@@ -317,7 +320,7 @@ class Rrt:
         """
         # Check if nodes exist lie within the current object
         for node in self.vertex:
-            if self.in_dynamic_obj(node, obj):
+            if obj.known and self.in_dynamic_obj(node, obj):
                 self.invalidated_nodes.add(node)
 
         # Check if any part of an edge lies within the object
@@ -325,7 +328,7 @@ class Rrt:
             n1 = edge.node_1
             n2 = edge.node_2
 
-            if self.utils.is_collision(n1, n2):
+            if obj.known and self.utils.is_collision(n1, n2):
                 self.invalidated_edges.add(edge)
 
     def revalidate(self):
@@ -382,7 +385,7 @@ class Rrt:
         validated and invalidated edges.
         """
         self.revalidate()
-        VISION = 30
+        VISION = 3
         pos = self.agent_pos
 
         for obj in self.dynamic_objects:
@@ -411,7 +414,7 @@ class Rrt:
             else:
                 obj.known = False
 
-    def move(self, path, mps=6) -> bool:
+    def move(self, path, mps=6):
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
@@ -422,7 +425,7 @@ class Rrt:
         next_node = path[self.current_index + 1]
 
         # Checks for collision between current point and the waypoint node
-        # TODO need to make a one-step-ahead check Might need to change based on implementation
+        # TODO change, need to make sure object which is blocking is known
         if self.utils.is_collision(Node(current_pos), Node(next_node)):
             return [None, None]
 
@@ -479,9 +482,9 @@ class Rrt:
                 self.time_steps += 1
 
             self.path = global_path
-            return True
+            return self.path
         else:
-            return False
+            return None
 
 
 def main():

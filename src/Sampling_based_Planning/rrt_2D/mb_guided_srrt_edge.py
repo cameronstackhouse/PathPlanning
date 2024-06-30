@@ -101,9 +101,9 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 2.5)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 5)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/0.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/4.json")
 
     path = srrt_edge.planning()
 
@@ -115,11 +115,11 @@ def main():
             srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False
         )
     else:
-        # print("No Path Found!")
-        # srrt_edge.plotting.animation(
-        #     srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False
-        # )
-        pass
+        print("No Path Found!")
+        srrt_edge.plotting.animation(
+            srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False
+        )
+        #pass
 
 
 if __name__ == "__main__":

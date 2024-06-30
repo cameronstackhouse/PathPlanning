@@ -67,7 +67,7 @@ class Plotting:
         plt.title(name)
         plt.axis("equal")
         return ax
-        #plt.show()
+        # plt.show()
 
     @staticmethod
     def plot_visited(nodelist, animation):
@@ -173,6 +173,7 @@ class DynamicPlotting(Plotting):
         fig, ax = plt.subplots()
         self.plot_grid(name, ax)
         self.plot_path(path)
+        self.plot_dynamic_objects()
         self.plot_original_path(self.initial_path)
         plt.pause(1)
 

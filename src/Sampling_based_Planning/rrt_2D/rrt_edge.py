@@ -210,6 +210,8 @@ class RrtEdge(Rrt):
             GOAL = global_path[-1]
 
             while current != GOAL:
+                print(self.agent_pos)
+
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
@@ -218,7 +220,7 @@ class RrtEdge(Rrt):
                 if new_coords == [None, None]:
                     # Rerun rrt-edge from the current position
                     self.edges = []
-                    self.vertex = [current]
+                    self.vertex = [Node(current)]
                     self.s_start = Node(current)
                     self.planning()
                 else:
@@ -228,9 +230,9 @@ class RrtEdge(Rrt):
                 self.time_steps += 1
 
             self.path = global_path
-            return True
+            return self.path
         else:
-            return False
+            return None
 
 
 def main():
@@ -238,7 +240,7 @@ def main():
     x_goal = (82, 77)
 
     rrt_edge = RrtEdge(x_start, x_goal, 0.05, 2000)
-    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/0.json")
+    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/7.json")
     path = rrt_edge.planning()
 
     if path:

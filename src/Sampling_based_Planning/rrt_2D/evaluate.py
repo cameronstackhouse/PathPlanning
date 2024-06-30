@@ -99,7 +99,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
             "Path Length": path_len,
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
-            "CPU Usgae": cpu_usage,
+            #"CPU Usgae": cpu_usage,
             "Number of Nodes": nodes,
         }
 
@@ -115,22 +115,22 @@ def save_results(results, name):
     print(f"Results saved to {name}")
 
 
-def meaure_cpu_usage(func, *args, **kwargs):
-    """
-    Measures the user, system, and idle cpu usage of a given function.
-    """
-    start_cpu_times = psutil.cpu_times_percent(interval=None)
+# def meaure_cpu_usage(func, *args, **kwargs):
+#     """
+#     Measures the user, system, and idle cpu usage of a given function.
+#     """
+#     start_cpu_times = psutil.cpu_times_percent(interval=None)
 
-    result = func(*args, **kwargs)
-    end_cpu_times = psutil.cpu_times_percent(interval=None)
+#     result = func(*args, **kwargs)
+#     end_cpu_times = psutil.cpu_times_percent(interval=None)
 
-    cpu_usage = {
-        "user": end_cpu_times.user - start_cpu_times.user,
-        "system": end_cpu_times.system - start_cpu_times.system,
-        "idle": end_cpu_times.idle - start_cpu_times.idle,
-    }
+#     cpu_usage = {
+#         "user": end_cpu_times.user - start_cpu_times.user,
+#         "system": end_cpu_times.system - start_cpu_times.system,
+#         "idle": end_cpu_times.idle - start_cpu_times.idle,
+#     }
 
-    return result, cpu_usage
+#     return result, cpu_usage
 
 
 def main():
