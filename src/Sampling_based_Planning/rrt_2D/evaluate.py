@@ -23,7 +23,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
 )
 
-from Search_2D.Astar import AStar
+from Search_2D.D_star_Lite import DStar
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
 from load_map import load_dynamic_obs
@@ -49,11 +49,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        # AStar(START, END, "euclidean"),
         MBGuidedSRrtEdge(START, END, 0.05, 1.5),
+        # DStar(START, END, "euclidean"),
         RrtEdge(START, END, 0.05, 2000),
         # RrtStar(START, END, 6, 0.05, 5, 2000),
-        Rrt(START, END, 6, 0.05, 2000),
     ]
     results = []
 

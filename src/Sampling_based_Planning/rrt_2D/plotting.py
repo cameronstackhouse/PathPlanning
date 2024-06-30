@@ -24,7 +24,7 @@ class Plotting:
         self.obs_rectangle = self.env.obs_rectangle
 
     def animation(self, nodelist, path, name, animation=False):
-        fig, ax = self.plot_grid(name)
+        fig = self.plot_grid(name)
         self.plot_grid(name)
         self.plot_visited(nodelist, animation)
         self.plot_path(path)

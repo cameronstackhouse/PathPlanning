@@ -4,6 +4,9 @@ Environment for rrt_2D
 """
 
 
+import numpy as np
+
+
 class Env:
     def __init__(self):
         self.x_range = (0, 1000)
@@ -88,37 +91,23 @@ class CustomEnv(Env):
         grid = self.data["grid"]
         rows = len(grid)
         cols = len(grid[0])
-        visited = [[False for _ in range(cols)] for _ in range(rows)]
+        visited = np.zeros((rows, cols), dtype=bool)
         rectangles = []
 
-        def dfs(x, y):
-            stack = [(x, y)]
-            min_x, max_x = x, x
-            min_y, max_y = y, y
-            while stack:
-                cx, cy = stack.pop()
-                if (
-                    0 <= cx < rows
-                    and 0 <= cy < cols
-                    and grid[cx][cy] == 1.0
-                    and not visited[cx][cy]
-                ):
-                    visited[cx][cy] = True
-                    min_x = min(min_x, cx)
-                    max_x = max(max_x, cx)
-                    min_y = min(min_y, cy)
-                    max_y = max(max_y, cy)
-                    neighbors = [(cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)]
-                    for nx, ny in neighbors:
-                        stack.append((nx, ny))
-            return min_x, min_y, max_x - min_x + 1, max_y - min_y + 1
-
-        for i in range(rows):
-            for j in range(cols):
-                if grid[i][j] == 1.0 and not visited[i][j]:
-                    rect = dfs(i, j)
-                    rectangles.append(
-                        [rect[1], rect[0], rect[3], rect[2]]
-                    )  # x, y, width, height
+        for y in range(rows):
+            for x in range(cols):
+                if grid[y][x] == 1 and not visited[y, x]:
+                    # Find the extent of the rectangle
+                    rect_x, rect_y = x, y
+                    while rect_x < cols and grid[y][rect_x] == 1:
+                        rect_x += 1
+                    while rect_y < rows and all(
+                        grid[rect_y][i] == 1 for i in range(x, rect_x)
+                    ):
+                        rect_y += 1
+                    width = rect_x - x
+                    height = rect_y - y
+                    rectangles.append([x, y, width, height])
+                    visited[y:rect_y, x:rect_x] = True
 
         return rectangles

@@ -46,9 +46,23 @@ class DStar:
     def run(self):
         self.Plot.plot_grid("D* Lite")
         self.ComputePath()
-        self.plot_path(self.extract_path())
+        self.plot_path(self.path_to_end())
         self.fig.canvas.mpl_connect("button_press_event", self.on_press)
         plt.show()
+
+    def path_to_end(self):
+        s_curr = self.s_start
+        path = [self.s_start]
+
+        while s_curr != self.s_goal:
+            s_list = {}
+
+            for s in self.get_neighbor(s_curr):
+                s_list[s] = self.g[s] + self.cost(s_curr, s)
+            s_curr = min(s_list, key=s_list.get)
+            path.append(s_curr)
+
+        return path
 
     def on_press(self, event):
         x, y = event.xdata, event.ydata
@@ -188,7 +202,7 @@ class DStar:
         nei_list = set()
         for u in self.u_set:
             s_next = tuple([s[i] + u[i] for i in range(2)])
-            if s_next not in self.obs:
+            if s_next not in self.obs and s_next in self.rhs.keys():
                 nei_list.add(s_next)
 
         return nei_list
@@ -256,21 +270,35 @@ class DStar:
             self.s_start = tuple(data["agent"])
             self.s_goal = tuple(data["goal"])
             self.Env = env.CustomEnv(data)
+
+            self.rhs = {}
+            self.g = {}
+
+            for i in range(self.Env.x_range):
+                for j in range(self.Env.y_range):
+                    self.rhs[(i, j)] = float("inf")
+                    self.g[(i, j)] = float("inf")
+
             self.obs = self.Env.obs
 
             self.Plot.env = self.Env
             self.Plot.xI = self.s_start
             self.Plot.xG = self.s_goal
             self.Plot.obs = self.Env.obs
+
+            self.rhs[self.s_goal] = 0.0
+            self.U = {}
+            self.U[self.s_goal] = self.CalculateKey(self.s_goal)
         else:
             print("Error, map not found")
 
 
 def main():
     s_start = (5, 5)
-    s_goal = (45, 25)
+    s_goal = (989, 888)
 
     dstar = DStar(s_start, s_goal, "euclidean")
+    dstar.change_env("Evaluation/Maps/2D/block_map_25/20.json")
     dstar.run()
 
 

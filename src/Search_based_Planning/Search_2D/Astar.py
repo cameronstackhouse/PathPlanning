@@ -237,8 +237,8 @@ def main():
     astar = AStar(s_start, s_goal, "euclidean")
     astar.change_env("Evaluation/Maps/2D/block_map_25/23.json")
 
-    path, visited = astar.planning()
-    astar.plot.animation(path, visited, "A* Path")
+    path = astar.planning()
+    astar.plot.animation(path, [], "A* Path")
 
 if __name__ == "__main__":
     main()

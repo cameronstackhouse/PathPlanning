@@ -6,8 +6,8 @@ Env 2D
 
 class Env:
     def __init__(self):
-        self.x_range = 100  # size of background
-        self.y_range = 100
+        self.x_range = 1000  # size of background
+        self.y_range = 1000
         self.motions = [
             (-1, 0),
             (-1, 1),
@@ -60,6 +60,7 @@ class CustomEnv(Env):
     def __init__(self, data):
         super().__init__()
         self.data = data
+        self.obs = []
         self.obs = self.gen_obs()
 
     def gen_obs(self):
@@ -68,6 +69,6 @@ class CustomEnv(Env):
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid[i][j] == 1:
-                    obs.add((i, j))
+                    obs.add((j, i))
 
         return obs
