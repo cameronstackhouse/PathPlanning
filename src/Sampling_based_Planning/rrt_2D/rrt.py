@@ -484,7 +484,8 @@ def main():
     x_start = (466, 270)
     x_goal = (967, 963)
 
-    rrt = Rrt(x_start, x_goal, 0.5, 0.15, 1000)
+    rrt = Rrt(x_start, x_goal, 5, 0.15, 1000)
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/0.json")
     path = rrt.planning()
 
     if path:

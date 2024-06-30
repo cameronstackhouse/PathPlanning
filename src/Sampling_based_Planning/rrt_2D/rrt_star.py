@@ -3,13 +3,15 @@ RRT_star 2D
 @author: huiming zhou
 """
 
+import json
 import os
 import sys
 import math
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../../Sampling_based_Planning/")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+)
 
 from rrt_2D import env, plotting, utils, queue
 
@@ -22,8 +24,9 @@ class Node:
 
 
 class RrtStar:
-    def __init__(self, x_start, x_goal, step_len,
-                 goal_sample_rate, search_radius, iter_max):
+    def __init__(
+        self, x_start, x_goal, step_len, goal_sample_rate, search_radius, iter_max
+    ):
         self.name = "RRT*"
         self.s_start = Node(x_start)
         self.s_goal = Node(x_goal)
@@ -64,14 +67,20 @@ class RrtStar:
         index = self.search_goal_parent()
         self.path = self.extract_path(self.vertex[index])
 
-        self.plotting.animation(self.vertex, self.path, "rrt*, N = " + str(self.iter_max))
+        self.plotting.animation(
+            self.vertex, self.path, "rrt*, N = " + str(self.iter_max)
+        )
 
     def new_state(self, node_start, node_goal):
         dist, theta = self.get_distance_and_angle(node_start, node_goal)
 
         dist = min(self.step_len, dist)
-        node_new = Node((node_start.x + dist * math.cos(theta),
-                         node_start.y + dist * math.sin(theta)))
+        node_new = Node(
+            (
+                node_start.x + dist * math.cos(theta),
+                node_start.y + dist * math.sin(theta),
+            )
+        )
 
         node_new.parent = node_start
 
@@ -91,12 +100,17 @@ class RrtStar:
                 node_neighbor.parent = node_new
 
     def search_goal_parent(self):
-        dist_list = [math.hypot(n.x - self.s_goal.x, n.y - self.s_goal.y) for n in self.vertex]
+        dist_list = [
+            math.hypot(n.x - self.s_goal.x, n.y - self.s_goal.y) for n in self.vertex
+        ]
         node_index = [i for i in range(len(dist_list)) if dist_list[i] <= self.step_len]
 
         if len(node_index) > 0:
-            cost_list = [dist_list[i] + self.cost(self.vertex[i]) for i in node_index
-                         if not self.utils.is_collision(self.vertex[i], self.s_goal)]
+            cost_list = [
+                dist_list[i] + self.cost(self.vertex[i])
+                for i in node_index
+                if not self.utils.is_collision(self.vertex[i], self.s_goal)
+            ]
             return node_index[int(np.argmin(cost_list))]
 
         return len(self.vertex) - 1
@@ -110,8 +124,12 @@ class RrtStar:
         delta = self.utils.delta
 
         if np.random.random() > goal_sample_rate:
-            return Node((np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
-                         np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta)))
+            return Node(
+                (
+                    np.random.uniform(self.x_range[0] + delta, self.x_range[1] - delta),
+                    np.random.uniform(self.y_range[0] + delta, self.y_range[1] - delta),
+                )
+            )
 
         return self.s_goal
 
@@ -119,16 +137,23 @@ class RrtStar:
         n = len(self.vertex) + 1
         r = min(self.search_radius * math.sqrt((math.log(n) / n)), self.step_len)
 
-        dist_table = [math.hypot(nd.x - node_new.x, nd.y - node_new.y) for nd in self.vertex]
-        dist_table_index = [ind for ind in range(len(dist_table)) if dist_table[ind] <= r and
-                            not self.utils.is_collision(node_new, self.vertex[ind])]
+        dist_table = [
+            math.hypot(nd.x - node_new.x, nd.y - node_new.y) for nd in self.vertex
+        ]
+        dist_table_index = [
+            ind
+            for ind in range(len(dist_table))
+            if dist_table[ind] <= r
+            and not self.utils.is_collision(node_new, self.vertex[ind])
+        ]
 
         return dist_table_index
 
     @staticmethod
     def nearest_neighbor(node_list, n):
-        return node_list[int(np.argmin([math.hypot(nd.x - n.x, nd.y - n.y)
-                                        for nd in node_list]))]
+        return node_list[
+            int(np.argmin([math.hypot(nd.x - n.x, nd.y - n.y) for nd in node_list]))
+        ]
 
     @staticmethod
     def cost(node_p):
@@ -172,14 +197,61 @@ class RrtStar:
         dy = node_end.y - node_start.y
         return math.hypot(dx, dy), math.atan2(dy, dx)
 
+    def change_env(self, map_name, obs_name=None):
+        """
+        Method which changes the env based on custom map input.
+        """
+        data = None
+        with open(map_name) as f:
+            data = json.load(f)
+
+        if data:
+            self.s_start = Node(data["agent"])
+            self.s_goal = Node(data["goal"])
+            self.vertex = [self.s_start]
+
+            # Initialize the new custom environment
+            self.env = env.CustomEnv(data)
+
+            # Update plotting with new environment details
+            self.plotting = plotting.Plotting(data["agent"], data["goal"])
+            self.plotting.env = self.env
+            self.plotting.xI = data["agent"]
+            self.plotting.xG = data["goal"]
+            self.plotting.obs_bound = self.env.obs_boundary
+            self.plotting.obs_circle = self.env.obs_circle
+            self.plotting.obs_rectangle = self.env.obs_rectangle
+
+            # Update utilities with new environment details
+            self.utils = utils.Utils()
+            self.utils.env = self.env
+            self.utils.obs_boundary = self.env.obs_boundary
+            self.utils.obs_circle = self.env.obs_circle
+            self.utils.obs_rectangle = self.env.obs_rectangle
+
+            # Update environment properties
+            self.x_range = self.env.x_range
+            self.y_range = self.env.y_range
+            self.obs_circle = self.env.obs_circle
+            self.obs_rectangle = self.env.obs_rectangle
+            self.obs_boundary = self.env.obs_boundary
+
+            # Add dynamic obs if needed
+            if obs_name:
+                self.set_dynamic_obs(obs_name)
+
+        else:
+            print("Error, map not found")
+
 
 def main():
     x_start = (18, 8)  # Starting node
     x_goal = (37, 18)  # Goal node
 
     rrt_star = RrtStar(x_start, x_goal, 10, 0.10, 20, 2000)
+    rrt_star.change_env("")
     rrt_star.planning()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

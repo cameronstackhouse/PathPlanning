@@ -194,12 +194,51 @@ class RrtEdge(Rrt):
         super().change_env(map_name)
         self.edges = []
 
+    def run(self):
+        """
+        Attempts to run the algorithm to intitially find a global path and
+        then traverse the environment while avoiding dynamic objects.
+        TODO.
+        """
+        global_path = self.planning()[::-1]
+        self.initial_path = global_path
+
+        self.init_dynamic_obs(1)
+
+        if global_path:
+            current = global_path[self.current_index]
+            GOAL = global_path[-1]
+
+            while current != GOAL:
+                current = global_path[self.current_index]
+                self.update_object_positions()
+                self.update_world_view()
+                new_coords = self.move(global_path, self.speed)
+
+                if new_coords == [None, None]:
+                    # Rerun rrt-edge from the current position
+                    self.edges = []
+                    self.vertex = [current]
+                    self.s_start = Node(current)
+                    self.planning()
+                else:
+                    self.agent_positions.append(new_coords)
+                    current = new_coords
+                    self.agent_pos = new_coords
+                self.time_steps += 1
+
+            self.path = global_path
+            return True
+        else:
+            return False
+
 
 def main():
     x_start = (2, 2)
     x_goal = (82, 77)
 
     rrt_edge = RrtEdge(x_start, x_goal, 0.05, 2000)
+    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/0.json")
     path = rrt_edge.planning()
 
     if path:

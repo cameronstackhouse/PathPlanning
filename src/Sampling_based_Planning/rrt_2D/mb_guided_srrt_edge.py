@@ -101,16 +101,16 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 3.5)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 2.5)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/20.json")
-    
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/0.json")
+
     path = srrt_edge.planning()
 
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")
         print(f"Path length: {srrt_edge.utils.path_cost(path)}")
-        
+
         srrt_edge.plotting.animation(
             srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False
         )
