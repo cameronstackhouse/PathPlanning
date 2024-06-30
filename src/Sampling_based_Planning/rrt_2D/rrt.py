@@ -62,6 +62,9 @@ class Node:
 
 
 class Rrt:
+    """
+    TODO STORE EDGES
+    """
     def __init__(self, s_start, s_goal, step_len, goal_sample_rate, iter_max):
         self.name = "RRT"
         self.s_start = Node(s_start)
@@ -70,6 +73,7 @@ class Rrt:
         self.goal_sample_rate = goal_sample_rate
         self.iter_max = iter_max
         self.vertex = [self.s_start]
+        self.edges = []
 
         self.env = env.Env()
         # self.env.x_range = (0, 1000)
