@@ -36,7 +36,6 @@ class DynamicObj:
             self.current_pos[1] + (velocity[1]),
         ]
 
-        self.current_pos = new_pos
         return new_pos
 
 
@@ -253,8 +252,8 @@ class Rrt:
         for _ in range(n_obs):
             new_obj = DynamicObj()
             new_obj.velocity = [
-                0,
-                0,
+                -1.1,
+                -1.1,
             ]
             new_obj.size = [150, 150]
             new_obj.current_pos = [177, 29]
@@ -375,6 +374,7 @@ class Rrt:
         for object in self.dynamic_objects:
             # Attempt to move in direction of travel
             new_pos = object.update_pos()
+            object.current_pos = new_pos
 
             self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
             self.utils.env.update_obj_pos(object.index, new_pos[0], new_pos[1])

@@ -561,7 +561,7 @@ def main():
     x_start = (18, 8)  # Starting node
     x_goal = (37, 18)  # Goal node
 
-    rrt_star = RrtStar(x_start, x_goal, 10, 0.10, 20, 2000)
+    rrt_star = RrtStar(x_start, x_goal, 5, 0.10, 20, 5000)
     rrt_star.change_env("Evaluation/Maps/2D/block_map_25/20.json")
     path = rrt_star.planning() # .run()
 

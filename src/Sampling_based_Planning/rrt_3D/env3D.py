@@ -121,7 +121,7 @@ class obb(object):
 
 
 class env:
-    def __init__(self, xmin=0, ymin=0, zmin=0, xmax=200, ymax=200, zmax=100, resolution=1):
+    def __init__(self, xmin=0, ymin=0, zmin=0, xmax=200, ymax=200, zmax=50, resolution=1):
         # def __init__(self, xmin=-5, ymin=0, zmin=-5, xmax=10, ymax=5, zmax=10, resolution=1):
         self.resolution = resolution
         self.boundary = np.array([xmin, ymin, zmin, xmax, ymax, zmax])

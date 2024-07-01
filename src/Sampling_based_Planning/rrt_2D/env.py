@@ -3,7 +3,6 @@ Environment for rrt_2D
 @author: huiming zhou
 """
 
-
 import numpy as np
 
 
@@ -84,7 +83,6 @@ class CustomEnv(Env):
         self.obs_circle = []
 
     def gen_rectangles(self):
-        # TODO. save this stuff so it doesnt have to be recalculated each time, reduces collision checking
         """
         Method which creates larger rectangles by grouping adjacent 1.0 points
         """

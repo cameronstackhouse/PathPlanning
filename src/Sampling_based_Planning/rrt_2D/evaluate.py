@@ -9,6 +9,7 @@ import time
 import psutil
 import matplotlib.pyplot as plt
 import seaborn as sns
+import tracemalloc
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -17,7 +18,10 @@ sys.path.append(
 from rrt_2D.mb_guided_srrt_edge import MBGuidedSRrtEdge
 from rrt_2D.rrt_edge import RrtEdge
 from rrt_2D.rrt import Rrt
-from rrt_2D.rrt_star import RrtStar
+from rrt_2D.informed_rrt_star import IRrtStar
+
+# from rrt_3D.mb_guided_srrt_edge3D import MbGuidedSrrtEdge
+# from rrt_3D.rrt3D import rrt
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
@@ -33,7 +37,7 @@ from glob import glob
 from pathlib import Path
 
 
-def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
+def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     """
     TODO
     """
@@ -41,6 +45,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
 
+    # TODO add dynamic capability to the evaluation suite
     if OBJ_DIR:
         obj_name_list = list(Path(OBJ_DIR).glob("*.json"))
         obj_names = [obj.stem for obj in obj_name_list]
@@ -48,12 +53,20 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
-    algorithms = [
-        MBGuidedSRrtEdge(START, END, 0.05, 1.5),
-        # DStar(START, END, "euclidean"),
-        RrtEdge(START, END, 0.05, 2000),
-        # RrtStar(START, END, 6, 0.05, 5, 2000),
-    ]
+    algorithms = []
+
+    if TYPE == "2D":
+        algorithms = [
+            MBGuidedSRrtEdge(START, END, 0.05, 2),
+            # DStar(START, END, "euclidean"),
+            RrtEdge(START, END, 0.05, 2000),
+            IRrtStar(START, END, 5, 0.05, 5, 2000),
+        ]
+
+    else:
+        # TODO 3D Algorithms
+        pass
+
     results = []
 
     for algorithm in algorithms:
@@ -65,6 +78,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
         nodes = []
         success = 0
 
+        # TODO
+        traversal_time = []
+        cpu_usage = []
+        memory_used = []  # psutil.virtual_memory()
+
         # Load and evaluate each map
         for i, map in enumerate(map_name_list):
             print(map)
@@ -74,9 +92,23 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
             else:
                 algorithm.change_env(map)
 
+            path = None
+            tracemalloc.start()
+            cpu_usage_start = psutil.cpu_percent(interval=None)
+
             start_time = time.time()
-            path = algorithm.planning()
+            if OBJ_DIR:
+                path = algorithm.run()
+            else:
+                path = algorithm.planning()
+
+            cpu_usage_end = psutil.cpu_percent(interval=None)
             total_time = time.time() - start_time
+            peak = tracemalloc.get_tracemalloc_memory()
+            tracemalloc.stop()
+
+            memory_used.append(peak)
+            cpu_usage.append((cpu_usage_start + cpu_usage_end) / 2)
 
             if path:
                 success += 1
@@ -99,8 +131,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None) -> dict:
             "Path Length": path_len,
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
-            #"CPU Usgae": cpu_usage,
+            "CPU Usage": cpu_usage,
             "Number of Nodes": nodes,
+            "Memory Used": memory_used,
         }
 
         results.append(result)
@@ -115,26 +148,8 @@ def save_results(results, name):
     print(f"Results saved to {name}")
 
 
-# def meaure_cpu_usage(func, *args, **kwargs):
-#     """
-#     Measures the user, system, and idle cpu usage of a given function.
-#     """
-#     start_cpu_times = psutil.cpu_times_percent(interval=None)
-
-#     result = func(*args, **kwargs)
-#     end_cpu_times = psutil.cpu_times_percent(interval=None)
-
-#     cpu_usage = {
-#         "user": end_cpu_times.user - start_cpu_times.user,
-#         "system": end_cpu_times.system - start_cpu_times.system,
-#         "idle": end_cpu_times.idle - start_cpu_times.idle,
-#     }
-
-#     return result, cpu_usage
-
-
 def main():
-    results = evaluate("src/Evaluation/Maps/2D/block_map_21")
+    results = evaluate("src/Evaluation/Maps/2D/block_map_25", TYPE="2D")
     save_results(results, "evaluation_results.json")
 
 

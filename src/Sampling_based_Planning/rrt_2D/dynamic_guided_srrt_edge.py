@@ -115,21 +115,14 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def regrow(self):
         """
-        TODO:
         Regrows the tree to try and find path from current to end node.
         """
+        # Clears the current tree
         self.vertex.clear()
         self.edges.clear()
         self.ellipsoid = None
+
         current_pos_node = Node(self.agent_pos)
-
-        for node in self.invalidated_nodes:
-            if node in self.vertex:
-                self.vertex.remove(node)
-
-        for edge in self.invalidated_edges:
-            if edge in self.edges:
-                self.edges.remove(edge)
 
         self.invalidated_nodes.clear()
         self.invalidated_edges.clear()
@@ -138,6 +131,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.vertex = [current_pos_node]
         self.edges = []
 
+        # Attempts to find a new path from the current position
         new_path = self.planning()
 
         if new_path:
@@ -147,11 +141,18 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             return None
 
     def reconnect(self, path):
-        """ """
-        # TODO see if wating for one time period would clear it, AKA the edge is valid
+        """
+        TODO see if wating for one time period would clear it, AKA the edge is valid
+        """
         current_pos = self.agent_pos
         goal_pos = path[self.current_index + 1]
+
         # TODO go one timestep ahead
+
+        for object in self.dynamic_objects:
+            new_pos = object.update_pos()
+            # TODO
+
         return not self.utils.is_collision(Node(current_pos), Node(goal_pos))
 
     def change_env(self, map_name):
