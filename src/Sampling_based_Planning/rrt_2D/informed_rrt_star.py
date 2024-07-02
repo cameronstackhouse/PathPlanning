@@ -10,6 +10,7 @@ import math
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import psutil
 from scipy.spatial.transform import Rotation as Rot
 import matplotlib.patches as patches
 
@@ -52,6 +53,8 @@ class IRrtStar:
         self.V = [self.x_start]
         self.X_soln = set()
         self.path = None
+        self.peak_cpu = 0
+        self.name = "Informed RRT*"
 
     def init(self):
         cMin, theta = self.get_distance_and_angle(self.x_start, self.x_goal)
@@ -72,6 +75,8 @@ class IRrtStar:
         c_best = np.inf
 
         for k in range(self.iter_max):
+            cpu_usage = psutil.cpu_percent(interval=None)
+            self.peak_cpu = max(self.peak_cpu, cpu_usage)
             if self.X_soln:
                 cost = {node: self.Cost(node) for node in self.X_soln}
                 x_best = min(cost, key=cost.get)
@@ -318,6 +323,8 @@ class IRrtStar:
             self.x_start = Node(data["agent"])
             self.x_goal = Node(data["goal"])
             self.V = [self.x_start]
+            self.X_soln = set()
+            self.path = None
 
             # Initialize the new custom environment
             self.env = env.CustomEnv(data)
@@ -359,8 +366,12 @@ def main():
     x_start = (18, 8)  # Starting node
     x_goal = (809, 909)  # Goal node
 
-    rrt_star = IRrtStar(x_start, x_goal, 10, 0.10, 12, 10000)
-    rrt_star.change_env("Evaluation/Maps/2D/block_map_25/20.json")
+    rrt_star = IRrtStar(x_start, x_goal, 10, 0.10, 12, 2000)
+
+    rrt_star.change_env("Evaluation/Maps/2D/main/house_11.json")
+    path = rrt_star.planning()
+
+    rrt_star.change_env("Evaluation/Maps/2D/main/block_9.json")
     path = rrt_star.planning()
 
 

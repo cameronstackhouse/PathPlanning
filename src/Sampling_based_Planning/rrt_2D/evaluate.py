@@ -58,9 +58,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     if TYPE == "2D":
         algorithms = [
             MBGuidedSRrtEdge(START, END, 0.05, 2),
-            # DStar(START, END, "euclidean"),
-            RrtEdge(START, END, 0.05, 2000),
-            IRrtStar(START, END, 5, 0.05, 5, 2000),
+            IRrtStar(START, END, 5, 0.05, 5, 4000),
+            #DStar(START, END, "euclidean"),
+            RrtEdge(START, END, 0.05, 4000),
         ]
 
     else:
@@ -94,7 +94,6 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             path = None
             tracemalloc.start()
-            cpu_usage_start = psutil.cpu_percent(interval=None)
 
             start_time = time.time()
             if OBJ_DIR:
@@ -102,13 +101,13 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             else:
                 path = algorithm.planning()
 
-            cpu_usage_end = psutil.cpu_percent(interval=None)
+            cpu_usage.append(algorithm.peak_cpu)
+
             total_time = time.time() - start_time
             peak = tracemalloc.get_tracemalloc_memory()
             tracemalloc.stop()
 
             memory_used.append(peak)
-            cpu_usage.append((cpu_usage_start + cpu_usage_end) / 2)
 
             if path:
                 success += 1

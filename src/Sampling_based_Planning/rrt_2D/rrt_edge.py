@@ -2,6 +2,7 @@ import os
 import sys
 import math
 import numpy as np
+import psutil
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "../Sampling_based_Planning/"
@@ -64,6 +65,9 @@ class RrtEdge(Rrt):
         b_path = None
         path_cost = float("inf")
         for _ in range(self.iter_max):
+            cpu_usage = psutil.cpu_percent(interval=None)
+            self.peak_cpu = max(self.peak_cpu, cpu_usage)
+
             node_rand = self.generate_random_node()
             node_near = self.nearest_neighbour(self.vertex, self.edges, node_rand)
             node_new = self.new_state(node_near, node_rand)
