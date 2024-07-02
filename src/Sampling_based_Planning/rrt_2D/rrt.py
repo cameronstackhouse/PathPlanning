@@ -8,6 +8,7 @@ import os
 import sys
 import math
 import numpy as np
+import psutil
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -128,6 +129,9 @@ class Rrt:
             )
 
         return self.s_goal
+
+    def measure_cpu(self):
+        return psutil.cpu_stats()
 
     @staticmethod
     def nearest_neighbor(node_list, n):

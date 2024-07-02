@@ -26,7 +26,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         self.name = "MB-SRRT-Edge"
         self.mem = mem
         self.time = time
-        self.cpu_data = []
+        self.peak_cpu = 0
 
     def clear_tree(self):
         self.vertex = [self.s_start]
@@ -41,6 +41,8 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         path_cost = float("inf")
         start_time = time.time()
         while True:
+            cpu_usage = psutil.cpu_percent(interval=None)
+            self.peak_cpu = max(self.peak_cpu, cpu_usage)
             elapsed_time = time.time() - start_time
 
             process = psutil.Process(os.getpid())
@@ -101,11 +103,13 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.05, 2.1)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.0, 10.3)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/block_map_25/20.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/house_25/6.json")
 
     path = srrt_edge.planning()
+
+    print(srrt_edge.peak_cpu)
 
     if path:
         print(f"Number of nodes: {len(srrt_edge.vertex)}")

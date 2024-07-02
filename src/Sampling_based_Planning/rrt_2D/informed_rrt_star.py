@@ -42,7 +42,6 @@ class IRrtStar:
         self.plotting = plotting.Plotting(x_start, x_goal)
         self.utils = utils.Utils()
 
-        self.fig, self.ax = plt.subplots()
         self.delta = self.utils.delta
         self.x_range = self.env.x_range
         self.y_range = self.env.y_range
@@ -106,6 +105,12 @@ class IRrtStar:
                         self.X_soln.add(x_new)
 
         self.path = self.ExtractPath(x_best)
+
+        if self.path and self.utils.is_collision(
+            Node(self.path[-1]), Node(self.path[-2])
+        ):
+            return None
+
         return self.path
 
     def Steer(self, x_start, x_goal):
@@ -180,7 +185,6 @@ class IRrtStar:
         return self.x_goal
 
     def ExtractPath(self, node):
-        # TODO change, this assumes that a path is found.
         path = [[self.x_goal.x, self.x_goal.y]]
 
         while node.parent:
@@ -355,11 +359,9 @@ def main():
     x_start = (18, 8)  # Starting node
     x_goal = (809, 909)  # Goal node
 
-    rrt_star = IRrtStar(x_start, x_goal, 5, 0.10, 12, 1000)
+    rrt_star = IRrtStar(x_start, x_goal, 10, 0.10, 12, 10000)
     rrt_star.change_env("Evaluation/Maps/2D/block_map_25/20.json")
     path = rrt_star.planning()
-
-    print(path)
 
 
 if __name__ == "__main__":

@@ -149,7 +149,7 @@ def save_results(results, name):
 
 
 def main():
-    results = evaluate("src/Evaluation/Maps/2D/block_map_25", TYPE="2D")
+    results = evaluate("src/Evaluation/Maps/2D/main", TYPE="2D")
     save_results(results, "evaluation_results.json")
 
 
