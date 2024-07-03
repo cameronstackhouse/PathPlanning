@@ -14,7 +14,7 @@ from rrt_2D.rrt_edge import RrtEdge, Edge
 class SRrtEdge(RrtEdge):
     """
     Version of RRT Edge which performs K checks along the edge of a newly added
-    node to see if the 
+    node to see if the
     """
 
     def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=5):
@@ -34,7 +34,7 @@ class SRrtEdge(RrtEdge):
                 self.vertex.append(node_new)
                 new_edge = Edge(node_near, node_new)
                 self.edges.append(new_edge)
-                
+
                 if not self.utils.is_collision(node_new, self.s_goal):
                     final_node = self.new_state(node_new, self.s_goal)
                     if final_node and not self.utils.is_collision(node_new, final_node):
@@ -57,7 +57,9 @@ class SRrtEdge(RrtEdge):
                     # Checks if there is a collision free path from the current point to the goal
                     if not self.utils.is_collision(point_node, self.s_goal):
                         final_node = self.new_state(point_node, self.s_goal)
-                        if final_node and not self.utils.is_collision(point_node, final_node):
+                        if final_node and not self.utils.is_collision(
+                            point_node, final_node
+                        ):
                             path = self.extract_path(final_node)
                             cost = utils.Utils.path_cost(path)
                             if cost < path_cost:
@@ -65,16 +67,16 @@ class SRrtEdge(RrtEdge):
                                 path_cost = cost
 
         return b_path
-    
+
     def calculate_k(self, edge):
         """
         TODO
         """
         x1, x2 = edge.node_1.x, edge.node_2.x
         y1, y2 = edge.node_1.y, edge.node_2.y
-        
+
         edge_len = math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2)
-        
+
         return min(5, math.ceil(edge_len))
 
     def get_k_partitions(self, k, edge):

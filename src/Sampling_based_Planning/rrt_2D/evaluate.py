@@ -58,8 +58,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
     if TYPE == "2D":
         algorithms = [
-            MBGuidedSRrtEdge(START, END, 0.05, 2),
-            RrtEdge(START, END, 0.05, 1000),
+            MBGuidedSRrtEdge(START, END, 0.05, 5),
+            RrtEdge(START, END, 0.05, 500),
             # IRrtStar(START, END, 5, 0.05, 5, 2000),
             # DStar(START, END, "euclidean"),
         ]
@@ -122,7 +122,6 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
                 times.append(None)
 
         success /= NUM_MAPS
-        # TODO record CPU load + memory usage too
         result = {
             "Algorithm": algorithm.name,
             "Map Names": map_names,
@@ -141,6 +140,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
 
 def save_results(results, name):
+    """
+    Saves the results obtained from the evaluation script in JSON format.
+    """
     with open(name, "w") as file:
         json.dump(results, file, indent=4)
 
@@ -157,7 +159,7 @@ def measure_cpu_usage(func, *args, **kwargs):
         while running:
             cpu_percentages.append(psutil.cpu_percent(interval=0.1))
 
-    process = psutil.Process()
+    # process = psutil.Process()
 
     cpu_percentages = []
     running = True
@@ -169,9 +171,9 @@ def measure_cpu_usage(func, *args, **kwargs):
     running = False
     measurement_thread.join()
 
-    avg_cpu_load = sum(cpu_percentages)
+    cpu_load = cpu_percentages
 
-    return (result, avg_cpu_load)
+    return (result, cpu_load)
 
 
 def main():
