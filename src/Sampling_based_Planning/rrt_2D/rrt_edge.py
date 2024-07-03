@@ -1,6 +1,7 @@
 import os
 import sys
 import math
+import time
 import numpy as np
 import psutil
 
@@ -57,7 +58,7 @@ class RrtEdge(Rrt):
         self.name = "RRT-Edge"
         self.edges = []
         self.min_edge_length = min_edge_length
-        self.first_success = float("inf")
+        self.first_success = None
 
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)
@@ -66,6 +67,7 @@ class RrtEdge(Rrt):
     def planning(self):
         b_path = None
         path_cost = float("inf")
+        start_time = time.time()
         for _ in range(self.iter_max):
             cpu_usage = psutil.cpu_percent(interval=None)
             self.peak_cpu = max(self.peak_cpu, cpu_usage)
@@ -87,6 +89,8 @@ class RrtEdge(Rrt):
                         path = self.extract_path(final_node)
                         cost = utils.Utils.path_cost(path)
                         if cost < path_cost:
+                            if self.first_success is None:
+                                self.first_success = time.time() - start_time
                             b_path = path
                             path_cost = cost
 
