@@ -58,10 +58,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
     if TYPE == "2D":
         algorithms = [
+            #DStar(START, END, "euclidean"),
             MBGuidedSRrtEdge(START, END, 0.05, 5),
-            RrtEdge(START, END, 0.05, 500),
-            # IRrtStar(START, END, 5, 0.05, 5, 2000),
-            # DStar(START, END, "euclidean"),
+            RrtEdge(START, END, 0.05, 2000),
+            IRrtStar(START, END, 5, 0.05, 5, 2000),
         ]
 
     else:
@@ -100,7 +100,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             if OBJ_DIR:
                 path = algorithm.run()
             else:
-                path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
+                if algorithm.name == "D* Lite":
+                    path, avg_cpu_load = measure_cpu_usage(algorithm.ComputePath)
+                else:
+                    path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
 
             cpu_usage.append(avg_cpu_load)
             first_successes.append(algorithm.first_success)
@@ -113,8 +116,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             if path:
                 success += 1
-                path_len.append(algorithms[0].utils.path_cost(path))
-                energy.append(algorithms[0].utils.path_energy(path))
+                path_len.append(algorithms[1].utils.path_cost(path))
+                energy.append(algorithms[1].utils.path_energy(path))
                 times.append(total_time)
             else:
                 path_len.append(None)

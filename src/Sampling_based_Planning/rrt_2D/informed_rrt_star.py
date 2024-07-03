@@ -111,7 +111,7 @@ class IRrtStar:
 
                 if self.InGoalRegion(x_new):
                     if not self.utils.is_collision(x_new, self.x_goal):
-                        if len(self.X_soln == 0):
+                        if len(self.X_soln) == 0:
                             self.first_success = time.time() - start
                         self.X_soln.add(x_new)
 

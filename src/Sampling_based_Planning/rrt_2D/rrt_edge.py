@@ -57,6 +57,7 @@ class RrtEdge(Rrt):
         self.name = "RRT-Edge"
         self.edges = []
         self.min_edge_length = min_edge_length
+        self.first_success = float("inf")
 
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)

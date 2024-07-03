@@ -32,8 +32,11 @@ class DStar:
         self.g, self.rhs, self.U = {}, {}, {}
         self.km = 0
 
-        for i in range(1, self.Env.x_range - 1):
-            for j in range(1, self.Env.y_range - 1):
+        self.name = "D* Lite"
+        self.first_success = None
+
+        for i in range(self.Env.x_range):
+            for j in range(self.Env.y_range):
                 self.rhs[(i, j)] = float("inf")
                 self.g[(i, j)] = float("inf")
 
@@ -111,6 +114,8 @@ class DStar:
 
     def ComputePath(self):
         while True:
+            if (len(self.U)) == 0:
+                return None
             s, v = self.TopKey()
             if (
                 v >= self.CalculateKey(self.s_start)
@@ -133,6 +138,8 @@ class DStar:
                 self.UpdateVertex(s)
                 for x in self.get_neighbor(s):
                     self.UpdateVertex(x)
+
+        return self.path_to_end()
 
     def UpdateVertex(self, s):
         if s != self.s_goal:
@@ -298,7 +305,7 @@ def main():
     s_goal = (989, 888)
 
     dstar = DStar(s_start, s_goal, "euclidean")
-    dstar.change_env("Evaluation/Maps/2D/block_map_25/20.json")
+    dstar.change_env("Evaluation/Maps/2D/house_25/house_3.json")
     dstar.run()
 
 
