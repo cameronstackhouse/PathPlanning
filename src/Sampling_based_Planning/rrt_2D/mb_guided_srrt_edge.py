@@ -68,6 +68,8 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
                         path = self.extract_path(final_node)
                         cost = self.utils.path_cost(path)
                         if cost < path_cost:
+                            if self.first_success is None:
+                                self.first_success = time.time() - start_time
                             b_path = path
                             path_cost = cost
                             self.update_ellipsoid(path)
@@ -91,6 +93,8 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
                             path = self.extract_path(final_node)
                             cost = self.utils.path_cost(path)
                             if cost < path_cost:
+                                if self.first_success is None:
+                                    self.first_success = time.time() - start_time
                                 b_path = path
                                 path_cost = cost
                                 self.update_ellipsoid(path)

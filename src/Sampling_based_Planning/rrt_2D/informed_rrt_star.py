@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import math
+import time
 import random
 import numpy as np
 import matplotlib.pyplot as plt
@@ -55,6 +56,7 @@ class IRrtStar:
         self.path = None
         self.peak_cpu = 0
         self.name = "Informed RRT*"
+        self.first_success = None
 
     def init(self):
         cMin, theta = self.get_distance_and_angle(self.x_start, self.x_goal)
@@ -73,6 +75,8 @@ class IRrtStar:
     def planning(self):
         theta, dist, x_center, C, x_best = self.init()
         c_best = np.inf
+
+        start = time.time()
 
         for k in range(self.iter_max):
             cpu_usage = psutil.cpu_percent(interval=None)
@@ -107,6 +111,8 @@ class IRrtStar:
 
                 if self.InGoalRegion(x_new):
                     if not self.utils.is_collision(x_new, self.x_goal):
+                        if len(self.X_soln == 0):
+                            self.first_success = time.time() - start
                         self.X_soln.add(x_new)
 
         self.path = self.ExtractPath(x_best)
@@ -357,6 +363,8 @@ class IRrtStar:
             # Add dynamic obs if needed
             if obs_name:
                 self.set_dynamic_obs(obs_name)
+
+            self.first_success = None
 
         else:
             print("Error, map not found")

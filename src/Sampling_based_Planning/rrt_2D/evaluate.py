@@ -10,6 +10,7 @@ import psutil
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tracemalloc
+from threading import Thread
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -58,9 +59,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     if TYPE == "2D":
         algorithms = [
             MBGuidedSRrtEdge(START, END, 0.05, 2),
-            IRrtStar(START, END, 5, 0.05, 5, 4000),
-            #DStar(START, END, "euclidean"),
-            RrtEdge(START, END, 0.05, 4000),
+            RrtEdge(START, END, 0.05, 1000),
+            # IRrtStar(START, END, 5, 0.05, 5, 2000),
+            # DStar(START, END, "euclidean"),
         ]
 
     else:
@@ -75,13 +76,13 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
         path_len = []
         times = []
         energy = []
-        nodes = []
         success = 0
 
         # TODO
         traversal_time = []
         cpu_usage = []
         memory_used = []  # psutil.virtual_memory()
+        first_successes = []
 
         # Load and evaluate each map
         for i, map in enumerate(map_name_list):
@@ -99,9 +100,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             if OBJ_DIR:
                 path = algorithm.run()
             else:
-                path = algorithm.planning()
+                path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
 
-            cpu_usage.append(algorithm.peak_cpu)
+            cpu_usage.append(avg_cpu_load)
+            first_successes.append(algorithm.first_success)
 
             total_time = time.time() - start_time
             peak = tracemalloc.get_tracemalloc_memory()
@@ -111,15 +113,13 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             if path:
                 success += 1
-                path_len.append(algorithms[1].utils.path_cost(path))
-                energy.append(algorithms[1].utils.path_energy(path))
+                path_len.append(algorithms[0].utils.path_cost(path))
+                energy.append(algorithms[0].utils.path_energy(path))
                 times.append(total_time)
             else:
                 path_len.append(None)
                 energy.append(None)
                 times.append(None)
-
-            # nodes.append(len(algorithm.vertex))
 
         success /= NUM_MAPS
         # TODO record CPU load + memory usage too
@@ -131,7 +131,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             "Time Taken To Calculate": times,
             "Energy To Traverse": energy,
             "CPU Usage": cpu_usage,
-            "Number of Nodes": nodes,
+            "First success": first_successes,
             "Memory Used": memory_used,
         }
 
@@ -145,6 +145,33 @@ def save_results(results, name):
         json.dump(results, file, indent=4)
 
     print(f"Results saved to {name}")
+
+
+def measure_cpu_usage(func, *args, **kwargs):
+    """
+    Measures CPU utalisation of a function as a sum of the CPU percentage
+    utalised at each time step.
+    """
+
+    def measure():
+        while running:
+            cpu_percentages.append(psutil.cpu_percent(interval=0.1))
+
+    process = psutil.Process()
+
+    cpu_percentages = []
+    running = True
+    measurement_thread = Thread(target=measure)
+    measurement_thread.start()
+
+    result = func(*args, **kwargs)
+
+    running = False
+    measurement_thread.join()
+
+    avg_cpu_load = sum(cpu_percentages)
+
+    return (result, avg_cpu_load)
 
 
 def main():

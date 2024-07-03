@@ -60,6 +60,7 @@ class RrtEdge(Rrt):
 
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)
+        self.peak_cpu = 0
 
     def planning(self):
         b_path = None
