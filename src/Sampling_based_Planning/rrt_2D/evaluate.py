@@ -58,10 +58,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
     if TYPE == "2D":
         algorithms = [
-            DStar(START, END, "euclidean", time=10),
-            MBGuidedSRrtEdge(START, END, 0.05, 10),
-            RrtEdge(START, END, 0.05, 2000, time=10),
-            IRrtStar(START, END, 5, 0.05, 5, 2000, time=10),
+            DStar(START, END, "euclidean", time=5),
+            MBGuidedSRrtEdge(START, END, 0.05, 5),
+            RrtEdge(START, END, 0.05, 2000, time=5),
+            IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
         ]
 
     else:
