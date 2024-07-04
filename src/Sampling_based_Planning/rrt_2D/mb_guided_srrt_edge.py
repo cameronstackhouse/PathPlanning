@@ -23,7 +23,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         self, start, end, goal_sample_rate, time=0.05, mem=100000, min_edge_length=4
     ):
         super().__init__(start, end, goal_sample_rate, float("inf"), min_edge_length)
-        self.name = "MB-SRRT-Edge"
+        self.name = "MB-SRRT-Edge-" + str(time)
         self.mem = mem
         self.time = time
         self.peak_cpu = 0
