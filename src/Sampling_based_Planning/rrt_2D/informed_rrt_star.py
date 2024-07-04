@@ -31,7 +31,14 @@ class Node:
 
 class IRrtStar:
     def __init__(
-        self, x_start, x_goal, step_len, goal_sample_rate, search_radius, iter_max
+        self,
+        x_start,
+        x_goal,
+        step_len,
+        goal_sample_rate,
+        search_radius,
+        iter_max,
+        time=float("inf"),
     ):
         self.x_start = Node(x_start)
         self.x_goal = Node(x_goal)
@@ -57,6 +64,7 @@ class IRrtStar:
         self.peak_cpu = 0
         self.name = "Informed RRT*"
         self.first_success = None
+        self.time = time
 
     def init(self):
         cMin, theta = self.get_distance_and_angle(self.x_start, self.x_goal)
@@ -85,6 +93,9 @@ class IRrtStar:
                 cost = {node: self.Cost(node) for node in self.X_soln}
                 x_best = min(cost, key=cost.get)
                 c_best = cost[x_best]
+
+            if time.time() - start > self.time:
+                break
 
             x_rand = self.Sample(c_best, dist, x_center, C)
             x_nearest = self.Nearest(self.V, x_rand)

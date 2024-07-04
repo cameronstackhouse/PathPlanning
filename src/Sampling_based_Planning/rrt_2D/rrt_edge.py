@@ -53,7 +53,15 @@ class RrtEdge(Rrt):
     Key features of the algorithm involve a completley unbounded edge length alongside
     """
 
-    def __init__(self, start, end, goal_sample_rate, iter_max, min_edge_length=4):
+    def __init__(
+        self,
+        start,
+        end,
+        goal_sample_rate,
+        iter_max,
+        min_edge_length=4,
+        time=float("inf"),
+    ):
         super().__init__(start, end, float("inf"), goal_sample_rate, iter_max)
         self.name = "RRT-Edge"
         self.edges = []
@@ -63,6 +71,7 @@ class RrtEdge(Rrt):
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)
         self.peak_cpu = 0
+        self.time = time
 
     def planning(self):
         b_path = None
@@ -71,6 +80,11 @@ class RrtEdge(Rrt):
         for _ in range(self.iter_max):
             cpu_usage = psutil.cpu_percent(interval=None)
             self.peak_cpu = max(self.peak_cpu, cpu_usage)
+
+            current_time = time.time()
+
+            if current_time - start_time > self.time:
+                break
 
             node_rand = self.generate_random_node()
             node_near = self.nearest_neighbour(self.vertex, self.edges, node_rand)

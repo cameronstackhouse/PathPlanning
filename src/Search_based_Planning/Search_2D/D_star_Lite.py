@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import math
+import time
 import matplotlib.pyplot as plt
 
 sys.path.append(
@@ -17,7 +18,7 @@ from Search_2D import plotting, env
 
 
 class DStar:
-    def __init__(self, s_start, s_goal, heuristic_type):
+    def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
         self.s_start, self.s_goal = s_start, s_goal
         self.heuristic_type = heuristic_type
 
@@ -34,6 +35,7 @@ class DStar:
 
         self.name = "D* Lite"
         self.first_success = None
+        self.time = time
 
         for i in range(self.Env.x_range):
             for j in range(self.Env.y_range):
@@ -113,9 +115,20 @@ class DStar:
             self.fig.canvas.draw_idle()
 
     def ComputePath(self):
+        start_time = time.time()
         while True:
             if (len(self.U)) == 0:
                 return None
+
+            if time.time() - start_time > self.time:
+                if (
+                    v >= self.CalculateKey(self.s_start)
+                    and self.rhs[self.s_start] == self.g[self.s_start]
+                ):
+                    break
+                else:
+                    return None
+
             s, v = self.TopKey()
             if (
                 v >= self.CalculateKey(self.s_start)
