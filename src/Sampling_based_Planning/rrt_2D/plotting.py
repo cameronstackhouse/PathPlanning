@@ -151,7 +151,7 @@ class DynamicPlotting(Plotting):
         for obj in self.dynamic_objects:
             obj.current_pos = [
                 obj.current_pos[0] + obj.velocity[0],
-                obj.current_pos[1] + obj.velocity[1]
+                obj.current_pos[1] + obj.velocity[1],
             ]
 
     def plot_dynamic_objects(self):
@@ -188,7 +188,6 @@ class DynamicPlotting(Plotting):
             self.plot_original_path(self.initial_path)
             self.plot_agent(self.agent_pos[i])
             self.update_dynamic_objects()
-
             fig.canvas.draw()
             plt.pause(0.1)
 

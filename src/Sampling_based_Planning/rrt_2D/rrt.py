@@ -28,9 +28,7 @@ class DynamicObj:
         self.init_pos = None
 
     def update_pos(self):
-        """
-        TODO improve
-        """
+        """ """
         velocity = self.velocity
         new_pos = [
             self.current_pos[0] + (velocity[0]),
@@ -217,10 +215,6 @@ class Rrt:
             self.obs_rectangle = self.env.obs_rectangle
             self.obs_boundary = self.env.obs_boundary
 
-            # Add dynamic obs if needed
-            if obs_name:
-                self.set_dynamic_obs(obs_name)
-
             self.agent_pos = data["agent"]
             self.first_success = None
 
@@ -329,7 +323,10 @@ class Rrt:
         """
         for object in self.dynamic_objects:
             # Attempt to move in direction of travel
+            prev_pos = object.current_pos
             new_pos = object.update_pos()
+            if not (0 <= new_pos[0] < self.x_range[1] and 0 <= new_pos[1] < self.y_range[1]):
+                new_pos = prev_pos
             object.current_pos = new_pos
 
             self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
