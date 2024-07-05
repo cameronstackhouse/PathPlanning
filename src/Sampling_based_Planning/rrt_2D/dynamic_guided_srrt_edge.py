@@ -28,7 +28,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
         self.path = []
-        self.speed = 100
+        self.speed = 50
         self.distance_travelled = 0
         self.obj_dir = obj_dir
 
@@ -81,12 +81,12 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 self.time_steps += 1
             # TODO update
             self.path = global_path
-            print(self.distance_travelled)
             return True
         else:
             return False
 
     def move(self, path, mps=6):
+        # TODO ADD CHECK TO MAKE SURE NOT MOVING INTO OBJECT
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
@@ -97,7 +97,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         next_node = path[self.current_index + 1]
 
         # Checks for collision between current point and the waypoint node
-        # TODO change, need to make sure object which is blocking is known
         if self.utils.is_collision(Node(current_pos), Node(next_node)):
             return [None, None]
 
@@ -112,6 +111,18 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             current_pos[0] + direction[0] * mps,
             current_pos[1] + direction[1] * mps,
         )
+
+        # Check to see if when moved, the uav will move into an object
+        for obj in self.dynamic_objects:
+            old_coords = obj.current_pos
+            obj.current_pos = [
+                obj.current_pos[0] + obj.velocity[0],
+                obj.current_pos[1] + obj.velocity[1],
+            ]
+
+            if self.in_dynamic_obj(Node(new_pos), obj):
+                obj.current_pos = old_coords
+                return [None, None]
 
         # Checks for overshoot
         if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
@@ -171,9 +182,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
     def plot(self):
         dynamic_objects = self.dynamic_objects
 
-        for obj in dynamic_objects:
-            print(obj.current_pos)
-
         nodelist = self.vertex
         path = self.path
 
@@ -205,8 +213,10 @@ if __name__ == "__main__":
         global_time=5,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_12.json")
 
     success = rrt.run()
+
+    print(success)
 
     rrt.plot()

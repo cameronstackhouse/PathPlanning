@@ -246,69 +246,18 @@ class Rrt:
                 new_obj.size = obj["size"]
                 new_obj.init_pos = new_obj.current_pos
 
+                self.env.add_rect(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                )
+
                 new_obj.index = len(self.env.obs_rectangle) - 1
                 self.dynamic_objects.append(new_obj)
 
         else:
             print("Error, dynamic objects could not be loaded")
-
-    def init_dynamic_obs(self, n_obs):
-        """
-        TODO, tidy
-        """
-        for _ in range(n_obs):
-            new_obj = DynamicObj()
-            new_obj.velocity = [
-                -1.1,
-                -1.1,
-            ]
-            new_obj.size = [150, 150]
-            new_obj.current_pos = [177, 29]
-            new_obj.init_pos = new_obj.current_pos
-
-            self.env.add_rect(
-                new_obj.current_pos[0],
-                new_obj.current_pos[1],
-                new_obj.size[0],
-                new_obj.size[1],
-            )
-
-            # TODO THIS IS THE KEY!
-            self.utils.env.add_rect(
-                new_obj.current_pos[0],
-                new_obj.current_pos[1],
-                new_obj.size[0],
-                new_obj.size[1],
-            )
-
-            new_obj.index = len(self.env.obs_rectangle) - 1
-            self.dynamic_objects.append(new_obj)
-
-        new_obj = DynamicObj()
-        new_obj.velocity = [
-            0,
-            0,
-        ]
-        new_obj.size = [100, 100]
-        new_obj.current_pos = [787, 635]
-        new_obj.init_pos = new_obj.current_pos
-
-        self.env.add_rect(
-            new_obj.current_pos[0],
-            new_obj.current_pos[1],
-            new_obj.size[0],
-            new_obj.size[1],
-        )
-
-        self.utils.env.add_rect(
-            new_obj.current_pos[0],
-            new_obj.current_pos[1],
-            new_obj.size[0],
-            new_obj.size[1],
-        )
-
-        new_obj.index = len(self.env.obs_rectangle) - 1
-        self.dynamic_objects.append(new_obj)
 
     def in_dynamic_obj(self, node, obj):
         """
@@ -465,7 +414,7 @@ class Rrt:
         global_path = self.planning()[::-1]
         self.initial_path = global_path
 
-        self.init_dynamic_obs(1)
+        # self.init_dynamic_obs(1)
 
         if global_path:
             current = global_path[self.current_index]
@@ -492,6 +441,28 @@ class Rrt:
             return self.path
         else:
             return None
+
+    def plot(self):
+        dynamic_objects = self.dynamic_objects
+
+        nodelist = self.vertex
+        path = self.path
+
+        plotter = plotting.DynamicPlotting(
+            self.s_start.coords,
+            self.s_goal.coords,
+            dynamic_objects,
+            self.time_steps,
+            self.agent_positions,
+            self.initial_path,
+        )
+
+        plotter.env = self.env
+        plotter.obs_bound = self.env.obs_boundary
+        plotter.obs_circle = self.env.obs_circle
+        plotter.obs_rectangle = self.env.obs_rectangle
+
+        plotter.animation(nodelist, path, "Test", animation=True)
 
 
 def main():

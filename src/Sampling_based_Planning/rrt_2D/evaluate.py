@@ -46,11 +46,6 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
 
-    # TODO add dynamic capability to the evaluation suite
-    if OBJ_DIR:
-        obj_name_list = list(Path(OBJ_DIR).glob("*.json"))
-        obj_names = [obj.stem for obj in obj_name_list]
-
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
@@ -88,10 +83,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
         for i, map in enumerate(map_name_list):
             print(map)
             # Checks if the algorithm is to be evaluated dynamically
-            if OBJ_DIR:
-                algorithm.change_env(map, obj_name_list[i])
-            else:
-                algorithm.change_env(map)
+            algorithm.change_env(map)
 
             path = None
             tracemalloc.start()
@@ -181,6 +173,7 @@ def measure_cpu_usage(func, *args, **kwargs):
 
 
 def main():
+    OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate("src/Evaluation/Maps/2D/main", TYPE="2D")
     save_results(results, "evaluation_results.json")
 

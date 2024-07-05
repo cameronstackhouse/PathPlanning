@@ -61,12 +61,15 @@ class RrtEdge(Rrt):
         iter_max,
         min_edge_length=4,
         time=float("inf"),
+        obj_dir=None,
     ):
         super().__init__(start, end, float("inf"), goal_sample_rate, iter_max)
         self.name = "RRT-Edge"
         self.edges = []
         self.min_edge_length = min_edge_length
         self.first_success = None
+        self.obj_dir = obj_dir
+        self.speed = 50
 
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)
@@ -227,21 +230,20 @@ class RrtEdge(Rrt):
         global_path = self.planning()[::-1]
         self.initial_path = global_path
 
-        self.init_dynamic_obs(1)
+        if self.obj_dir:
+            self.set_dynamic_obs(self.obj_dir)
 
         if global_path:
             current = global_path[self.current_index]
             GOAL = global_path[-1]
 
             while current != GOAL:
-                print(self.agent_pos)
-
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
                 new_coords = self.move(global_path, self.speed)
 
-                if new_coords == [None, None]:
+                if new_coords[0] is None:
                     # Rerun rrt-edge from the current position
                     self.edges = []
                     self.vertex = [Node(current)]
@@ -254,26 +256,30 @@ class RrtEdge(Rrt):
                 self.time_steps += 1
 
             self.path = global_path
-            return self.path
+            return True
         else:
-            return None
+            return False
 
 
 def main():
     x_start = (2, 2)
     x_goal = (82, 77)
 
-    rrt_edge = RrtEdge(x_start, x_goal, 0.05, 2000)
-    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/7.json")
-    path = rrt_edge.planning()
+    rrt_edge = RrtEdge(
+        x_start,
+        x_goal,
+        0.05,
+        2000,
+        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+    )
 
-    if path:
-        print(f"Number of nodes: {len(rrt_edge.vertex)}")
-        print(f"Path length: {utils.Utils.path_cost(path)}")
-        rrt_edge.plotting.animation(rrt_edge.vertex, path, "RRT-Edge", True)
-    else:
-        print("No Path Found!")
+    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/block_12.json")
 
+    success = rrt_edge.run()
+
+    print(success)
+
+    rrt_edge.plot()
 
 if __name__ == "__main__":
     main()
