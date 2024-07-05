@@ -20,7 +20,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         start,
         end,
         goal_sample_rate,
-        global_time=10.0,
+        global_time=3.0,
+        local_time=1.0,
         mem=100000,
         min_edge_length=4,
         obj_dir=None,
@@ -29,7 +30,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
         self.path = []
-        self.speed = 50
+        self.speed = 6
         self.distance_travelled = 0
         self.obj_dir = obj_dir
         self.start_rect = None
@@ -61,6 +62,11 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
+
+                if not self.utils.is_collision(Node(self.agent_pos), Node(GOAL)):
+                    global_path = [self.agent_pos, self.s_goal.coords]
+                    self.current_index = 0
+
                 new_coords = self.move(global_path, self.speed)
                 # If the UAV can't move to the next position
                 if new_coords[0] is None:
@@ -72,7 +78,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                             return False
                         else:
                             global_path = new_path
-                            self.agent_positions.append(self.agent_pos)
+
+                    self.agent_positions.append(self.agent_pos)
+
                 else:
                     self.agent_positions.append(new_coords)
                     current = new_coords
@@ -91,7 +99,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             return False
 
     def move(self, path, mps=6):
-        # TODO ADD CHECK TO MAKE SURE NOT MOVING INTO OBJECT
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
@@ -103,7 +110,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         # Checks for collision between current point and the waypoint node
         if self.utils.is_collision(Node(current_pos), Node(next_node)):
-            print(f"Collision: current: {current_pos}, next: {next_node}")
             return [None, None]
 
         seg_distance = self.utils.euclidian_distance(current_pos, next_node)
@@ -127,7 +133,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             ]
 
             if self.in_dynamic_obj(Node(new_pos), obj):
-                print("HERE")
                 obj.current_pos = old_coords
                 return [None, None]
 
@@ -178,11 +183,35 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         current_pos = self.agent_pos
         goal_pos = path[self.current_index + 1]
 
-        # TODO go one timestep ahead
-        for obj in self.dynamic_objects:
-            pass
+        time_steps = int(self.time)
 
-        return not self.utils.is_collision(Node(current_pos), Node(goal_pos))
+        # Checks if its faster to wait than replan
+        for t in range(1, time_steps + 1):
+            collision_detected = False
+            for obj in self.dynamic_objects:
+                future_pos = [
+                    obj.current_pos[0] + obj.velocity[0] * t,
+                    obj.current_pos[1] + obj.velocity[1] * t,
+                ]
+
+                original_pos = obj.current_pos
+                obj.current_pos = future_pos
+
+                if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
+                    Node(goal_pos), obj
+                ):
+                    collision_detected = True
+
+                # Restore the original position
+                obj.current_pos = original_pos
+
+                if collision_detected:
+                    break
+
+            if not collision_detected:
+                return True
+
+        return False
 
     def change_env(self, map_name, obj_dir=None):
         super().change_env(map_name, obj_dir)
@@ -219,10 +248,10 @@ if __name__ == "__main__":
         start,
         end,
         goal_sample_rate,
-        global_time=2,
+        global_time=3,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_15.json")
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_3.json")
 
     success = rrt.run()
 
