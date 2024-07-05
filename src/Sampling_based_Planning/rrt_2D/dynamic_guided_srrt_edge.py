@@ -202,6 +202,7 @@ if __name__ == "__main__":
         start,
         end,
         goal_sample_rate,
+        global_time=5,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
     rrt.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
