@@ -17,6 +17,28 @@ sys.path.append(
 from Search_2D import plotting, env
 
 
+class DynamicObj:
+    def __init__(self) -> None:
+        self.velocity = []
+        self.size = []
+        self.known = False
+        self.current_pos = []
+        self.index = 0
+        self.init_pos = None
+
+    def update_pos(self):
+        """
+        TODO improve
+        """
+        velocity = self.velocity
+        new_pos = [
+            self.current_pos[0] + (velocity[0]),
+            self.current_pos[1] + (velocity[1]),
+        ]
+
+        return new_pos
+
+
 class DStar:
     def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
         self.s_start, self.s_goal = s_start, s_goal
@@ -48,12 +70,18 @@ class DStar:
         self.count = 0
         self.fig = plt.figure()
 
-    def run(self):
-        self.Plot.plot_grid("D* Lite")
-        self.ComputePath()
-        self.plot_path(self.path_to_end())
-        self.fig.canvas.mpl_connect("button_press_event", self.on_press)
-        plt.show()
+        # Data associated with traversal of the found path
+        self.current_index = 0
+        self.dynamic_objects = []
+        self.speed = 600
+        self.time_steps = 0
+        self.agent_pos = self.s_start
+
+    # def run(self):
+    #     self.Plot.plot_grid("D* Lite")
+    #     self.ComputePath()
+    #     self.plot_path(self.path_to_end())
+    #     plt.show()
 
     def path_to_end(self):
         s_curr = self.s_start
@@ -69,50 +97,47 @@ class DStar:
 
         return path
 
-    def on_press(self, event):
-        x, y = event.xdata, event.ydata
-        if x < 0 or x > self.x - 1 or y < 0 or y > self.y - 1:
-            print("Please choose right area!")
-        else:
-            x, y = int(x), int(y)
-            print("Change position: s =", x, ",", "y =", y)
+    def update_and_rerun(self, x, y):
+        """
+        Update and rerun method which deals with the replanning around
+        a dynamic object.
 
-            s_curr = self.s_start
-            s_last = self.s_start
-            i = 0
-            path = [self.s_start]
+        TODO.
+        """
+        s_curr = self.s_start
+        s_last = self.s_start
+        i = 0
+        # TODO
+        path = [self.s_start]
 
-            while s_curr != self.s_goal:
-                s_list = {}
+        while s_curr != self.s_goal:
+            s_list = {}
 
-                for s in self.get_neighbor(s_curr):
-                    s_list[s] = self.g[s] + self.cost(s_curr, s)
-                s_curr = min(s_list, key=s_list.get)
-                path.append(s_curr)
+            for s in self.get_neighbor(s_curr):
+                s_list[s] = self.g[s] + self.cost(s_curr, s)
+            s_curr = min(s_list, key=s_list.get)
+            path.append(s_curr)
 
-                if i < 1:
-                    self.km += self.h(s_last, s_curr)
-                    s_last = s_curr
-                    if (x, y) not in self.obs:
-                        self.obs.add((x, y))
-                        plt.plot(x, y, "sk")
-                        self.g[(x, y)] = float("inf")
-                        self.rhs[(x, y)] = float("inf")
-                    else:
-                        self.obs.remove((x, y))
-                        plt.plot(x, y, marker="s", color="white")
-                        self.UpdateVertex((x, y))
-                    for s in self.get_neighbor((x, y)):
-                        self.UpdateVertex(s)
-                    i += 1
+            if i < 1:
+                self.km += self.h(s_last, s_curr)
+                s_last = s_curr
+                # Adds the object to the object set
+                if (x, y) not in self.obs:
+                    self.obs.add((x, y))
+                    self.g[(x, y)] = float("inf")
+                    self.rhs[(x, y)] = float("inf")
+                else:
+                    self.obs.remove((x, y))
+                    plt.plot(x, y, marker="s", color="white")
+                    self.UpdateVertex((x, y))
+                for s in self.get_neighbor((x, y)):
+                    # Update the neighbours of the dynamic object
+                    self.UpdateVertex(s)
+                i += 1
 
-                    self.count += 1
-                    self.visited = set()
-                    self.ComputePath()
-
-            self.plot_visited(self.visited)
-            self.plot_path(path)
-            self.fig.canvas.draw_idle()
+                self.count += 1
+                self.visited = set()
+                self.ComputePath()
 
     def ComputePath(self):
         start_time = time.time()
@@ -312,13 +337,80 @@ class DStar:
         else:
             print("Error, map not found")
 
+    def init_dynamic_obs(self, n_obs):
+        pass
+        # for _ in range(n_obs):
+        #     new_obj = DynamicObj()
+        #     new_obj.velocity = [
+        #         -1.1,
+        #         -1.1,
+        #     ]
+        #     new_obj.size = [150, 150]
+        #     new_obj.current_pos = [177, 29]
+        #     new_obj.init_pos = new_obj.current_pos
+
+        #     self.env.add_rect(
+        #         new_obj.current_pos[0],
+        #         new_obj.current_pos[1],
+        #         new_obj.size[0],
+        #         new_obj.size[1],
+        #     )
+
+    def move(self, path, mps=6):
+        """
+        Attempts to move the agent forward by a fixed amount of meters per second.
+        """
+        if self.current_index >= len(path) - 1:
+            return self.s_goal.coords
+
+        current_pos = self.agent_pos
+        next_node = path[self.current_index + 1]
+
+        # Checks for collision between current point and the waypoint node
+        # TODO change, need to make sure object which is blocking is known
+        if self.is_collision(current_pos, next_node):
+            return [None, None]
+
+        seg_distance = self.utils.euclidian_distance(current_pos, next_node)
+
+        direction = (
+            (next_node[0] - current_pos[0]) / seg_distance,
+            (next_node[1] - current_pos[1]) / seg_distance,
+        )
+
+        new_pos = (
+            current_pos[0] + direction[0] * mps,
+            current_pos[1] + direction[1] * mps,
+        )
+
+        # Checks for overshoot
+        if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
+            self.agent_pos = next_node
+            self.current_index += 1
+            return next_node
+
+        return new_pos
+
+    def run(self):
+        """
+        TODO
+        """
+        path = self.ComputePath()
+        self.initial_path = path
+
+        # TODO implement
+        self.init_dynamic_obs(1)
+
+        if path:
+            pass
+
 
 def main():
     s_start = (5, 5)
     s_goal = (989, 888)
 
     dstar = DStar(s_start, s_goal, "euclidean")
-    dstar.change_env("Evaluation/Maps/2D/house_25/house_3.json")
+    dstar.change_env("Evaluation/Maps/2D/house_25/house_0.json")
     dstar.run()
 
 

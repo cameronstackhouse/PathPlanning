@@ -19,6 +19,7 @@ class Env:
             (-1, -1),
         ]
         self.obs = self.obs_map()
+        self.dynamic_obs = []
 
     def update_obs(self, obs):
         self.obs = obs

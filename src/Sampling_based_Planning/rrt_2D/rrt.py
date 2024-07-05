@@ -239,11 +239,12 @@ class Rrt:
 
         # Adds each object to the environment
         if obj_json:
-            for obj in obj_json:
+            for obj in obj_json["objects"]:
                 new_obj = DynamicObj()
                 new_obj.velocity = obj["velocity"]
                 new_obj.current_pos = obj["position"]
                 new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
 
                 new_obj.index = len(self.env.obs_rectangle) - 1
                 self.dynamic_objects.append(new_obj)

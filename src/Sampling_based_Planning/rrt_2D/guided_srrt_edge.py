@@ -55,7 +55,7 @@ class GuidedSRrtEdge(SRrtEdge):
         if self.ellipsoid:
             center_x, center_y, semi_major_axis, semi_minor_axis, angle = self.ellipsoid
             while True:
-                # Samples a point within a unit circle
+                # Samples a point within a unit circle
                 u, v = np.random.uniform(-1, 1, 2)
                 if u**2 + v**2 <= 1:
                     break
@@ -123,9 +123,9 @@ class GuidedSRrtEdge(SRrtEdge):
                                 self.update_ellipsoid(path)
 
         return b_path
-    
-    def change_env(self, map_name):
-        super().change_env(map_name)
+
+    def change_env(self, map_name, obj_dir=None):
+        super().change_env(map_name, obj_dir)
         self.ellipsoid = None
 
 

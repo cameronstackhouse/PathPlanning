@@ -101,8 +101,8 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
         return b_path
 
-    def change_env(self, map_name):
-        super().change_env(map_name)
+    def change_env(self, map_name, obj_dir=None):
+        super().change_env(map_name, obj_dir)
         self.ellipsoid = None
 
 

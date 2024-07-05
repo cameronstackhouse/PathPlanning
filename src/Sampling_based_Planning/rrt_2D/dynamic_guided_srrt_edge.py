@@ -19,27 +19,31 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         start,
         end,
         goal_sample_rate,
-        global_time=4.0,
-        local_time=0.05,
+        global_time=10.0,
         mem=100000,
         min_edge_length=4,
+        obj_dir=None,
     ):
         super().__init__(
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
         self.path = []
         self.speed = 100
+        self.distance_travelled = 0
+        self.obj_dir = obj_dir
 
     def run(self):
         """
         Attempts to run the algorithm to initially find a global path
         and then traverse the environment while avoiding dynamic objects
         """
-        taken_path = []  # TODO!
+        prev_coords = self.s_start.coords
         # Find initial global path without knowledge of dynamic objects
         global_path = self.planning()
         self.initial_path = global_path
-        self.init_dynamic_obs(1)
+
+        if self.obj_dir:
+            self.set_dynamic_obs(self.obj_dir)
 
         if global_path:
             global_path = global_path[::-1]
@@ -68,9 +72,16 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     self.agent_positions.append(new_coords)
                     current = new_coords
                     self.agent_pos = new_coords
+
+                    self.distance_travelled += self.utils.euclidian_distance(
+                        prev_coords, new_coords
+                    )
+                    prev_coords = new_coords
+
                 self.time_steps += 1
             # TODO update
             self.path = global_path
+            print(self.distance_travelled)
             return True
         else:
             return False
@@ -148,18 +159,20 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         goal_pos = path[self.current_index + 1]
 
         # TODO go one timestep ahead
-
         for object in self.dynamic_objects:
             new_pos = object.update_pos()
             # TODO
 
         return not self.utils.is_collision(Node(current_pos), Node(goal_pos))
 
-    def change_env(self, map_name):
-        super().change_env(map_name)
+    def change_env(self, map_name, obj_dir=None):
+        super().change_env(map_name, obj_dir)
 
     def plot(self):
         dynamic_objects = self.dynamic_objects
+
+        for obj in dynamic_objects:
+            print(obj.current_pos)
 
         nodelist = self.vertex
         path = self.path
@@ -178,15 +191,20 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         plotter.obs_circle = self.env.obs_circle
         plotter.obs_rectangle = self.env.obs_rectangle
 
-        plotter.animation(nodelist, path, "Test", animation=False)
+        plotter.animation(nodelist, path, "Test", animation=True)
 
 
 if __name__ == "__main__":
     start = (906, 2)
     end = (10, 505)
     goal_sample_rate = 0.05
-    rrt = DynamicGuidedSRrtEdge(start, end, goal_sample_rate)
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/0.json")
+    rrt = DynamicGuidedSRrtEdge(
+        start,
+        end,
+        goal_sample_rate,
+        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+    )
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
 
     success = rrt.run()
 

@@ -214,8 +214,8 @@ class RrtEdge(Rrt):
         self.edges.append(Edge(node, edge.node_2))
         node.edge = None
 
-    def change_env(self, map_name):
-        super().change_env(map_name)
+    def change_env(self, map_name, obj_dir=None):
+        super().change_env(map_name, obj_dir)
         self.edges = []
 
     def run(self):

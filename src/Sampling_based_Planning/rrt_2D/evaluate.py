@@ -98,6 +98,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             start_time = time.time()
             if OBJ_DIR:
+                # Run the dynamic algorithm
                 path = algorithm.run()
             else:
                 if algorithm.name == "D* Lite":
