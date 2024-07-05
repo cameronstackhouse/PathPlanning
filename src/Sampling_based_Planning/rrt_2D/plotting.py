@@ -149,10 +149,14 @@ class DynamicPlotting(Plotting):
 
     def update_dynamic_objects(self):
         for obj in self.dynamic_objects:
+            old_pos = obj.current_pos
             obj.current_pos = [
                 obj.current_pos[0] + obj.velocity[0],
                 obj.current_pos[1] + obj.velocity[1],
             ]
+
+            if not (0 <= obj.current_pos[0] < 1000 and 0 <= obj.current_pos[1] < 1000):
+                obj.current_pos = old_pos
 
     def plot_dynamic_objects(self):
         for obj in self.dynamic_objects:

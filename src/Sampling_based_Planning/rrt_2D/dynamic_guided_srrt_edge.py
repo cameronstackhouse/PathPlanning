@@ -29,7 +29,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             start, end, goal_sample_rate, global_time, mem, min_edge_length
         )
         self.path = []
-        self.speed = 10
+        self.speed = 50
         self.distance_travelled = 0
         self.obj_dir = obj_dir
         self.start_rect = None
@@ -127,6 +127,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             ]
 
             if self.in_dynamic_obj(Node(new_pos), obj):
+                print("HERE")
                 obj.current_pos = old_coords
                 return [None, None]
 
