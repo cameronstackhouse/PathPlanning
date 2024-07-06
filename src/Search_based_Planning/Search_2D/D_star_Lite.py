@@ -49,6 +49,7 @@ class DStar:
 
         self.Env = env.Env()  # class Env
         self.Plot = plotting.Plotting(s_start, s_goal)
+        self.fig = plt.figure()
 
         self.u_set = self.Env.motions  # feasible input set
         self.obs = self.Env.obs  # position of obstacles
@@ -79,6 +80,7 @@ class DStar:
         self.time_steps = 0
         self.agent_pos = self.s_start
         self.obj_dir = obj_dir
+        self.traversed_path = []
 
     # def run(self):
     #     self.Plot.plot_grid("D* Lite")
@@ -415,6 +417,11 @@ class DStar:
 
         return path
 
+    def plot(self):
+        self.Plot.plot_grid("D* Lite")
+        self.plot_path(self.traversed_path)
+        plt.show()
+
     def run(self):
         """
         TODO
@@ -438,7 +445,7 @@ class DStar:
                 path = self.update_costs()
                 current = path[self.current_index + 1]
                 self.agent_pos = current
-                print(self.agent_pos)
+                self.traversed_path.append(self.agent_pos)
 
 
 def main():
@@ -451,8 +458,10 @@ def main():
         "euclidean",
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    dstar.change_env("Evaluation/Maps/2D/house_25/house_0.json")
+    dstar.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
     dstar.run()
+
+    dstar.plot()
 
 
 if __name__ == "__main__":
