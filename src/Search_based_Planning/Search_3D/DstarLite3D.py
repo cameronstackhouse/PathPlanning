@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,7 +9,7 @@ from collections import defaultdict
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
 )
-from Search_3D.env3D import env
+from Search_3D.env3D import CustomEnv, env
 from Search_3D.utils3D import (
     getDist,
     heuristic_fun,
@@ -172,6 +173,33 @@ class D_star_Lite(object):
             # visualization(self)
             self.ind += 1
 
+    def change_env(self, map_name, obs_name=None):
+        """
+        TODO
+        """
+        data = None
+        with open(map_name) as f:
+            data = json.load(f)
+
+        if data:
+            self.V = set()
+            self.i = 0
+            self.done = False
+            self.Path = []
+            self.Parent = {}
+
+            self.env = CustomEnv(data)
+
+            self.x0 = tuple(self.env.start)
+            self.xt = tuple(self.env.goal)
+            
+            self.rhs = {self.xt: 0}  # rhs(x0) = 0
+
+            self.OPEN = queue.MinheapPQ()
+            self.OPEN.put(self.xt, self.CalculateKey(self.xt))
+        else:
+            print("Error, failed to load custom environment.")
+
     def main(self):
         s_last = self.x0
         print("first run ...")
@@ -185,19 +213,20 @@ class D_star_Lite(object):
         t = 0  # count time
         ischanged = False
         self.V = set()
+        # TODO: NOTE THIS COULD HELP FOR 2D
         while getDist(self.x0, self.xt) > 2 * self.env.resolution:
             # ---------------------------------- at specific times, the environment is changed and Cost is updated
-            if t % 2 == 0:
-                new0, old0 = self.env.move_block(
-                    a=[-0.1, 0, -0.2], s=0.5, block_to_move=1, mode="translation"
-                )
-                new1, old1 = self.env.move_block(
-                    a=[0, 0, -0.2], s=0.5, block_to_move=0, mode="translation"
-                )
-                new2, old2 = self.env.move_OBB(theta=[0, 0.1 * t, 0])
-                # new2,old2 = self.env.move_block(a=[-0.3, 0, -0.1], s=0.5, block_to_move=1, mode='translation')
-                ischanged = True
-                self.Path = []
+            # if t % 2 == 0:
+            #     new0, old0 = self.env.move_block(
+            #         a=[-0.1, 0, -0.2], s=0.5, block_to_move=1, mode="translation"
+            #     )
+            #     new1, old1 = self.env.move_block(
+            #         a=[0, 0, -0.2], s=0.5, block_to_move=0, mode="translation"
+            #     )
+            #     new2, old2 = self.env.move_OBB(theta=[0, 0.1 * t, 0])
+            #     # new2,old2 = self.env.move_block(a=[-0.3, 0, -0.1], s=0.5, block_to_move=1, mode='translation')
+            #     ischanged = True
+            #     self.Path = []
             # ----------------------------------- traverse the route as originally planned
             if t == 0:
                 children_new = [
@@ -274,6 +303,7 @@ class D_star_Lite(object):
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
+    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
     a = time.time()
     D_lite.main()
     print("used time (s) is " + str(time.time() - a))
