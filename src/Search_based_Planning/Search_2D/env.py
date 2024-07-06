@@ -24,6 +24,10 @@ class Env:
     def update_obs(self, obs):
         self.obs = obs
 
+    def update_dynamic_obj_pos(self, index, new_x, new_y):
+        obj = self.dynamic_obs[index]
+        obj.current_pos = [new_x, new_y]
+
     def obs_map(self):
         """
         Initialize obstacles' positions
@@ -63,6 +67,7 @@ class CustomEnv(Env):
         self.data = data
         self.obs = []
         self.obs = self.gen_obs()
+        self.dynamic_obs = []
 
     def gen_obs(self):
         obs = set()

@@ -49,7 +49,6 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
             memory_usage = (process.memory_info().rss) / (1024 * 1024)
 
             if elapsed_time > self.time or memory_usage > self.mem:
-                print(elapsed_time)
                 break
 
             node_rand = self.generate_random_node()

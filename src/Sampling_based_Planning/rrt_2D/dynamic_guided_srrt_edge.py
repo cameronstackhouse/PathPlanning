@@ -92,7 +92,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     prev_coords = new_coords
 
                 self.time_steps += 1
-            # TODO update
             self.path = global_path
             return True
         else:
@@ -178,7 +177,8 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def reconnect(self, path):
         """
-        TODO see if wating for one time period would clear it, AKA the edge is valid
+        Waits up to t time steps to see if waiting would clear the object
+        in a faster time than replanning.
         """
         current_pos = self.agent_pos
         goal_pos = path[self.current_index + 1]
@@ -197,6 +197,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
+                # TODO might need to change
                 if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
                     Node(goal_pos), obj
                 ):
@@ -251,7 +252,7 @@ if __name__ == "__main__":
         global_time=3,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_3.json")
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_20.json")
 
     success = rrt.run()
 

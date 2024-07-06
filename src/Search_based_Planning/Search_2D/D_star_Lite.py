@@ -9,6 +9,7 @@ import sys
 import math
 import time
 import matplotlib.pyplot as plt
+import numpy as np
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
@@ -40,7 +41,9 @@ class DynamicObj:
 
 
 class DStar:
-    def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
+    def __init__(
+        self, s_start, s_goal, heuristic_type, time=float("inf"), obj_dir=None
+    ):
         self.s_start, self.s_goal = s_start, s_goal
         self.heuristic_type = heuristic_type
 
@@ -68,7 +71,6 @@ class DStar:
         self.U[self.s_goal] = self.CalculateKey(self.s_goal)
         self.visited = set()
         self.count = 0
-        self.fig = plt.figure()
 
         # Data associated with traversal of the found path
         self.current_index = 0
@@ -76,6 +78,7 @@ class DStar:
         self.speed = 600
         self.time_steps = 0
         self.agent_pos = self.s_start
+        self.obj_dir = obj_dir
 
     # def run(self):
     #     self.Plot.plot_grid("D* Lite")
@@ -102,12 +105,11 @@ class DStar:
         Update and rerun method which deals with the replanning around
         a dynamic object.
 
-        TODO.
+        TODO. NOTE: This mwethod was called when an object was added via a click.
         """
         s_curr = self.s_start
         s_last = self.s_start
         i = 0
-        # TODO
         path = [self.s_start]
 
         while s_curr != self.s_goal:
@@ -126,9 +128,8 @@ class DStar:
                     self.obs.add((x, y))
                     self.g[(x, y)] = float("inf")
                     self.rhs[(x, y)] = float("inf")
-                else:
+                else:  # Removes object if exists.
                     self.obs.remove((x, y))
-                    plt.plot(x, y, marker="s", color="white")
                     self.UpdateVertex((x, y))
                 for s in self.get_neighbor((x, y)):
                     # Update the neighbours of the dynamic object
@@ -280,33 +281,7 @@ class DStar:
         plt.plot(self.s_start[0], self.s_start[1], "bs")
         plt.plot(self.s_goal[0], self.s_goal[1], "gs")
 
-    def plot_visited(self, visited):
-        color = [
-            "gainsboro",
-            "lightgray",
-            "silver",
-            "darkgray",
-            "bisque",
-            "navajowhite",
-            "moccasin",
-            "wheat",
-            "powderblue",
-            "skyblue",
-            "lightskyblue",
-            "cornflowerblue",
-        ]
-
-        if self.count >= len(color) - 1:
-            self.count = 0
-
-        for x in visited:
-            plt.plot(x[0], x[1], marker="s", color=color[self.count])
-
     def change_env(self, map_name):
-        """
-        TODO
-        """
-
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -334,27 +309,10 @@ class DStar:
             self.rhs[self.s_goal] = 0.0
             self.U = {}
             self.U[self.s_goal] = self.CalculateKey(self.s_goal)
+
+            self.agent_pos = self.s_start
         else:
             print("Error, map not found")
-
-    def init_dynamic_obs(self, n_obs):
-        pass
-        # for _ in range(n_obs):
-        #     new_obj = DynamicObj()
-        #     new_obj.velocity = [
-        #         -1.1,
-        #         -1.1,
-        #     ]
-        #     new_obj.size = [150, 150]
-        #     new_obj.current_pos = [177, 29]
-        #     new_obj.init_pos = new_obj.current_pos
-
-        #     self.env.add_rect(
-        #         new_obj.current_pos[0],
-        #         new_obj.current_pos[1],
-        #         new_obj.size[0],
-        #         new_obj.size[1],
-        #     )
 
     def move(self, path, mps=6):
         """
@@ -363,33 +321,99 @@ class DStar:
         if self.current_index >= len(path) - 1:
             return self.s_goal.coords
 
-        current_pos = self.agent_pos
-        next_node = path[self.current_index + 1]
+        # TODO
 
-        # Checks for collision between current point and the waypoint node
-        # TODO change, need to make sure object which is blocking is known
-        if self.is_collision(current_pos, next_node):
-            return [None, None]
+        return []
 
-        seg_distance = self.utils.euclidian_distance(current_pos, next_node)
+    def update_object_positions(self):
+        # TODO
+        for i, object in enumerate(self.dynamic_objects):
+            prev_pos = object.current_pos
+            new_pos = object.update_pos()
 
-        direction = (
-            (next_node[0] - current_pos[0]) / seg_distance,
-            (next_node[1] - current_pos[1]) / seg_distance,
-        )
+            if not (0 <= new_pos[0] < self.x and 0 <= new_pos[1] < self.y):
+                new_pos = prev_pos
+            object.current_pos = new_pos
 
-        new_pos = (
-            current_pos[0] + direction[0] * mps,
-            current_pos[1] + direction[1] * mps,
-        )
+            self.Env.update_dynamic_obj_pos(i, new_pos[0], new_pos[1])
 
-        # Checks for overshoot
-        if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
-            self.agent_pos = next_node
-            self.current_index += 1
-            return next_node
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
 
-        return new_pos
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+
+                self.dynamic_objects.append(new_obj)
+
+                # Add to the env
+                self.Env.dynamic_obs.append(new_obj)
+        else:
+            print("Error, dynamic objects could not be loaded")
+
+    def get_covered_vertices(self, pos, size):
+        covered_vertices = []
+
+        x_start, y_start = pos
+        x_end, y_end = x_start + size[0], y_start + size[1]
+
+        for x in range(x_start, x_end):
+            for y in range(y_start, y_end):
+                covered_vertices.append((x, y))
+
+        return covered_vertices
+
+    def update_costs(self):
+        """
+        Updates costs based on locally discovered dynamic objects.
+        """
+        # Check within vicinity of UAV for dynamic/unknown objects and update
+        # Update from goal backwards to current POS!
+        s_curr = self.agent_pos
+        s_last = self.agent_pos
+        i = 0
+        path = [self.agent_pos]
+
+        while s_curr != self.s_goal:
+            s_list = {}
+
+            for s in self.get_neighbor(s_curr):
+                s_list[s] = self.g[s] + self.cost(s_curr, s)
+            s_curr = min(s_list, key=s_list.get)
+            path.append(s_curr)
+
+            if i < 1:
+                self.km += self.h(s_last, s_curr)
+                s_last = s_curr
+
+                for obj in self.dynamic_objects:
+                    pos = obj.current_pos
+                    size = obj.size
+                    if self.h(self.agent_pos, pos) <= 5:
+                        covered_vertices = self.get_covered_vertices(pos, size)
+
+                        for vertex in covered_vertices:
+                            if vertex not in self.obs:
+                                self.obs.add(vertex)
+                                self.g[vertex] = float("inf")
+                                self.rhs[vertex] = float("inf")
+
+                                for s in self.get_neighbor(vertex):
+                                    self.UpdateVertex(s)
+                i += 1
+
+                self.count += 1
+                self.visited = set()
+
+                self.ComputePath()
+
+        return path
 
     def run(self):
         """
@@ -398,18 +422,35 @@ class DStar:
         path = self.ComputePath()
         self.initial_path = path
 
-        # TODO implement
-        self.init_dynamic_obs(1)
+        if self.obj_dir:
+            self.set_dynamic_obs(self.obj_dir)
 
         if path:
-            pass
+            current = path[self.current_index]
+            GOAL = path[-1]
+
+            current = np.array(current)
+            GOAL = np.array(GOAL)
+
+            while not np.array_equal(current, GOAL):
+                current = path[self.current_index]
+                self.update_object_positions()
+                path = self.update_costs()
+                current = path[self.current_index + 1]
+                self.agent_pos = current
+                print(self.agent_pos)
 
 
 def main():
     s_start = (5, 5)
     s_goal = (989, 888)
 
-    dstar = DStar(s_start, s_goal, "euclidean")
+    dstar = DStar(
+        s_start,
+        s_goal,
+        "euclidean",
+        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+    )
     dstar.change_env("Evaluation/Maps/2D/house_25/house_0.json")
     dstar.run()
 
