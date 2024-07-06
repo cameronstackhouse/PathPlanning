@@ -3,6 +3,7 @@ This is rrt star code for 3D
 @author: yue qi
 """
 
+import json
 import numpy as np
 from numpy.matlib import repmat
 from collections import defaultdict
@@ -18,7 +19,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
 
-from rrt_3D.env3D import env
+from rrt_3D.env3D import env, CustomEnv
 from rrt_3D.utils3D import (
     getDist,
     sampleFree,
@@ -78,11 +79,27 @@ class rrt:
         # visualization(self)
         # plt.show()
 
-    def change_env(self):
+    def change_env(self, map_name, obs_name=None):
         """
         TODO
         """
-        pass
+        data = None
+        with open(map_name) as f:
+            data = json.load(f)
+
+        if data:
+            self.V = []
+            self.i = 0
+            self.done = False
+            self.Path = []
+            self.Parent = {}
+
+            self.env = CustomEnv(data)
+
+            self.x0 = tuple(self.env.start)
+            self.xt = tuple(self.env.goal)
+        else:
+            print("Error, failed to load custom environment.")
 
 
 if __name__ == "__main__":

@@ -121,7 +121,9 @@ class obb(object):
 
 
 class env:
-    def __init__(self, xmin=0, ymin=0, zmin=0, xmax=200, ymax=200, zmax=50, resolution=1):
+    def __init__(
+        self, xmin=0, ymin=0, zmin=0, xmax=200, ymax=200, zmax=50, resolution=1
+    ):
         # def __init__(self, xmin=-5, ymin=0, zmin=-5, xmax=10, ymax=5, zmax=10, resolution=1):
         self.resolution = resolution
         self.boundary = np.array([xmin, ymin, zmin, xmax, ymax, zmax])
@@ -225,6 +227,67 @@ class env:
             ]
         )
         return self.OBB[obb_to_move], ori[0]
+
+
+class CustomEnv(env):
+    def __init__(
+        self, data, xmin=0, ymin=0, zmin=0, xmax=100, ymax=100, zmax=100, resolution=1
+    ):
+        super().__init__(xmin, ymin, zmin, xmax, ymax, zmax, resolution)
+        self.data = data
+        self.gen_obs()
+
+    def gen_obs(self):
+        grid = self.data["grid"]
+
+        self.start = np.array(self.data["agent"])
+        self.goal = np.array(self.data["goal"])
+
+        depths = len(grid)
+
+        rows = len(grid[0])
+        cols = len(grid[0][0])
+        visited = np.zeros((depths, rows, cols), dtype=bool)
+        cuboids = []
+
+        for z in range(depths):
+            for y in range(rows):
+                for x in range(cols):
+                    if grid[z][y][x] == 1 and not visited[z, y, x]:
+                        # Find the extent of the cuboid
+                        rect_x, rect_y, rect_z = x, y, z
+                        while rect_x < cols and grid[z][y][rect_x] == 1:
+                            rect_x += 1
+                        while rect_y < rows and all(
+                            grid[z][rect_y][i] == 1 for i in range(x, rect_x)
+                        ):
+                            rect_y += 1
+                        while rect_z < depths and all(
+                            grid[rect_z][j][i] == 1
+                            for j in range(y, rect_y)
+                            for i in range(x, rect_x)
+                        ):
+                            rect_z += 1
+
+                        # xmin, ymin, zmin, xmax, ymax, zmax
+                        cuboid = [x, y, z, rect_x, rect_y, rect_z]
+                        cuboids.append(cuboid)
+
+                        # Mark the found cuboid as visited
+                        visited[z:rect_z, y:rect_y, x:rect_x] = True
+
+        Obstacles = []
+        for i in cuboids:
+            i = np.array(i)
+        Obstacles.append([j for j in i])
+
+        self.balls = []
+        self.blocks = np.array(Obstacles)
+        
+        print(Obstacles)
+
+        self.AABB = getAABB2(self.blocks)
+        self.AABB_pyrr = getAABB(self.blocks)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import json
 import math
 import os
 import sys
@@ -13,7 +14,7 @@ sys.path.append(
 
 from rrt_edge3D import Edge
 from guided_srrt_edge3D import GuidedSrrtEdge
-from rrt_3D.env3D import env
+from rrt_3D.env3D import CustomEnv, env
 from rrt_3D.utils3D import (
     getDist,
     sampleFree,
@@ -94,10 +95,10 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                 self.i += 1
 
         self.done = True
+        print(best_path_dist)
+
         visualization(self)
         plt.show()
-
-        print(best_path_dist)
 
         if self.Path:
             return True
@@ -108,4 +109,5 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 if __name__ == "__main__":
     TIME = 2.53
     p = MbGuidedSrrtEdge(TIME)
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
     p.run()
