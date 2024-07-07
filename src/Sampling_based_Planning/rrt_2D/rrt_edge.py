@@ -71,7 +71,7 @@ class RrtEdge(Rrt):
         self.min_edge_length = min_edge_length
         self.first_success = None
         self.obj_dir = obj_dir
-        self.speed = 50
+        self.speed = 6
 
         self.env.x_range = (0, 1000)
         self.env.y_range = (0, 1000)

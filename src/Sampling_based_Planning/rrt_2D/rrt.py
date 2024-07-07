@@ -325,7 +325,9 @@ class Rrt:
             # Attempt to move in direction of travel
             prev_pos = object.current_pos
             new_pos = object.update_pos()
-            if not (0 <= new_pos[0] < self.x_range[1] and 0 <= new_pos[1] < self.y_range[1]):
+            if not (
+                0 <= new_pos[0] < self.x_range[1] and 0 <= new_pos[1] < self.y_range[1]
+            ):
                 new_pos = prev_pos
             object.current_pos = new_pos
 
@@ -378,7 +380,6 @@ class Rrt:
         next_node = path[self.current_index + 1]
 
         # Checks for collision between current point and the waypoint node
-        # TODO change, need to make sure object which is blocking is known
         if self.utils.is_collision(Node(current_pos), Node(next_node)):
             return [None, None]
 
@@ -399,6 +400,8 @@ class Rrt:
             self.agent_pos = next_node
             self.current_index += 1
             return next_node
+
+        # TODO: Check for collision within next x amount of time (maybe based on speed)
 
         return new_pos
 

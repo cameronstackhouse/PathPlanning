@@ -3,6 +3,7 @@ INFORMED_RRT_STAR 2D
 @author: huiming zhou
 """
 
+import copy
 import json
 import os
 import sys
@@ -20,6 +21,7 @@ sys.path.append(
 )
 
 from rrt_2D import env, plotting, utils
+from rrt_2D.rrt import DynamicObj
 
 
 class Node:
@@ -27,6 +29,7 @@ class Node:
         self.x = n[0]
         self.y = n[1]
         self.parent = None
+        self.coords = n
 
 
 class IRrtStar:
@@ -39,6 +42,7 @@ class IRrtStar:
         search_radius,
         iter_max,
         time=float("inf"),
+        obj_dir=None,
     ):
         self.x_start = Node(x_start)
         self.x_goal = Node(x_goal)
@@ -57,6 +61,7 @@ class IRrtStar:
         self.obs_circle = self.env.obs_circle
         self.obs_rectangle = self.env.obs_rectangle
         self.obs_boundary = self.env.obs_boundary
+        self.start_rect = None
 
         self.V = [self.x_start]
         self.X_soln = set()
@@ -65,6 +70,15 @@ class IRrtStar:
         self.name = "Informed RRT*"
         self.first_success = None
         self.time = time
+        self.obj_dir = obj_dir
+        self.current_index = 0
+        self.agent_positions = []
+        self.time_steps = 0
+        self.distance_travelled = 0
+        self.speed = 60
+        self.dynamic_objects = []
+        self.initial_start = None
+        self.initial_path = None
 
     def init(self):
         cMin, theta = self.get_distance_and_angle(self.x_start, self.x_goal)
@@ -380,18 +394,193 @@ class IRrtStar:
         else:
             print("Error, map not found")
 
+    def set_dynamic_obs(self, filename):
+        """
+        Adds dynamic objects to the environment given a JSON filename
+        containing the data of the dynamic objects.
+        """
+        # Loads the objects
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        # Adds each object to the environment
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+
+                self.env.add_rect(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                )
+
+                new_obj.index = len(self.env.obs_rectangle) - 1
+                self.dynamic_objects.append(new_obj)
+
+        else:
+            print("Error, dynamic objects could not be loaded")
+
+    def move(self, path, mps=6):
+        """
+        Attempts to move the agent forward by a fixed amount of meters per second.
+        """
+        if self.current_index >= len(path) - 1:
+            return self.s_goal.coords
+
+        current_pos = self.agent_pos
+        next_node = path[self.current_index + 1]
+
+        # Checks for collision between current point and the waypoint node
+        if self.utils.is_collision(Node(current_pos), Node(next_node)):
+            return [None, None]
+
+        seg_distance = self.utils.euclidian_distance(current_pos, next_node)
+
+        direction = (
+            (next_node[0] - current_pos[0]) / seg_distance,
+            (next_node[1] - current_pos[1]) / seg_distance,
+        )
+
+        new_pos = (
+            current_pos[0] + direction[0] * mps,
+            current_pos[1] + direction[1] * mps,
+        )
+
+        # Checks for overshoot
+        if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
+            self.agent_pos = next_node
+            self.current_index += 1
+            return next_node
+
+        # TODO: Check for collision within next x amount of time (maybe based on speed)
+
+        return new_pos
+
+    def update_object_positions(self, time_steps=1):
+        """
+        Updates the position of dynamic objects over one timestep.
+        The object moves in a fixed direction and comes to an immediate stop
+        if a fixed object is detected.
+
+        :param: time_steps: the number of time steps in the future to predict the object positions.
+        """
+        for object in self.dynamic_objects:
+            # Attempt to move in direction of travel
+            prev_pos = object.current_pos
+            new_pos = object.update_pos()
+            if not (
+                0 <= new_pos[0] < self.x_range[1] and 0 <= new_pos[1] < self.y_range[1]
+            ):
+                new_pos = prev_pos
+            object.current_pos = new_pos
+
+            self.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
+            self.utils.env.update_obj_pos(object.index, new_pos[0], new_pos[1])
+
+    def run(self):
+        """ """
+        self.initial_start = self.x_start
+        self.start_rect = copy.deepcopy(self.env.obs_rectangle)
+        prev_coords = self.x_start.coords
+        global_path = self.planning()
+        self.initial_path = global_path
+
+        if self.obj_dir:
+            self.set_dynamic_obs(self.obj_dir)
+
+        if global_path:
+            global_path = global_path[::-1]
+            current = global_path[self.current_index]
+            GOAL = global_path[-1]
+
+            current = np.array(current)
+            GOAL = np.array(GOAL)
+
+            while not np.array_equal(current, GOAL):
+                current = global_path[self.current_index]
+                self.update_object_positions()
+
+                new_coords = self.move(global_path, self.speed)
+
+                if new_coords[0] is None:
+                    new_path = self.planning()
+
+                    if not new_path:
+                        self.agent_positions.append(self.agent_pos)
+                        return False
+                    else:
+                        global_path = new_path[::-1]
+                        self.current_index = 0
+                        self.agent_positions.append(self.agent_pos)
+                else:
+                    self.agent_positions.append(new_coords)
+                    current = new_coords
+                    self.agent_pos = new_coords
+
+                    self.distance_travelled += self.utils.euclidian_distance(
+                        prev_coords, new_coords
+                    )
+                    prev_coords = new_coords
+
+                self.time_steps += 1
+
+            self.path = global_path
+            return True
+        else:
+            return False
+
+    def plot(self):
+        dynamic_objects = self.dynamic_objects
+
+        nodelist = self.V
+        path = self.path
+
+        plotter = plotting.DynamicPlotting(
+            self.x_start.coords,
+            self.x_goal.coords,
+            dynamic_objects,
+            self.time_steps,
+            self.agent_positions,
+            self.initial_path,
+        )
+
+        plotter.env = self.env
+        plotter.obs_bound = self.env.obs_boundary
+        plotter.obs_circle = self.env.obs_circle
+        plotter.obs_rectangle = self.env.obs_rectangle
+
+        plotter.animation(nodelist, path, "Test", animation=True)
+
 
 def main():
     x_start = (18, 8)  # Starting node
     x_goal = (809, 909)  # Goal node
 
-    rrt_star = IRrtStar(x_start, x_goal, 10, 0.10, 12, 2000)
+    rrt_star = IRrtStar(
+        x_start,
+        x_goal,
+        10,
+        0.10,
+        12,
+        5000,
+        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+    )
 
-    rrt_star.change_env("Evaluation/Maps/2D/main/house_11.json")
-    path = rrt_star.planning()
+    # rrt_star.change_env("Evaluation/Maps/2D/main/house_11.json")
+    # path = rrt_star.planning()
 
-    rrt_star.change_env("Evaluation/Maps/2D/main/block_9.json")
-    path = rrt_star.planning()
+    rrt_star.change_env("Evaluation/Maps/2D/main/block_20.json")
+    success = rrt_star.run()
+    print(success)
+
+    if success:
+        rrt_star.plot()
 
 
 if __name__ == "__main__":
