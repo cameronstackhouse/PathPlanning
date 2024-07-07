@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import math
@@ -10,6 +11,7 @@ sys.path.append(
 )
 
 from rrt import Node, Rrt, utils
+from plotting import DynamicPlotting
 
 
 class Edge:
@@ -75,8 +77,11 @@ class RrtEdge(Rrt):
         self.env.y_range = (0, 1000)
         self.peak_cpu = 0
         self.time = time
+        self.distance_travelled = 0
+        self.path = []
 
     def planning(self):
+        self.vertex = [Node(self.agent_pos)]
         b_path = None
         path_cost = float("inf")
         start_time = time.time()
@@ -227,6 +232,9 @@ class RrtEdge(Rrt):
         then traverse the environment while avoiding dynamic objects.
         TODO.
         """
+        self.initial_start = self.s_start
+        self.start_rect = copy.deepcopy(self.env.obs_rectangle)
+        prev_coords = self.s_start.coords
         global_path = self.planning()[::-1]
         self.initial_path = global_path
 
@@ -237,7 +245,10 @@ class RrtEdge(Rrt):
             current = global_path[self.current_index]
             GOAL = global_path[-1]
 
-            while current != GOAL:
+            current = np.array(current)
+            GOAL = np.array(GOAL)
+            # While the final node has not been reached
+            while not np.array_equal(current, GOAL):
                 current = global_path[self.current_index]
                 self.update_object_positions()
                 self.update_world_view()
@@ -248,17 +259,53 @@ class RrtEdge(Rrt):
                     self.edges = []
                     self.vertex = [Node(current)]
                     self.s_start = Node(current)
-                    self.planning()
+                    new_path = self.planning()
+
+                    if not new_path:
+                        self.agent_positions.append(self.agent_pos)
+                        return False
+                    else:
+                        global_path = new_path[::-1]
+                        self.current_index = 0
+                        self.agent_positions.append(self.agent_pos)
                 else:
                     self.agent_positions.append(new_coords)
                     current = new_coords
                     self.agent_pos = new_coords
+
+                    self.distance_travelled += self.utils.euclidian_distance(
+                        prev_coords, new_coords
+                    )
+                    prev_coords = new_coords
+
                 self.time_steps += 1
 
             self.path = global_path
             return True
         else:
             return False
+
+    def plot(self):
+        dynamic_objects = self.dynamic_objects
+
+        nodelist = self.vertex
+        path = self.path
+
+        plotter = DynamicPlotting(
+            self.initial_start.coords,
+            self.s_goal.coords,
+            dynamic_objects,
+            self.time_steps,
+            self.agent_positions,
+            self.initial_path,
+        )
+
+        plotter.env = self.env
+        plotter.obs_bound = self.env.obs_boundary
+        plotter.obs_circle = self.env.obs_circle
+        plotter.obs_rectangle = self.start_rect
+
+        plotter.animation(nodelist, path, "Test", animation=True)
 
 
 def main():
@@ -269,11 +316,11 @@ def main():
         x_start,
         x_goal,
         0.05,
-        2000,
+        1000,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
-    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/block_12.json")
+    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/block_20.json")
 
     success = rrt_edge.run()
 
