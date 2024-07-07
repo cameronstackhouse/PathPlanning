@@ -69,7 +69,7 @@ class DStar:
                 self.g[(i, j)] = float("inf")
 
         self.rhs[self.s_goal] = 0.0
-        self.U[self.s_goal] = self.CalculateKey(self.s_goal)
+        self.U[self.s_goal] = self.CalculateKey(self.s_goal)  # THIS IS OPEN
         self.visited = set()
         self.count = 0
 
@@ -101,46 +101,6 @@ class DStar:
             path.append(s_curr)
 
         return path
-
-    def update_and_rerun(self, x, y):
-        """
-        Update and rerun method which deals with the replanning around
-        a dynamic object.
-
-        TODO. NOTE: This mwethod was called when an object was added via a click.
-        """
-        s_curr = self.s_start
-        s_last = self.s_start
-        i = 0
-        path = [self.s_start]
-
-        while s_curr != self.s_goal:
-            s_list = {}
-
-            for s in self.get_neighbor(s_curr):
-                s_list[s] = self.g[s] + self.cost(s_curr, s)
-            s_curr = min(s_list, key=s_list.get)
-            path.append(s_curr)
-
-            if i < 1:
-                self.km += self.h(s_last, s_curr)
-                s_last = s_curr
-                # Adds the object to the object set
-                if (x, y) not in self.obs:
-                    self.obs.add((x, y))
-                    self.g[(x, y)] = float("inf")
-                    self.rhs[(x, y)] = float("inf")
-                else:  # Removes object if exists.
-                    self.obs.remove((x, y))
-                    self.UpdateVertex((x, y))
-                for s in self.get_neighbor((x, y)):
-                    # Update the neighbours of the dynamic object
-                    self.UpdateVertex(s)
-                i += 1
-
-                self.count += 1
-                self.visited = set()
-                self.ComputePath()
 
     def ComputePath(self):
         start_time = time.time()
@@ -371,52 +331,6 @@ class DStar:
 
         return covered_vertices
 
-    def update_costs(self):
-        """
-        Updates costs based on locally discovered dynamic objects.
-        """
-        # Check within vicinity of UAV for dynamic/unknown objects and update
-        # Update from goal backwards to current POS!
-        s_curr = self.agent_pos
-        s_last = self.agent_pos
-        i = 0
-        path = [self.agent_pos]
-
-        while s_curr != self.s_goal:
-            s_list = {}
-
-            for s in self.get_neighbor(s_curr):
-                s_list[s] = self.g[s] + self.cost(s_curr, s)
-            s_curr = min(s_list, key=s_list.get)
-            path.append(s_curr)
-
-            if i < 1:
-                self.km += self.h(s_last, s_curr)
-                s_last = s_curr
-
-                for obj in self.dynamic_objects:
-                    pos = obj.current_pos
-                    size = obj.size
-                    if self.h(self.agent_pos, pos) <= 5:
-                        covered_vertices = self.get_covered_vertices(pos, size)
-
-                        for vertex in covered_vertices:
-                            if vertex not in self.obs:
-                                self.obs.add(vertex)
-                                self.g[vertex] = float("inf")
-                                self.rhs[vertex] = float("inf")
-
-                                for s in self.get_neighbor(vertex):
-                                    self.UpdateVertex(s)
-                i += 1
-
-                self.count += 1
-                self.visited = set()
-
-                self.ComputePath()
-
-        return path
-
     def plot(self):
         self.Plot.plot_grid("D* Lite")
         self.plot_path(self.traversed_path)
@@ -446,6 +360,7 @@ class DStar:
                 current = path[self.current_index + 1]
                 self.agent_pos = current
                 self.traversed_path.append(self.agent_pos)
+                print(current)
 
 
 def main():

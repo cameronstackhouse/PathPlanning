@@ -34,9 +34,13 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         super().__init__()
         self.t = t
         self.m = m
+        self.flag = {}
+        self.E = []
+        self.V = []
 
     def run(self):
         self.V.append(self.x0)
+        self.flag[self.x0] = "Valid"
         best_path = None
         best_path_dist = float("inf")
         start_time = time.time()
@@ -56,14 +60,16 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
             xnew, dist = steer(self, xnearest, xrand)
             collide, _ = isCollide(self, xnearest, xnew, dist=dist)
             if not collide:
-                new_edge = Edge(xnearest, xnew)
+                new_edge = Edge(xnew, xnearest)
                 self.E.append(new_edge)
                 self.V.append(xnew)
+                self.flag[tuple(xnew)] = "valid"
                 self.wireup(tuple(xnew), tuple(xnearest))
 
                 goal_dist = getDist(xnew, self.xt)
                 goal_collide, _ = isCollide(self, xnew, self.xt, goal_dist)
                 if not goal_collide:
+                    self.flag[tuple(self.xt)] = "Valid"
                     self.wireup(tuple(self.xt), tuple(xnew))
                     current_path, D = path_from_point(self, tuple(xnew))
 
@@ -77,11 +83,13 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
                 for partition_point in partition_points:
-                    self.Parent[tuple(partition_point)] = tuple(new_edge.node_1)
                     goal_partition_collide, _ = isCollide(
                         self, partition_point, self.xt, goal_dist
                     )
                     if not goal_partition_collide:
+                        self.Parent[tuple(partition_point)] = tuple(new_edge.node_1)
+                        self.flag[tuple(self.xt)] = "Valid"
+                        self.flag[tuple(partition_point)] = "Valid"
                         self.wireup(tuple(self.xt), tuple(partition_point))
                         current_path, D = path_from_point(self, tuple(partition_point))
 
@@ -96,9 +104,6 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 
         self.done = True
         print(best_path_dist)
-
-        visualization(self)
-        plt.show()
 
         if self.Path:
             return True

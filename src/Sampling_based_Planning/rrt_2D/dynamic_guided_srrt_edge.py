@@ -265,7 +265,7 @@ if __name__ == "__main__":
         global_time=3,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_23.json")
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_6.json")
 
     success = rrt.run()
 

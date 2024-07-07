@@ -41,6 +41,7 @@ class RrtEdge(rrt):
         super().__init__()
         self.E = []
         self.stepsize = float("inf")
+        self.flag = {}
 
     def run(self):
         self.V.append(self.x0)
@@ -56,6 +57,7 @@ class RrtEdge(rrt):
                 new_edge = Edge(xnearest, xnew)
                 self.E.append(new_edge)
                 self.V.append(xnew)
+                self.flag[xnew] = 'Valid'
                 self.wireup(tuple(xnew), tuple(xnearest))
 
                 goal_dist = getDist(xnew, self.xt)

@@ -157,8 +157,6 @@ class GuidedSrrtEdge(SRrtEdge):
                 self.i += 1
 
         self.done = True
-        visualization(self)
-        plt.show()
 
         print(best_path_dist)
 
