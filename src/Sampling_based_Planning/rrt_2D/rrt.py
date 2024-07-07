@@ -37,6 +37,18 @@ class DynamicObj:
 
         return new_pos
 
+    def predict_future_positions(self, prediction_horizon):
+        future_positions = []
+
+        for i in range(1, prediction_horizon + 1):
+            future_position = (
+                self.current_pos[0] + (self.velocity[0] * i),
+                self.current_pos[1] + (self.velocity[1] * i),
+            )
+            future_positions.append(future_position)
+
+        return future_positions
+
 
 class Node:
     def __init__(self, n):
@@ -402,6 +414,31 @@ class Rrt:
             return next_node
 
         # TODO: Check for collision within next x amount of time (maybe based on speed)
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current_pos[0] + direction[0] * mps * t,
+                current_pos[1] + direction[1] * mps * t,
+            )
+            future_uav_positions.append(future_pos)
+
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_objects:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
+
+                # check for future collisions
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(Node(future_pos), dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None]
+
+                    dynamic_object.current_pos = original_pos
 
         return new_pos
 

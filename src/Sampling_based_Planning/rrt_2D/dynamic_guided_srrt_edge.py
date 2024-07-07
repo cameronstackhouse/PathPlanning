@@ -123,25 +123,38 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             current_pos[1] + direction[1] * mps,
         )
 
-        # Check to see if when moved, the uav will move into an object
-        for obj in self.dynamic_objects:
-            old_coords = obj.current_pos
-            obj.current_pos = [
-                obj.current_pos[0] + obj.velocity[0],
-                obj.current_pos[1] + obj.velocity[1],
-            ]
-
-            if self.in_dynamic_obj(Node(new_pos), obj):
-                obj.current_pos = old_coords
-                return [None, None]
-
-            obj.current_pos = old_coords
-
         # Checks for overshoot
         if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
             self.agent_pos = next_node
             self.current_index += 1
             return next_node
+
+        # TODO: Check for collision within next x amount of time (maybe based on speed)
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current_pos[0] + direction[0] * mps * t,
+                current_pos[1] + direction[1] * mps * t,
+            )
+            future_uav_positions.append(future_pos)
+
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_objects:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
+
+                # TODO, check for future collisions
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(Node(future_pos), dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None]
+
+                    dynamic_object.current_pos = original_pos
 
         return new_pos
 
@@ -197,7 +210,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
-                # TODO might need to change
+                # TODO might need to change
                 if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
                     Node(goal_pos), obj
                 ):
@@ -252,7 +265,7 @@ if __name__ == "__main__":
         global_time=3,
         obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_20.json")
+    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_23.json")
 
     success = rrt.run()
 

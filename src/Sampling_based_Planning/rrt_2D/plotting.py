@@ -185,13 +185,13 @@ class DynamicPlotting(Plotting):
         plt.pause(1)
 
         for i in range(self.t):
+            self.update_dynamic_objects()
             ax.clear()
             self.plot_grid(name, ax)
             self.plot_dynamic_objects()
             self.plot_path(path)
             self.plot_original_path(self.initial_path)
             self.plot_agent(self.agent_pos[i])
-            self.update_dynamic_objects()
             fig.canvas.draw()
             plt.pause(0.1)
 
