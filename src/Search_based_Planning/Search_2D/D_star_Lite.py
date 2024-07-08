@@ -184,7 +184,8 @@ class DStar:
         return math.hypot(s_goal[0] - s_start[0], s_goal[1] - s_start[1])
 
     def is_collision(self, s_start, s_end):
-        if s_start in self.obs or s_end in self.obs:
+        dynamic_covered_cells = self.Env.dynamic_obs_cells
+        if s_start in self.obs or s_end in self.obs or s_start in dynamic_covered_cells or s_end in dynamic_covered_cells:
             return True
 
         if s_start[0] != s_end[0] and s_start[1] != s_end[1]:
@@ -195,16 +196,17 @@ class DStar:
                 s1 = (min(s_start[0], s_end[0]), max(s_start[1], s_end[1]))
                 s2 = (max(s_start[0], s_end[0]), min(s_start[1], s_end[1]))
 
-            if s1 in self.obs or s2 in self.obs:
+            if s1 in self.obs or s2 in self.obs or s1 in dynamic_covered_cells or s2 in dynamic_covered_cells:
                 return True
 
         return False
 
     def get_neighbor(self, s):
+        dynamic_covered_cells = self.Env.dynamic_obs_cells
         nei_list = set()
         for u in self.u_set:
             s_next = tuple([s[i] + u[i] for i in range(2)])
-            if s_next not in self.obs and s_next in self.rhs.keys():
+            if s_next not in self.obs and s_next not in dynamic_covered_cells and s_next in self.rhs.keys():
                 nei_list.add(s_next)
 
         return nei_list
@@ -277,12 +279,14 @@ class DStar:
         if self.current_index >= len(path) - 1:
             return self.s_goal.coords
 
-        # TODO
+        self.current_index += 1
+        self.agent_pos = path[self.current_index]
 
-        return []
+        return self.agent_pos
 
     def update_object_positions(self):
         # TODO
+        self.Env.dynamic_obs_cells = set()
         for i, object in enumerate(self.dynamic_objects):
             prev_pos = object.current_pos
             new_pos = object.update_pos()

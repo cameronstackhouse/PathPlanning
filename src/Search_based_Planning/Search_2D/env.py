@@ -20,13 +20,38 @@ class Env:
         ]
         self.obs = self.obs_map()
         self.dynamic_obs = []
+        self.dynamic_obs_cells = set()
+    
+    def get_covered_cells(self, dynamic_obj):
+        x, y = dynamic_obj.size
+        center = dynamic_obj.current_pos
 
-    def update_obs(self, obs):
-        self.obs = obs
+        covered_cells = []
+
+        half_x = x / 2
+        half_y = y / 2
+
+        min_x = center[0] - half_x
+        max_x = center[0] + half_x
+        min_y = center[1] - half_y
+        max_y = center[1] + half_y
+        
+        min_cell_x = int(min_x)
+        max_cell_x = int(max_x)
+        min_cell_y = int(min_y)
+        max_cell_y = int(max_y)
+        
+        for i in range(min_cell_x, max_cell_x + 1):
+            for j in range(min_cell_y, max_cell_y + 1):
+                covered_cells.append((i, j))
+        
+        self.dynamic_obs_cells.append(cell for cell in covered_cells)
 
     def update_dynamic_obj_pos(self, index, new_x, new_y):
         obj = self.dynamic_obs[index]
         obj.current_pos = [new_x, new_y]
+        self.get_covered_cells(obj)
+
 
     def obs_map(self):
         """
