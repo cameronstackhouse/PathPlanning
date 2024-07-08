@@ -24,6 +24,28 @@ from Search_3D import queue
 import time
 
 
+class DynamicObj:
+    def __init__(self) -> None:
+        self.velocity = []
+        self.size = []
+        self.known = False
+        self.current_pos = []
+        self.index = 0
+        self.init_pos = None
+        self.old_pos = None
+        self.corners = []
+
+    def update_pos(self):
+        velocity = self.velocity
+        new_pos = [
+            self.current_pos[0] + (velocity[0]),
+            self.current_pos[1] + (velocity[1]),
+            self.current_pos[2] + (velocity[2]),
+        ]
+
+        return new_pos
+
+
 class D_star_Lite(object):
     # Original version of the D*lite
     def __init__(self, resolution=1):
@@ -55,12 +77,10 @@ class D_star_Lite(object):
             (1, -1, 1): np.sqrt(3),
             (-1, 1, 1): np.sqrt(3),
         }
+        self.dynamic_obs = []
         self.env = env(resolution=resolution)
-        # self.X = StateSpace(self.env)
-        # self.x0, self.xt = getNearest(self.X, self.env.start), getNearest(self.X, self.env.goal)
         self.settings = "CollisionChecking"  # for collision checking
         self.x0, self.xt = tuple(self.env.start), tuple(self.env.goal)
-        # self.OPEN = queue.QueuePrior()
         self.OPEN = queue.MinheapPQ()
         self.km = 0
         self.g = {}  # all g initialized at inf
@@ -192,11 +212,14 @@ class D_star_Lite(object):
 
             self.x0 = tuple(self.env.start)
             self.xt = tuple(self.env.goal)
-            
+
             self.rhs = {self.xt: 0}  # rhs(x0) = 0
 
             self.OPEN = queue.MinheapPQ()
             self.OPEN.put(self.xt, self.CalculateKey(self.xt))
+
+            if obs_name:
+                self.set_dynamic_obs(obs_name)
         else:
             print("Error, failed to load custom environment.")
 
@@ -213,7 +236,6 @@ class D_star_Lite(object):
         t = 0  # count time
         ischanged = False
         self.V = set()
-        # TODO: NOTE THIS COULD HELP FOR 2D
         while getDist(self.x0, self.xt) > 2 * self.env.resolution:
             # ---------------------------------- at specific times, the environment is changed and Cost is updated
             # if t % 2 == 0:
@@ -227,45 +249,78 @@ class D_star_Lite(object):
             #     # new2,old2 = self.env.move_block(a=[-0.3, 0, -0.1], s=0.5, block_to_move=1, mode='translation')
             #     ischanged = True
             #     self.Path = []
-            # ----------------------------------- traverse the route as originally planned
-            if t == 0:
-                children_new = [
-                    i
-                    for i in self.CLOSED
-                    if getDist(self.x0, i) <= self.env.resolution * np.sqrt(3)
-                ]
-            else:
-                children_new = list(children(self, self.x0))
-            self.x0 = children_new[
-                np.argmin(
-                    [
-                        self.getcost(self.x0, s_p) + self.getg(s_p)
-                        for s_p in children_new
-                    ]
-                )
-            ]
+            # # ----------------------------------- traverse the route as originally planned
+            # if t == 0:
+            #     children_new = [
+            #         i
+            #         for i in self.CLOSED
+            #         if getDist(self.x0, i) <= self.env.resolution * np.sqrt(3)
+            #     ]
+            # else:
+            #     children_new = list(children(self, self.x0))
+            # self.x0 = children_new[
+            #     np.argmin(
+            #         [
+            #             self.getcost(self.x0, s_p) + self.getg(s_p)
+            #             for s_p in children_new
+            #         ]
+            #     )
+            # ]
             # TODO add the moving robot position codes
             self.env.start = self.x0
             # ---------------------------------- if any Cost changed, update km, reset slast,
             #                                    for all directed edgees (u,v) with  chaged edge costs,
             #                                    update the edge Cost cBest(u,v) and update vertex u. then replan
             if ischanged:
-                self.km += heuristic_fun(self, self.x0, s_last)
-                s_last = self.x0
-                CHANGED = self.updatecost(True, new0, old0)
-                CHANGED1 = self.updatecost(True, new1, old1)
-                CHANGED2 = self.updatecost(True, new2, old2, mode="obb")
-                CHANGED = CHANGED.union(CHANGED1, CHANGED2)
+                # self.km += heuristic_fun(self, self.x0, s_last)
+                # s_last = self.x0
+                # CHANGED = self.updatecost(True, new0, old0)
+                # CHANGED1 = self.updatecost(True, new1, old1)
+                # CHANGED2 = self.updatecost(True, new2, old2, mode="obb")
+                # CHANGED = CHANGED.union(CHANGED1, CHANGED2)
                 # self.V = set()
-                for u in CHANGED:
-                    self.UpdateVertex(u)
-                self.ComputeShortestPath()
+                # for u in CHANGED:
+                #     self.UpdateVertex(u)
+                # self.ComputeShortestPath()
 
                 ischanged = False
             self.Path = self.path(self.x0)
             visualization(self)
             t += 1
         plt.show()
+
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x2, y2, z2)
+
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+                new_obj.corners = self.corner_coords(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.current_pos[2],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                    new_obj.size[2],
+                )
+
+                new_obj.index = len(self.env.blocks) - 1
+                self.dynamic_obs.append(new_obj)
+
+                self.env.New_block(new_obj.corners)
 
     def path(self, s_start=None):
         """After ComputeShortestPath()
@@ -298,6 +353,11 @@ class D_star_Lite(object):
                 break
             ind += 1
         return path
+
+    def run(self):
+        self.ComputeShortestPath()
+        self.Path = self.path(self.x0)
+        # TODO
 
 
 if __name__ == "__main__":

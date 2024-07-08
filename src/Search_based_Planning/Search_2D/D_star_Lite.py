@@ -9,6 +9,7 @@ import sys
 import math
 import time
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import numpy as np
 
 sys.path.append(
@@ -29,9 +30,6 @@ class DynamicObj:
         self.old_pos = None
 
     def update_pos(self):
-        """
-        TODO improve
-        """
         velocity = self.velocity
         new_pos = [
             self.current_pos[0] + (velocity[0]),
@@ -316,10 +314,9 @@ class DStar:
         new_pos = (current[0] + direction[0] * mps, current[1] + direction[1] * mps)
 
         if self.euclidean_distance(current, new_pos) >= seg_distance:
-            # Check if in same direction
-            v1 = np.array(current)
-            v2 = np.array(next)
-
+            # Calculate vectors and check if in the same direction
+            v1 = np.array(next) - np.array(current)
+            v2 = np.array(new_pos) - np.array(next)
             dot_product = np.dot(v1, v2)
 
             mag_v1 = np.linalg.norm(v1)
@@ -328,12 +325,36 @@ class DStar:
             same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
 
             if same_dir:
-                # TODO
+                # Move the agent far forward without turning
                 self.current_index += 1
-                self.agent_pos = path[self.current_index]
+                count = 0
+                while self.current_index < len(path) - 1:
+                    next = path[self.current_index + 1]
+                    seg_distance = self.euclidean_distance(current, next)
+                    direction = (
+                        (next[0] - current[0]) / seg_distance,
+                        (next[1] - current[1]) / seg_distance,
+                    )
+                    new_pos = (
+                        current[0] + direction[0] * mps,
+                        current[1] + direction[1] * mps,
+                    )
+                    v1 = np.array(next) - np.array(current)
+                    v2 = np.array(new_pos) - np.array(next)
+                    dot_product = np.dot(v1, v2)
+                    mag_v1 = np.linalg.norm(v1)
+                    mag_v2 = np.linalg.norm(v2)
+                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+                    if not same_dir or count >= self.speed - 1:
+                        break
+                    current = next
+                    self.agent_pos = current
+                    self.current_index += 1
+                    count += 1
             else:
+                # Move to the next node and update position
+                self.agent_pos = next
                 self.current_index += 1
-                self.agent_pos = path[self.current_index]
         else:
             self.agent_pos = new_pos
 
@@ -390,7 +411,6 @@ class DStar:
                     for neighbour in self.get_neighbor(cell):
                         self.UpdateVertex(neighbour)
 
-        print(path_blocked)
         return self.ComputePath() if path_blocked else self.initial_path
 
     def set_dynamic_obs(self, filename):
@@ -433,8 +453,10 @@ class DStar:
 
     def run(self):
         """
-        TODO
+        Runs the simulation involving pathfinding, traversing the found path,
+        and reacting to dynamic objects.
         """
+        self.traversed_path.append(self.agent_pos)
         path = self.ComputePath()
         self.initial_path = path
         print("INITIAL FOUND")
@@ -451,12 +473,13 @@ class DStar:
 
             while not np.array_equal(current, GOAL):
                 self.update_object_positions()
-                path = self.update_costs(path)  # TODO
+                path = self.update_costs(path)
 
                 current = self.move(path)
                 print(f"Current pos: {current}")
 
                 self.traversed_path.append(self.agent_pos)
+            # self.plot_dynamic_objects_and_agent()
 
 
 def main():

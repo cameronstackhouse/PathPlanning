@@ -139,6 +139,11 @@ class env:
         self.goal = np.array([6.0, 16.0, 0.0])
         self.t = 0  # time
 
+    def New_block(self, corners):
+        self.blocks = np.vstack([self.blocks, corners])
+        self.AABB = getAABB2(self.blocks)
+        self.AABB_pyrr = getAABB(self.blocks)
+
     def New_block(self):
         newblock = add_block()
         self.blocks = np.vstack([self.blocks, newblock])
