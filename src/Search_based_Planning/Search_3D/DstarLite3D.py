@@ -354,16 +354,48 @@ class D_star_Lite(object):
             ind += 1
         return path
 
+    def move_dynamic_obs(self):
+        # TODO
+        self.path = []
+        changed = None
+        for obj in self.dynamic_obs:
+            # TODO change
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
+            n_changed = self.updatecost(True, new, old)
+            if changed is None:
+                changed = n_changed
+            else:
+                changed = changed.union(n_changed)
+
+        self.V = set()
+        for u in changed:
+            self.UpdateVertex(u)
+        self.ComputeShortestPath()
+
+        self.Path = self.path(self.x0)
+
+    def move(self):
+        #TODO
+        pass
+
     def run(self):
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)
         # TODO
+        t = 0
+        ischanged = False
+        self.V = set()
+        while getDist(self.x0, self.xt) > 2 * self.env.resolution:
+            self.move_dynamic_obs()
+            self.move()
 
 
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
-    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
+    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json", )
     a = time.time()
     D_lite.main()
     print("used time (s) is " + str(time.time() - a))
