@@ -76,7 +76,7 @@ class DStar:
         # Data associated with traversal of the found path
         self.current_index = 0
         self.dynamic_objects = []
-        self.speed = 600
+        self.speed = 6
         self.time_steps = 0
         self.agent_pos = self.s_start
         self.obj_dir = obj_dir
@@ -358,8 +358,13 @@ class DStar:
 
     def update_costs(self, path):
         path_blocked = False
+        upcoming_path_cells = None
 
-        current_path = set(path[self.current_index :])
+        # ONLY DETECTS CHANGES LOCALLY
+        if self.current_index + self.speed < len(path):
+            upcoming_path_cells = set(path[self.current_index : self.current_index + 3])
+        else:
+            upcoming_path_cells = set(path[self.current_index : self.current_index + 3])
 
         for obj in self.dynamic_objects:
             old_pos = obj.old_pos
@@ -368,7 +373,7 @@ class DStar:
 
             new_cells = self.get_affected_cells(new_pos, width, height)
 
-            if any(cell in current_path for cell in new_cells):
+            if any(cell in upcoming_path_cells for cell in new_cells):
                 path_blocked = True
 
                 old_cells = self.get_affected_cells(old_pos, width, height)
