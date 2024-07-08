@@ -26,6 +26,7 @@ class DynamicObj:
         self.current_pos = []
         self.index = 0
         self.init_pos = None
+        self.old_pos = None
 
     def update_pos(self):
         """
@@ -49,7 +50,6 @@ class DStar:
 
         self.Env = env.Env()  # class Env
         self.Plot = plotting.Plotting(s_start, s_goal)
-        self.fig = plt.figure()
 
         self.u_set = self.Env.motions  # feasible input set
         self.obs = self.Env.obs  # position of obstacles
@@ -81,6 +81,14 @@ class DStar:
         self.agent_pos = self.s_start
         self.obj_dir = obj_dir
         self.traversed_path = []
+
+    def euclidean_distance(self, point1, point2):
+        point1 = np.array(point1)
+        point2 = np.array(point2)
+
+        distance = np.linalg.norm(point1 - point2)
+
+        return distance
 
     def path_to_end(self):
         s_curr = self.s_start
@@ -185,7 +193,12 @@ class DStar:
 
     def is_collision(self, s_start, s_end):
         dynamic_covered_cells = self.Env.dynamic_obs_cells
-        if s_start in self.obs or s_end in self.obs or s_start in dynamic_covered_cells or s_end in dynamic_covered_cells:
+        if (
+            s_start in self.obs
+            or s_end in self.obs
+            or s_start in dynamic_covered_cells
+            or s_end in dynamic_covered_cells
+        ):
             return True
 
         if s_start[0] != s_end[0] and s_start[1] != s_end[1]:
@@ -196,7 +209,12 @@ class DStar:
                 s1 = (min(s_start[0], s_end[0]), max(s_start[1], s_end[1]))
                 s2 = (max(s_start[0], s_end[0]), min(s_start[1], s_end[1]))
 
-            if s1 in self.obs or s2 in self.obs or s1 in dynamic_covered_cells or s2 in dynamic_covered_cells:
+            if (
+                s1 in self.obs
+                or s2 in self.obs
+                or s1 in dynamic_covered_cells
+                or s2 in dynamic_covered_cells
+            ):
                 return True
 
         return False
@@ -206,7 +224,11 @@ class DStar:
         nei_list = set()
         for u in self.u_set:
             s_next = tuple([s[i] + u[i] for i in range(2)])
-            if s_next not in self.obs and s_next not in dynamic_covered_cells and s_next in self.rhs.keys():
+            if (
+                s_next not in self.obs
+                and s_next not in dynamic_covered_cells
+                and s_next in self.rhs.keys()
+            ):
                 nei_list.add(s_next)
 
         return nei_list
@@ -279,13 +301,45 @@ class DStar:
         if self.current_index >= len(path) - 1:
             return self.s_goal.coords
 
-        self.current_index += 1
-        self.agent_pos = path[self.current_index]
+        current = self.agent_pos
+        next = path[self.current_index + 1]
+
+        # No need to check for collisions, this is already done in the updating of costs
+
+        seg_distance = self.euclidean_distance(current, next)
+
+        direction = (
+            (next[0] - current[0]) / seg_distance,
+            (next[1] - current[1]) / seg_distance,
+        )
+
+        new_pos = (current[0] + direction[0] * mps, current[1] + direction[1] * mps)
+
+        if self.euclidean_distance(current, new_pos) >= seg_distance:
+            # Check if in same direction
+            v1 = np.array(current)
+            v2 = np.array(next)
+
+            dot_product = np.dot(v1, v2)
+
+            mag_v1 = np.linalg.norm(v1)
+            mag_v2 = np.linalg.norm(v2)
+
+            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+
+            if same_dir:
+                # TODO
+                self.current_index += 1
+                self.agent_pos = path[self.current_index]
+            else:
+                self.current_index += 1
+                self.agent_pos = path[self.current_index]
+        else:
+            self.agent_pos = new_pos
 
         return self.agent_pos
 
     def update_object_positions(self):
-        # TODO
         self.Env.dynamic_obs_cells = set()
         for i, object in enumerate(self.dynamic_objects):
             prev_pos = object.current_pos
@@ -293,9 +347,46 @@ class DStar:
 
             if not (0 <= new_pos[0] < self.x and 0 <= new_pos[1] < self.y):
                 new_pos = prev_pos
+            object.prev_pos = object.current_pos
             object.current_pos = new_pos
 
             self.Env.update_dynamic_obj_pos(i, new_pos[0], new_pos[1])
+
+    def get_affected_cells(self, position, width, height):
+        x, y = position
+        return [(x + dx, y + dy) for dx in range(width) for dy in range(height)]
+
+    def update_costs(self, path):
+        path_blocked = False
+
+        current_path = set(path[self.current_index :])
+
+        for obj in self.dynamic_objects:
+            old_pos = obj.old_pos
+            new_pos = obj.current_pos
+            width, height = obj.size
+
+            new_cells = self.get_affected_cells(new_pos, width, height)
+
+            if any(cell in current_path for cell in new_cells):
+                path_blocked = True
+
+                old_cells = self.get_affected_cells(old_pos, width, height)
+
+                for cell in old_cells:
+                    self.g[cell] = 1
+                    self.rhs[cell] = 1
+
+                for cell in new_cells:
+                    self.g[cell] = float("inf")
+                    self.rhs[cell] = float("inf")
+
+                for cell in old_cells + new_cells:
+                    for neighbour in self.get_neighbor(cell):
+                        self.UpdateVertex(neighbour)
+
+        print(path_blocked)
+        return self.ComputePath() if path_blocked else self.initial_path
 
     def set_dynamic_obs(self, filename):
         obj_json = None
@@ -307,6 +398,7 @@ class DStar:
                 new_obj = DynamicObj()
                 new_obj.velocity = obj["velocity"]
                 new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
                 new_obj.size = obj["size"]
                 new_obj.init_pos = new_obj.current_pos
 
@@ -340,6 +432,7 @@ class DStar:
         """
         path = self.ComputePath()
         self.initial_path = path
+        print("INITIAL FOUND")
 
         if self.obj_dir:
             self.set_dynamic_obs(self.obj_dir)
@@ -353,10 +446,10 @@ class DStar:
 
             while not np.array_equal(current, GOAL):
                 self.update_object_positions()
+                path = self.update_costs(path)  # TODO
 
-                res = self.move(path)
-
-                path = self.update_costs()
+                current = self.move(path)
+                print(f"Current pos: {current}")
 
                 self.traversed_path.append(self.agent_pos)
 
