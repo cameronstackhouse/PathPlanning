@@ -82,12 +82,6 @@ class DStar:
         self.obj_dir = obj_dir
         self.traversed_path = []
 
-    # def run(self):
-    #     self.Plot.plot_grid("D* Lite")
-    #     self.ComputePath()
-    #     self.plot_path(self.path_to_end())
-    #     plt.show()
-
     def path_to_end(self):
         s_curr = self.s_start
         path = [self.s_start]
@@ -354,13 +348,13 @@ class DStar:
             GOAL = np.array(GOAL)
 
             while not np.array_equal(current, GOAL):
-                current = path[self.current_index]
                 self.update_object_positions()
+
+                res = self.move(path)
+
                 path = self.update_costs()
-                current = path[self.current_index + 1]
-                self.agent_pos = current
+
                 self.traversed_path.append(self.agent_pos)
-                print(current)
 
 
 def main():
@@ -376,7 +370,7 @@ def main():
     dstar.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
     dstar.run()
 
-    dstar.plot()
+    # dstar.plot()
 
 
 if __name__ == "__main__":
