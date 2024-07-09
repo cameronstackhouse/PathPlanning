@@ -40,6 +40,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     results = []
     for algorithm in algorithms:
         print(algorithm)
+        algorithm.speed = 6
         path_len = []
         compute_time = []
         traversal_time = []
