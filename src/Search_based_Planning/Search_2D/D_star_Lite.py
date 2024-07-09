@@ -269,7 +269,11 @@ class DStar:
             self.s_start = tuple(data["agent"])
             self.s_goal = tuple(data["goal"])
             self.Env = env.CustomEnv(data)
-
+            self.dynamic_objects = []
+            self.current_index = 0
+            self.traversed_path = []
+            self.replan_time = []
+            
             self.rhs = {}
             self.g = {}
 
@@ -477,7 +481,7 @@ class DStar:
         self.initial_path = path
 
         if self.dobs_dir:
-            self.set_dynamic_obs()
+            self.set_dynamic_obs(self.dobs_dir)
 
         start_time = time.time()
 
@@ -512,9 +516,9 @@ def main():
         "euclidean",
     )
     dstar.change_env(
-        "Evaluation/Maps/2D/block_map_25/block_9.json",
-        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+        "src/Evaluation/Maps/2D/main/house_1.json",
     )
+    dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     dstar.run()
 
     # dstar.plot()

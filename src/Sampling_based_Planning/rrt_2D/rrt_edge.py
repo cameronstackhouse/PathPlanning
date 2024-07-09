@@ -238,17 +238,18 @@ class RrtEdge(Rrt):
 
         prev_coords = self.s_start.coords
         start_time = time.time()
-        global_path = self.planning()[::-1]
+        global_path = self.planning()
         end_time = time.time() - start_time
 
         self.compute_time = end_time
         self.initial_path = global_path
 
-        if self.obj_dir:
-            self.set_dynamic_obs(self.obj_dir)
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
 
         start_time = time.time()
         if global_path:
+            global_path = global_path[::-1]
             current = global_path[self.current_index]
             GOAL = global_path[-1]
 

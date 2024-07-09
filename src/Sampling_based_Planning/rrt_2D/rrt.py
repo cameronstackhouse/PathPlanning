@@ -112,6 +112,7 @@ class Rrt:
         self.compute_time = 0
         self.total_time = 0
         self.replan_time = []
+        self.dobs_dir = None
 
     def planning(self):
         for _ in range(self.iter_max):
@@ -204,6 +205,14 @@ class Rrt:
             self.s_goal = Node(data["goal"])
             self.vertex = [self.s_start]
 
+            self.initial_path = []
+            self.current_index = 0
+            self.dynamic_objects = []
+            self.time_steps = 0
+            self.agent_positions = [self.s_start.coords]
+            self.compute_time = 0
+            self.replan_time = []
+
             # Initialize the new custom environment
             self.env = env.CustomEnv(data)
 
@@ -233,8 +242,8 @@ class Rrt:
             self.agent_pos = data["agent"]
             self.first_success = None
 
-            if obs_name:
-                self.set_dynamic_obs(obs_name)
+            # if obs_name:
+            #     self.set_dynamic_obs(obs_name)
 
         else:
             print("Error, map not found")

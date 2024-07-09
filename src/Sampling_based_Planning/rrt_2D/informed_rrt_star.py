@@ -70,7 +70,7 @@ class IRrtStar:
         self.name = "Informed RRT*"
         self.first_success = None
         self.time = time
-        self.obj_dir = obj_dir
+        self.dobs_dir = obj_dir
         self.current_index = 0
         self.agent_positions = []
         self.time_steps = 0
@@ -357,6 +357,12 @@ class IRrtStar:
             self.V = [self.x_start]
             self.X_soln = set()
             self.path = None
+            
+            self.dynamic_objects = []
+            self.agent_positions = []
+            self.time_steps = 0
+            self.current_index = 0
+            self.replan_time = []
 
             # Initialize the new custom environment
             self.env = env.CustomEnv(data)
@@ -387,8 +393,8 @@ class IRrtStar:
             self.agent_pos = data["agent"]
 
             # Add dynamic obs if needed
-            if obs_name:
-                self.set_dynamic_obs(obs_name)
+            # if obs_name:
+            #     self.set_dynamic_obs(obs_name)
 
             self.first_success = None
 
@@ -495,8 +501,8 @@ class IRrtStar:
         self.compute_time = end_time
         self.initial_path = global_path
 
-        if self.obj_dir:
-            self.set_dynamic_obs(self.obj_dir)
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
 
         start_time = time.time()
 

@@ -33,8 +33,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     algorithms = [
         DStar(START, END, "euclidian"),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        RrtEdge(START, END, 0.05, 2000, time=5),
-        IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
+        RrtEdge(START, END, 0.05, 2000),
+        IRrtStar(START, END, 5, 0.05, 5, 2000),
     ]
 
     results = []
