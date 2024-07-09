@@ -102,6 +102,11 @@ class D_star_Lite(object):
 
         self.name = "D* Lite"
 
+        self.current_index = 0
+        self.agent_pos = None
+        self.agent_positions = []
+        self.speed = 6
+
     def updatecost(self, range_changed=None, new=None, old=None, mode=False):
         # scan graph for changed Cost, if Cost is changed update it
         CHANGED = set()
@@ -223,77 +228,11 @@ class D_star_Lite(object):
         else:
             print("Error, failed to load custom environment.")
 
-    def main(self):
-        s_last = self.x0
-        print("first run ...")
-        self.ComputeShortestPath()
-        self.Path = self.path()
-        self.done = True
-        visualization(self)
-        plt.pause(0.5)
-        # plt.show()
-        print("running with map update ...")
-        t = 0  # count time
-        ischanged = False
-        self.V = set()
-        while getDist(self.x0, self.xt) > 2 * self.env.resolution:
-            # ---------------------------------- at specific times, the environment is changed and Cost is updated
-            # if t % 2 == 0:
-            #     new0, old0 = self.env.move_block(
-            #         a=[-0.1, 0, -0.2], s=0.5, block_to_move=1, mode="translation"
-            #     )
-            #     new1, old1 = self.env.move_block(
-            #         a=[0, 0, -0.2], s=0.5, block_to_move=0, mode="translation"
-            #     )
-            #     new2, old2 = self.env.move_OBB(theta=[0, 0.1 * t, 0])
-            #     # new2,old2 = self.env.move_block(a=[-0.3, 0, -0.1], s=0.5, block_to_move=1, mode='translation')
-            #     ischanged = True
-            #     self.Path = []
-            # # ----------------------------------- traverse the route as originally planned
-            # if t == 0:
-            #     children_new = [
-            #         i
-            #         for i in self.CLOSED
-            #         if getDist(self.x0, i) <= self.env.resolution * np.sqrt(3)
-            #     ]
-            # else:
-            #     children_new = list(children(self, self.x0))
-            # self.x0 = children_new[
-            #     np.argmin(
-            #         [
-            #             self.getcost(self.x0, s_p) + self.getg(s_p)
-            #             for s_p in children_new
-            #         ]
-            #     )
-            # ]
-            # TODO add the moving robot position codes
-            self.env.start = self.x0
-            # ---------------------------------- if any Cost changed, update km, reset slast,
-            #                                    for all directed edgees (u,v) with  chaged edge costs,
-            #                                    update the edge Cost cBest(u,v) and update vertex u. then replan
-            if ischanged:
-                # self.km += heuristic_fun(self, self.x0, s_last)
-                # s_last = self.x0
-                # CHANGED = self.updatecost(True, new0, old0)
-                # CHANGED1 = self.updatecost(True, new1, old1)
-                # CHANGED2 = self.updatecost(True, new2, old2, mode="obb")
-                # CHANGED = CHANGED.union(CHANGED1, CHANGED2)
-                # self.V = set()
-                # for u in CHANGED:
-                #     self.UpdateVertex(u)
-                # self.ComputeShortestPath()
-
-                ischanged = False
-            self.Path = self.path(self.x0)
-            visualization(self)
-            t += 1
-        plt.show()
-
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
         y2 = y1 + height
         z2 = z1 + depth
-        return (x2, y2, z2)
+        return (x1, y1, z1, x2, y2, z2)
 
     def set_dynamic_obs(self, filename):
         obj_json = None
@@ -320,7 +259,7 @@ class D_star_Lite(object):
                 new_obj.index = len(self.env.blocks) - 1
                 self.dynamic_obs.append(new_obj)
 
-                self.env.New_block(new_obj.corners)
+                self.env.new_block_corners(new_obj.corners)
 
     def path(self, s_start=None):
         """After ComputeShortestPath()
@@ -356,7 +295,7 @@ class D_star_Lite(object):
 
     def move_dynamic_obs(self):
         # TODO
-        self.path = []
+        self.Path = []
         changed = None
         for obj in self.dynamic_obs:
             # TODO change
@@ -370,32 +309,106 @@ class D_star_Lite(object):
                 changed = changed.union(n_changed)
 
         self.V = set()
-        for u in changed:
-            self.UpdateVertex(u)
-        self.ComputeShortestPath()
+        if changed is not None:
+            for u in changed:
+                self.UpdateVertex(u)
+            self.ComputeShortestPath()
 
         self.Path = self.path(self.x0)
 
-    def move(self):
-        #TODO
-        pass
+    def move(self, path, mps=6):
+        if self.current_index >= len(path) - 1:
+            return self.xt
+
+        current = self.agent_pos
+        next = path[self.current_index + 1][1]
+
+        seg_distance = getDist(current, next)
+
+        direction = (
+            (next[0] - current[0]) / seg_distance,
+            (next[1] - current[1]) / seg_distance,
+            (next[2] - current[2]) / seg_distance,
+        )
+
+        new_pos = (
+            current[0] + direction[0] * mps,
+            current[1] + direction[1] * mps,
+            current[2] + direction[2] * mps,
+        )
+
+        if getDist(current, new_pos) >= seg_distance:
+            v1 = np.array(next) - np.array(current)
+            v2 = np.array(new_pos) - np.array(next)
+            dot_product = np.dot(v1, v2)
+
+            mag_v1 = np.linalg.norm(v1)
+            mag_v2 = np.linalg.norm(v2)
+
+            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+
+            if same_dir:
+                # Move the agent far forward without turning
+                self.current_index += 1
+                count = 0
+                while self.current_index < len(path) - 1:
+                    next = path[self.current_index + 1][1]
+
+                    seg_distance = getDist(current, next)
+                    direction = (
+                        (next[0] - current[0]) / seg_distance,
+                        (next[1] - current[1]) / seg_distance,
+                        (next[2] - current[2]) / seg_distance,
+                    )
+                    new_pos = (
+                        current[0] + direction[0] * mps,
+                        current[1] + direction[1] * mps,
+                        current[2] + direction[2] * mps,
+                    )
+                    v1 = np.array(next) - np.array(current)
+                    v2 = np.array(new_pos) - np.array(next)
+                    dot_product = np.dot(v1, v2)
+                    mag_v1 = np.linalg.norm(v1)
+                    mag_v2 = np.linalg.norm(v2)
+                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+                    if not same_dir or count >= mps - 1:
+                        break
+                    current = next
+                    self.agent_pos = current
+                    self.current_index += 1
+                    count += 1
+            else:
+                self.agent_pos = next
+                self.current_index += 1
+        else:
+            self.agent_pos = new_pos
+
+        return self.agent_pos
 
     def run(self):
+        self.agent_pos = self.x0
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)
         # TODO
         t = 0
-        ischanged = False
         self.V = set()
-        while getDist(self.x0, self.xt) > 2 * self.env.resolution:
+        while self.agent_pos != self.xt:
+            self.env.start = self.x0
             self.move_dynamic_obs()
-            self.move()
+            self.move(self.Path)
+            self.agent_positions.append(self.agent_pos)
+
+            t += 1
 
 
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
-    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json", )
+    D_lite.change_env(
+        "Evaluation/Maps/3D/block_map_25_3d/4_3d.json", "Evaluation/Maps/3D/obs.json"
+    )
     a = time.time()
-    D_lite.main()
+    D_lite.run()
     print("used time (s) is " + str(time.time() - a))
+
+    print(D_lite.agent_positions)
