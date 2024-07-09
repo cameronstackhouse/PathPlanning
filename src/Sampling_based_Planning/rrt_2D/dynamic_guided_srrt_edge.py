@@ -84,7 +84,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                         self.replan_time.append(replan_time)
                         if not new_path:
                             self.agent_positions.append(self.agent_pos)
-                            return False
+                            return None
                         else:
                             global_path = new_path
                     replan_time = time.time() - replan_time
