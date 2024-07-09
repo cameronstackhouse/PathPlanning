@@ -97,7 +97,11 @@ class DStar:
             s_list = {}
 
             for s in self.get_neighbor(s_curr):
-                s_list[s] = self.g[s] + self.cost(s_curr, s)
+                if s not in self.visited:
+                    s_list[s] = self.g[s] + self.cost(s_curr, s)
+
+            if not s_list:
+                return None
             s_curr = min(s_list, key=s_list.get)
             path.append(s_curr)
 
@@ -273,7 +277,7 @@ class DStar:
             self.current_index = 0
             self.traversed_path = []
             self.replan_time = []
-            
+
             self.rhs = {}
             self.g = {}
 
@@ -420,6 +424,7 @@ class DStar:
                         self.UpdateVertex(neighbour)
 
         if path_blocked:
+
             replan_time = time.time()
             p = self.ComputePath()
             replan_time = time.time() - replan_time
@@ -496,6 +501,9 @@ class DStar:
                 self.update_object_positions()
                 path = self.update_costs(path)
 
+                if path is None:
+                    return None
+
                 current = self.move(path)
 
                 self.traversed_path.append(self.agent_pos)
@@ -516,7 +524,7 @@ def main():
         "euclidean",
     )
     dstar.change_env(
-        "src/Evaluation/Maps/2D/main/house_1.json",
+        "Evaluation/Maps/2D/main/house_10.json",
     )
     dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     dstar.run()
