@@ -153,7 +153,7 @@ class GuidedSrrtEdge(SRrtEdge):
                             best_path_dist = D
                             self.update_ellipsoid(best_path)
 
-                # visualization(self)
+                visualization(self)
                 self.i += 1
 
         self.done = True
@@ -169,3 +169,5 @@ class GuidedSrrtEdge(SRrtEdge):
 if __name__ == "__main__":
     p = GuidedSrrtEdge()
     p.run()
+    
+    print(p.Path)

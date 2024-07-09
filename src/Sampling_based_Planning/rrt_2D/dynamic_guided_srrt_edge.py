@@ -2,6 +2,7 @@ import copy
 import math
 import os
 import sys
+import time
 
 import numpy as np
 
@@ -24,7 +25,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         local_time=1.0,
         mem=100000,
         min_edge_length=4,
-        obj_dir=None,
     ):
         super().__init__(
             start, end, goal_sample_rate, global_time, mem, min_edge_length
@@ -32,7 +32,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.path = []
         self.speed = 6
         self.distance_travelled = 0
-        self.obj_dir = obj_dir
         self.start_rect = None
 
     def run(self):
@@ -44,11 +43,18 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         self.start_rect = copy.deepcopy(self.env.obs_rectangle)
         prev_coords = self.s_start.coords
         # Find initial global path without knowledge of dynamic objects
+
+        start_time = time.time()
         global_path = self.planning()
+        end_time = time.time() - start_time
+
+        self.compute_time = end_time
+
         self.initial_path = global_path
 
-        if self.obj_dir:
-            self.set_dynamic_obs(self.obj_dir)
+        start_time = time.time()
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
 
         if global_path:
             global_path = global_path[::-1]
@@ -70,15 +76,18 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 new_coords = self.move(global_path, self.speed)
                 # If the UAV can't move to the next position
                 if new_coords[0] is None:
+                    replan_time = time.time()
                     # Attempt to reconnect
                     if not self.reconnect(global_path):
                         new_path = self.regrow()
+                        replan_time = time.time() - replan_time
+                        self.replan_time.append(replan_time)
                         if not new_path:
                             self.agent_positions.append(self.agent_pos)
                             return False
                         else:
                             global_path = new_path
-
+                    replan_time = time.time() - replan_time
                     self.agent_positions.append(self.agent_pos)
 
                 else:
@@ -93,9 +102,11 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
                 self.time_steps += 1
             self.path = global_path
-            return True
+            self.total_time = time.time() - start_time
+            return self.agent_positions
         else:
-            return False
+            self.total_time = time.time() - start_time
+            return None
 
     def move(self, path, mps=6):
         """
@@ -129,7 +140,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             self.current_index += 1
             return next_node
 
-        # TODO: Check for collision within next x amount of time (maybe based on speed)
         future_uav_positions = []
         PREDICTION_HORIZON = 4
         for t in range(1, PREDICTION_HORIZON):
@@ -145,7 +155,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     PREDICTION_HORIZON
                 )
 
-                # TODO, check for future collisions
                 for pos in dynamic_future_pos:
                     original_pos = dynamic_object.current_pos
                     dynamic_object.current_pos = pos
@@ -157,9 +166,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     dynamic_object.current_pos = original_pos
 
         return new_pos
-
-    def invalidated_graph_after_n_steps(self, n=1):
-        pass
 
     def regrow(self):
         """
@@ -210,7 +216,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
-                # TODO might need to change
                 if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
                     Node(goal_pos), obj
                 ):
@@ -263,9 +268,11 @@ if __name__ == "__main__":
         end,
         goal_sample_rate,
         global_time=3,
-        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    rrt.change_env("Evaluation/Maps/2D/block_map_25/block_6.json")
+    rrt.change_env(
+        "Evaluation/Maps/2D/block_map_25/block_9.json"
+        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+    )
 
     success = rrt.run()
 

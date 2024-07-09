@@ -79,6 +79,7 @@ class RrtEdge(Rrt):
         self.time = time
         self.distance_travelled = 0
         self.path = []
+        self.total_time = 0
 
     def planning(self):
         self.vertex = [Node(self.agent_pos)]
@@ -234,13 +235,19 @@ class RrtEdge(Rrt):
         """
         self.initial_start = self.s_start
         self.start_rect = copy.deepcopy(self.env.obs_rectangle)
+
         prev_coords = self.s_start.coords
+        start_time = time.time()
         global_path = self.planning()[::-1]
+        end_time = time.time() - start_time
+
+        self.compute_time = end_time
         self.initial_path = global_path
 
         if self.obj_dir:
             self.set_dynamic_obs(self.obj_dir)
 
+        start_time = time.time()
         if global_path:
             current = global_path[self.current_index]
             GOAL = global_path[-1]
@@ -255,15 +262,17 @@ class RrtEdge(Rrt):
                 new_coords = self.move(global_path, self.speed)
 
                 if new_coords[0] is None:
+                    start_replan = time.time()
                     # Rerun rrt-edge from the current position
                     self.edges = []
                     self.vertex = [Node(current)]
                     self.s_start = Node(current)
                     new_path = self.planning()
-
+                    end_replan = time.time() - start_replan
+                    self.replan_time.append(end_replan)
                     if not new_path:
                         self.agent_positions.append(self.agent_pos)
-                        return False
+                        return None
                     else:
                         global_path = new_path[::-1]
                         self.current_index = 0
@@ -281,9 +290,10 @@ class RrtEdge(Rrt):
                 self.time_steps += 1
 
             self.path = global_path
-            return True
+            self.total_time = time.time() - start_time
+            return self.agent_positions
         else:
-            return False
+            return None
 
     def plot(self):
         dynamic_objects = self.dynamic_objects

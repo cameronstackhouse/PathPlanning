@@ -2,6 +2,7 @@
 TODO
 """
 
+import json
 import os
 import sys
 
@@ -12,7 +13,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
 
-from rrt_3D.env3D import env
+from rrt_3D.env3D import CustomEnv
 from rrt_3D.utils3D import getDist, sampleFree, nearest, isCollide
 from rrt_3D.plot_util3D import (
     set_axes_equal,
@@ -23,6 +24,7 @@ from rrt_3D.plot_util3D import (
     make_transparent,
 )
 from rrt_3D.mb_guided_srrt_edge3D import MbGuidedSrrtEdge
+from rrt_3D.rrt3D import DynamicObj
 
 
 class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
@@ -32,43 +34,54 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.agent_positions = []
         self.agent_pos = None
         self.distance_travelled = 0
+        self.time = 3
+
+        self.dynamic_obs = []
+
+        self.replanning_time = []
 
     def regrow(self):
-        pass
+        """
+        TODO
+        """
+        self.V.clear()
+        self.E.clear()
+        self.ellipsoid = None
+        self.Path = None
 
-    def reconnect(self):
-        pass
+        current_pos = self.agent_pos
 
-    def update_objs(self):
-        pass
+        self.x0 = current_pos
+        self.V = [current_pos]
+        self.E = []
 
-    def FindAffectedEdges(self, obstacle):
-        Affectededges = []
-        for e in self.E:
-            child, parent = e.node_1, e.node_2
-            collide, _ = isCollide(self, child, parent)
-            if collide:
-                Affectededges.append(e)
-        return Affectededges
+        self.run()
 
-    def PathisInvalid(self, path):
-        for edge in path:
-            if (
-                self.flag[tuple(edge[0])] == "Invalid"
-                or self.flag[tuple(edge[1])] == "Invalid"
-            ):
-                return True
+        if self.Path is not None:
+            self.current_index = 0
+            return self.Path
+        else:
+            return None
 
-    def InvalidateNodes(self, obstacle):
-        Edges = self.FindAffectedEdges(obstacle)
-        for edge in Edges:
-            qe = self.ChildEndpointNode(edge)
-            self.flag[qe] = "Invalid"
+    def reconnect(self, path):
+        """
+        TODO
+        """
+        current_pos = self.agent_pos
+        goal_pos = path[self.current_index + 1]
+
+        time_steps = int(self.time)
+
+    def move_dynamic_obs(self):
+        """
+        TODO
+        """
+        for obj in self.dynamic_obs:
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
 
     def move(self, path, mps=6):
-        # if self.PathisInvalid(path):
-        #     return None
-
         if self.current_index >= len(path) - 1:
             return self.env.goal
 
@@ -96,13 +109,13 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         return new_pos
 
-    def Main(self):
-        self.x0 = tuple(self.env.goal)
-        self.xt = tuple(self.env.start)
+    def main(self):
+        self.x0 = tuple(self.env.start)
+        self.xt = tuple(self.env.goal)
         prev_coords = self.x0
-        self.flag[tuple(self.x0)] = "Valid"
 
         self.agent_pos = self.x0
+        self.agent_positions.append(self.agent_pos)
 
         # Find initial path
         path = self.run()
@@ -113,16 +126,15 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             path = self.Path
             start = self.env.start
             goal = self.env.goal
-            
+
             current = start
 
             current = np.array(current)
             GOAL = np.array(goal)
             while not np.array_equal(current, GOAL):
-                self.update_objs()
+                self.move_dynamic_obs()
 
                 new_coords = self.move(path)
-                print(new_coords)
                 if new_coords is None:
                     if not self.reconnect():
                         new_path = self.regrow()
@@ -149,8 +161,61 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         else:
             return False
 
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x1, y1, z1, x2, y2, z2)
+
+    def change_env(self, map_name, obs_name=None):
+        data = None
+        with open(map_name) as f:
+            data = json.load(f)
+
+        if data:
+            self.current_index = 0
+            self.agent_positions = []
+            self.agent_pos = None
+            self.distance_travelled = 0
+            self.dynamic_obs = []
+
+            self.env = CustomEnv(data)
+
+            if obs_name:
+                self.set_dynamic_obs(obs_name)
+
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+                new_obj.corners = self.corner_coords(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.current_pos[2],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                    new_obj.size[2],
+                )
+
+                new_obj.index = len(self.env.blocks) - 1
+                self.dynamic_obs.append(new_obj)
+
+                # TODO Add to env
+                self.env.new_block_corners(new_obj.corners)
+
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(1)
-    res = rrt.Main()
-    print(res)
+    rrt.change_env(
+        "Evaluation/Maps/3D/block_map_25_3d/6_3d.json", "Evaluation/Maps/3D/obs.json"
+    )
+    res = rrt.main()

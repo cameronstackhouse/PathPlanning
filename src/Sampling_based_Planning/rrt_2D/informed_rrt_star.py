@@ -79,6 +79,9 @@ class IRrtStar:
         self.dynamic_objects = []
         self.initial_start = None
         self.initial_path = None
+        self.total_time = 0
+        self.compute_time = 0
+        self.replan_time = []
 
     def init(self):
         cMin, theta = self.get_distance_and_angle(self.x_start, self.x_goal)
@@ -101,8 +104,6 @@ class IRrtStar:
         start = time.time()
 
         for k in range(self.iter_max):
-            cpu_usage = psutil.cpu_percent(interval=None)
-            self.peak_cpu = max(self.peak_cpu, cpu_usage)
             if self.X_soln:
                 cost = {node: self.Cost(node) for node in self.X_soln}
                 x_best = min(cost, key=cost.get)
@@ -488,11 +489,16 @@ class IRrtStar:
         self.initial_start = self.x_start
         self.start_rect = copy.deepcopy(self.env.obs_rectangle)
         prev_coords = self.x_start.coords
+        start_time = time.time()
         global_path = self.planning()
+        end_time = time.time() - start_time
+        self.compute_time = end_time
         self.initial_path = global_path
 
         if self.obj_dir:
             self.set_dynamic_obs(self.obj_dir)
+
+        start_time = time.time()
 
         if global_path:
             global_path = global_path[::-1]
@@ -509,11 +515,14 @@ class IRrtStar:
                 new_coords = self.move(global_path, self.speed)
 
                 if new_coords[0] is None:
+                    replan_time = time.time()
                     new_path = self.planning()
+                    replan_time = time.time() - replan_time
 
+                    self.replan_time.append(replan_time)
                     if not new_path:
                         self.agent_positions.append(self.agent_pos)
-                        return False
+                        return None
                     else:
                         global_path = new_path[::-1]
                         self.current_index = 0
@@ -531,9 +540,11 @@ class IRrtStar:
                 self.time_steps += 1
 
             self.path = global_path
-            return True
+            self.total_time = time.time() - start_time
+            return self.agent_positions
         else:
-            return False
+            self.total_time = time.time() - start_time
+            return None
 
     def plot(self):
         dynamic_objects = self.dynamic_objects

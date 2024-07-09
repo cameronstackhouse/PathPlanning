@@ -27,6 +27,7 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
         self.mem = mem
         self.time = time
         self.peak_cpu = 0
+        self.dobs_dir = None
 
     def clear_tree(self):
         self.vertex = [self.s_start]

@@ -212,6 +212,8 @@ class D_star_Lite(object):
             self.done = False
             self.Path = []
             self.Parent = {}
+            self.km = 0
+            
 
             self.env = CustomEnv(data)
 
@@ -222,6 +224,13 @@ class D_star_Lite(object):
 
             self.OPEN = queue.MinheapPQ()
             self.OPEN.put(self.xt, self.CalculateKey(self.xt))
+            
+            self.g = {}
+            self.h = {}
+            self.CLOSED = set()
+            self.CHILDREN = {}
+            
+            self.COST = defaultdict(lambda: defaultdict(dict))
 
             if obs_name:
                 self.set_dynamic_obs(obs_name)
@@ -294,11 +303,9 @@ class D_star_Lite(object):
         return path
 
     def move_dynamic_obs(self):
-        # TODO
         self.Path = []
         changed = None
         for obj in self.dynamic_obs:
-            # TODO change
             old, new = self.env.move_block(
                 a=obj.velocity, block_to_move=obj.index, mode="translation"
             )
@@ -389,7 +396,6 @@ class D_star_Lite(object):
         self.agent_pos = self.x0
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)
-        # TODO
         t = 0
         self.V = set()
         while self.agent_pos != self.xt:

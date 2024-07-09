@@ -31,8 +31,6 @@ sys.path.append(
 from Search_2D.D_star_Lite import DStar
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../Evaluation/")
-from load_map import load_dynamic_obs
-from stats import Stats
 
 from glob import glob
 from pathlib import Path
@@ -74,7 +72,6 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
         success = 0
 
         # TODO
-        traversal_time = []
         cpu_usage = []
         memory_used = []  # psutil.virtual_memory()
         first_successes = []
@@ -102,7 +99,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             first_successes.append(algorithm.first_success)
 
             total_time = time.time() - start_time
-            peak = tracemalloc.get_tracemalloc_memory()
+            _, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             memory_used.append(peak)

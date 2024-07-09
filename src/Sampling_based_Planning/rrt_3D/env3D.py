@@ -141,6 +141,11 @@ class env:
         self.goal = np.array([6.0, 16.0, 0.0])
         self.t = 0  # time
 
+    def new_block_corners(self, corners):
+        self.blocks = np.vstack([self.blocks, corners])
+        self.AABB = getAABB2(self.blocks)
+        self.AABB_pyrr = getAABB(self.blocks)
+
     def New_block(self):
         newblock = add_block()
         self.blocks = np.vstack([self.blocks, newblock])
@@ -283,8 +288,6 @@ class CustomEnv(env):
 
         self.balls = []
         self.blocks = np.array(Obstacles)
-        
-        print(Obstacles)
 
         self.AABB = getAABB2(self.blocks)
         self.AABB_pyrr = getAABB(self.blocks)

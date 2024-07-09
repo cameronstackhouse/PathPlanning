@@ -109,6 +109,9 @@ class Rrt:
         self.agent_positions = [self.s_start.coords]
         self.agent_pos = self.s_start.coords
         self.first_success = None
+        self.compute_time = 0
+        self.total_time = 0
+        self.replan_time = []
 
     def planning(self):
         for _ in range(self.iter_max):
@@ -229,6 +232,9 @@ class Rrt:
 
             self.agent_pos = data["agent"]
             self.first_success = None
+
+            if obs_name:
+                self.set_dynamic_obs(obs_name)
 
         else:
             print("Error, map not found")

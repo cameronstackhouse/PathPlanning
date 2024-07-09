@@ -40,9 +40,7 @@ class DynamicObj:
 
 
 class DStar:
-    def __init__(
-        self, s_start, s_goal, heuristic_type, time=float("inf"), obj_dir=None
-    ):
+    def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
         self.s_start, self.s_goal = s_start, s_goal
         self.heuristic_type = heuristic_type
 
@@ -77,8 +75,11 @@ class DStar:
         self.speed = 6
         self.time_steps = 0
         self.agent_pos = self.s_start
-        self.obj_dir = obj_dir
         self.traversed_path = []
+        self.replan_time = []
+        self.total_time = 0
+        self.dobs_dir = None
+        self.compute_time = None
 
     def euclidean_distance(self, point1, point2):
         point1 = np.array(point1)
@@ -259,7 +260,7 @@ class DStar:
         plt.plot(self.s_start[0], self.s_start[1], "bs")
         plt.plot(self.s_goal[0], self.s_goal[1], "gs")
 
-    def change_env(self, map_name):
+    def change_env(self, map_name, obj_dir=None):
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -289,6 +290,9 @@ class DStar:
             self.U[self.s_goal] = self.CalculateKey(self.s_goal)
 
             self.agent_pos = self.s_start
+
+            # if obj_dir:
+            #     self.set_dynamic_obs(obj_dir)
         else:
             print("Error, map not found")
 
@@ -411,7 +415,14 @@ class DStar:
                     for neighbour in self.get_neighbor(cell):
                         self.UpdateVertex(neighbour)
 
-        return self.ComputePath() if path_blocked else self.initial_path
+        if path_blocked:
+            replan_time = time.time()
+            p = self.ComputePath()
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
+            return p
+        else:
+            return self.initial_path
 
     def set_dynamic_obs(self, filename):
         obj_json = None
@@ -457,12 +468,18 @@ class DStar:
         and reacting to dynamic objects.
         """
         self.traversed_path.append(self.agent_pos)
+        start_time = time.time()
         path = self.ComputePath()
-        self.initial_path = path
-        print("INITIAL FOUND")
+        end_time = time.time() - start_time
 
-        if self.obj_dir:
-            self.set_dynamic_obs(self.obj_dir)
+        self.compute_time = end_time
+
+        self.initial_path = path
+
+        if self.dobs_dir:
+            self.set_dynamic_obs()
+
+        start_time = time.time()
 
         if path:
             current = path[self.current_index]
@@ -476,10 +493,13 @@ class DStar:
                 path = self.update_costs(path)
 
                 current = self.move(path)
-                print(f"Current pos: {current}")
 
                 self.traversed_path.append(self.agent_pos)
-            # self.plot_dynamic_objects_and_agent()
+
+        end_time = time.time() - start_time
+        self.total_time = end_time
+
+        return self.traversed_path
 
 
 def main():
@@ -490,9 +510,11 @@ def main():
         s_start,
         s_goal,
         "euclidean",
-        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    dstar.change_env("Evaluation/Maps/2D/block_map_25/block_0.json")
+    dstar.change_env(
+        "Evaluation/Maps/2D/block_map_25/block_9.json",
+        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+    )
     dstar.run()
 
     # dstar.plot()
