@@ -1,3 +1,4 @@
+import json
 import sys
 import os
 import tracemalloc
@@ -22,6 +23,18 @@ from glob import glob
 from pathlib import Path
 
 
+def load_existing_data(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "r") as file:
+            return json.load(file)
+    return []
+
+
+def save_data(file_path, data):
+    with open(file_path, "w") as file:
+        json.dump(data, file, indent=4)
+
+
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     START = (0, 0)
     END = (0, 0)
@@ -31,10 +44,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        #DStar(START, END, "euclidian"),
+        # DStar(START, END, "euclidian"),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        RrtEdge(START, END, 0.05, 2000),
-        IRrtStar(START, END, 5, 0.05, 5, 2000),
+        RrtEdge(START, END, 0.05, 2000, time=5),
+        IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
     ]
 
     results = []
@@ -45,6 +58,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
         compute_time = []
         traversal_time = []
         energy = []
+        replan_time = []
         success = 0
 
         cpu_usage = []
@@ -68,6 +82,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             cpu_usage.append(avg_cpu_load)
             memory_used.append(peak)
 
+            replan_time.append(algorithm.replan_time)
+
             if path is not None:
                 success += 1
                 path_len.append(algorithms[1].utils.path_cost(path))
@@ -86,10 +102,12 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             "Traversal Time": traversal_time,
             "CPU Usage": cpu_usage,
             "Memory Used": memory_used,
-            "Replan Time": [],
+            "Replan Time": replan_time,
         }
 
+        results = load_existing_data("dynamic_eval_2D_results.json")
         results.append(result)
+        save_data("dynamic_eval_2D_results.json", results)
 
     return results
 
@@ -98,7 +116,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "dynamic_eval_2D_results.json")
+    #save_results(results, "dynamic_eval_2D_results.json")
 
 
 if __name__ == "__main__":
