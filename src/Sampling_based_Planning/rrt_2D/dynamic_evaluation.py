@@ -45,9 +45,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
     algorithms = [
         # DStar(START, END, "euclidian"),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        RrtEdge(START, END, 0.05, 2000, time=5),
-        IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=10),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=20),
+        # RrtEdge(START, END, 0.05, 2000, time=5),
+        # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
     ]
 
     results = []
@@ -105,9 +106,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             "Replan Time": replan_time,
         }
 
-        results = load_existing_data("dynamic_eval_2D_results.json")
+        results = load_existing_data("dynamic_eval_2D_results_2.json")
         results.append(result)
-        save_data("dynamic_eval_2D_results.json", results)
+        save_data("dynamic_eval_2D_results_2.json", results)
 
     return results
 
@@ -116,7 +117,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    #save_results(results, "dynamic_eval_2D_results.json")
+    # save_results(results, "dynamic_eval_2D_results.json")
 
 
 if __name__ == "__main__":
