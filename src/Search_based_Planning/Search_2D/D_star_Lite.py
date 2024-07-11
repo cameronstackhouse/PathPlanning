@@ -299,6 +299,8 @@ class DStar:
 
             self.agent_pos = self.s_start
 
+            return self.Env
+
             # if obj_dir:
             #     self.set_dynamic_obs(obj_dir)
         else:
