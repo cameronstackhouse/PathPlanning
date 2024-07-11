@@ -91,12 +91,17 @@ class CustomEnv(Env):
         super().__init__()
         self.data = data
         self.obs = []
+        self.s_start = None
+        self.s_end = None
         self.obs = self.gen_obs()
         self.dynamic_obs = []
 
     def gen_obs(self):
         obs = set()
         grid = self.data["grid"]
+        self.s_start = self.data["agent"]
+        self.s_goal = self.data["goal"]
+
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 if grid[i][j] == 1:

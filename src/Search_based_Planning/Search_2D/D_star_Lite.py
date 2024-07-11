@@ -112,7 +112,6 @@ class DStar:
         while True:
             if (len(self.U)) == 0:
                 return None
-
             if time.time() - start_time > self.time:
                 if (
                     v >= self.CalculateKey(self.s_start)
