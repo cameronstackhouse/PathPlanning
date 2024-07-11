@@ -1,5 +1,8 @@
 from D_star_Lite import DStar
 
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
 class TreeNode:
     def __init__(self, x, y, width, height, env) -> None:
         self.x = x
@@ -17,9 +20,6 @@ class TreeNode:
         return self.left_top is None and self.right_top is None and self.left_bottom is None and self.right_bottom is None
     
     def is_uniform(self):
-        """
-        TODO Work out.
-        """
         init_val = (self.x, self.y) in self.env.obs
         for i in range(self.x, self.x + self.width):
             for j in range(self.y, self.y + self.height):
@@ -27,7 +27,7 @@ class TreeNode:
                     return False
         return True
 
-    def partition(self):
+    def partition(self, leafs):
         if self.is_leaf() and not self.is_uniform():
             mid_width = self.width // 2
             mid_height = self.height // 2
@@ -42,11 +42,14 @@ class TreeNode:
 
             for child in [self.left_top, self.right_top, self.left_bottom, self.right_bottom]:
                 child.parent = self
+
+            leafs.remove(self)
+            leafs.extend([self.left_top, self.right_top, self.left_bottom, self.right_bottom])
             
-            self.left_top.partition()
-            self.right_top.partition()
-            self.left_bottom.partition()
-            self.right_bottom.partition()
+            self.left_top.partition(leafs)
+            self.right_top.partition(leafs)
+            self.left_bottom.partition(leafs)
+            self.right_bottom.partition(leafs)
 
 class QuadTree:
     def __init__(self, env) -> None:
@@ -56,11 +59,21 @@ class QuadTree:
     
     def partition(self, node):
         if node.is_leaf() and not node.is_uniform():
-            node.partition()
-            self.partition(node.left_top)
-            self.partition(node.right_top)
-            self.partition(node.left_bottom)
-            self.partition(node.right_bottom)
+            node.partition(self.leafs)
+    
+    def visualize(self):
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, self.root.width)
+        ax.set_ylim(0, self.root.height)
+        for node in self.leafs:
+            if node.is_uniform():
+                color = 'black' if (node.x, node.y) in node.env.obs else 'white'
+            else:
+                color = 'gray'
+            rect = patches.Rectangle((node.x, node.y), node.width, node.height, linewidth=1, edgecolor='r', facecolor=color, fill=True)
+            ax.add_patch(rect)
+        plt.gca().invert_yaxis()
+        plt.show()
 
 class ABFStarLite(DStar):
     def __init__(self, s_start, s_goal, heuristic_type, time=...):
@@ -79,13 +92,6 @@ class ABFStarLite(DStar):
 
 if __name__ == "__main__":
     s = ABFStarLite((0,0), (1, 0), "manhattan", time=2)
-    s.change_env("Evaluation/Maps/2D/main/block_10.json")
+    s.change_env("Evaluation/Maps/2D/main/block_23.json")
 
-    curr = s.quadtree.root
-    count = 0
-
-    while curr.left_top is not None:
-        curr = curr.right_top
-        count += 1
-
-    print(count)
+    s.quadtree.visualize()
