@@ -116,6 +116,24 @@ class QuadTree:
         if node.is_leaf() and not node.is_uniform():
             node.partition(self.leafs)
 
+    def update_leafs(self):
+        self.leafs = []
+        self._collect_leafs(self.root)
+        print(len(self.leafs))
+
+    def _collect_leafs(self, node):
+        if node.is_leaf():
+            self.leafs.append(node)
+        else:
+            for child in [
+                node.left_top,
+                node.right_top,
+                node.left_bottom,
+                node.right_bottom,
+            ]:
+                if child:
+                    self._collect_leafs(child)
+
     def visualize(self, path=None):
         fig, ax = plt.subplots()
         ax.set_xlim(0, self.root.width)
@@ -222,7 +240,7 @@ class ADStarLite(DStar):
                     return traverse(child)
             return None
 
-        return traverse(self.root)
+        return traverse(self.quadtree.root)
 
     def update(self):
         current_pos = self.agent_pos
@@ -244,11 +262,47 @@ class ADStarLite(DStar):
                         affected_leafs.add(leaf_containing_point)
 
         if repartition:
-            for leaf in affected_leafs:
-                leaf.first_inconsistent()
-                self.quadtree.partition(leaf)
-
+            self.update_costs_and_queue(affected_leafs)
             self.plan_new_path()
+
+    def update_costs_and_queue(self, affected_leafs):
+        """
+        TODO fix
+        """
+        old_cells = set()
+        new_cells = {}
+
+        for leaf in affected_leafs:
+            for x in range(leaf.x, leaf.x + leaf.width):
+                for y in range(leaf.y, leaf.y + leaf.height):
+                    node_center = (x + leaf.width // 2, y + leaf.height // 2)
+                    old_cells.add(node_center)
+
+        for leaf in affected_leafs:
+            self.quadtree.partition(leaf)
+
+        if len(affected_leafs) > 0:
+            self.quadtree.update_leafs()
+
+            for leaf in self.quadtree.leafs:
+                for x in range(leaf.x, leaf.x + leaf.width):
+                    for y in range(leaf.y, leaf.y + leaf.height):
+                        midpoint = (x + leaf.width // 2, y + leaf.height // 2)
+                        new_cells[midpoint] = leaf
+
+            for cell in old_cells:
+                if cell in self.U:
+                    del self.U[cell]
+                if cell in self.rhs:
+                    del self.rhs[cell]
+                if cell in self.g:
+                    del self.g[cell]
+
+            for cell, leaf in new_cells.items():
+                self.rhs[cell] = float("inf")
+                self.g[cell] = float("inf")
+                self.leaf_nodes[cell] = self.quadtree.leafs[i]
+                self.UpdateVertex(cell)
 
     def plan_new_path(self):
         self.s_start = self.agent_pos
@@ -258,9 +312,13 @@ class ADStarLite(DStar):
     def run(self):
         path = self.ComputePath()
 
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
         self.agent_pos = path[0]
         GOAL = path[-1]
 
+        self.update_costs_and_queue([])
         while self.agent_pos != GOAL:
             self.update_object_positions()
             self.update()
@@ -271,4 +329,5 @@ class ADStarLite(DStar):
 if __name__ == "__main__":
     s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
     s.change_env("Evaluation/Maps/2D/main/block_10.json")
+    s.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     s.run()
