@@ -97,11 +97,8 @@ class DStar:
             s_list = {}
 
             for s in self.get_neighbor(s_curr):
-                if s not in self.visited:
-                    s_list[s] = self.g[s] + self.cost(s_curr, s)
+                s_list[s] = self.g[s] + self.cost(s_curr, s)
 
-            if not s_list:
-                return None
             s_curr = min(s_list, key=s_list.get)
             path.append(s_curr)
 
@@ -522,13 +519,15 @@ def main():
     dstar = DStar(
         s_start,
         s_goal,
-        "euclidean",
+        "manhattan",
     )
     dstar.change_env(
-        "Evaluation/Maps/2D/main/house_10.json",
+        "Evaluation/Maps/2D/main/block_22.json",
     )
-    dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
-    dstar.run()
+    #dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+    path = dstar.ComputePath()
+
+    print(path)
 
     # dstar.plot()
 

@@ -16,6 +16,7 @@ class TreeNode:
         self.right_bottom = None
         self.parent = None
         self.env = env
+        self.coords = [x, y]
 
     def is_leaf(self):
         return (
@@ -40,6 +41,7 @@ class TreeNode:
         )
 
     def partition(self, leafs):
+        # TODO ADD DYNAMIC OBS CHECK
         if self.width == 1 and self.height == 1:
             return
 
@@ -165,7 +167,7 @@ class ABFStarLite(DStar):
         current_leaf = self.leaf_nodes[s]
 
         for leaf in self.quadtree.leafs:
-            if leaf != current_leaf:
+            if leaf.coords != current_leaf.coords:
                 if (
                     current_leaf.x + current_leaf.width == leaf.x
                     or current_leaf.x == leaf.x + leaf.width
@@ -199,7 +201,6 @@ class ABFStarLite(DStar):
 
 if __name__ == "__main__":
     s = ABFStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
-    s.change_env("Evaluation/Maps/2D/main/block_21.json")
+    s.change_env("Evaluation/Maps/2D/main/house_1.json")
     path = s.ComputePath()
-    print(path)
     s.quadtree.visualize(path)
