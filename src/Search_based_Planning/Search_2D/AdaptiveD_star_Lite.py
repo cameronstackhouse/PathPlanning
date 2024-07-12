@@ -30,7 +30,7 @@ class TreeNode:
         init_val = (self.x, self.y) in self.env.obs
         for i in range(self.x, self.x + self.width):
             for j in range(self.y, self.y + self.height):
-                if ((i, j) in self.env.obs) != init_val:
+                if ((i, j) in self.env.obs or (i, j) in self.env.dynamic_obs_cells) != init_val:
                     return False
         return True
 
@@ -41,7 +41,6 @@ class TreeNode:
         )
 
     def partition(self, leafs):
-        # TODO ADD DYNAMIC OBS CHECK
         if self.width == 1 and self.height == 1:
             return
 
@@ -92,7 +91,16 @@ class TreeNode:
             self.right_top.partition(leafs)
             self.left_bottom.partition(leafs)
             self.right_bottom.partition(leafs)
+        
+    def first_inconsistent(self):
+        current = self
+        while current is not None:
+            if not current.is_uniform():
+                return current
 
+            current = current.parent
+        
+        return None
 
 class QuadTree:
     def __init__(self, env) -> None:
@@ -138,7 +146,7 @@ class QuadTree:
         plt.show()
 
 
-class ABFStarLite(DStar):
+class ADStarLite(DStar):
     def __init__(self, s_start, s_goal, heuristic_type, time=...):
         super().__init__(s_start, s_goal, heuristic_type, time)
         self.heuristic_type = "manhattan"
@@ -196,11 +204,13 @@ class ABFStarLite(DStar):
 
         return neighbours
     
-    
+    def run():
+        # TODO
+        pass
 
 
 if __name__ == "__main__":
-    s = ABFStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
-    s.change_env("Evaluation/Maps/2D/main/house_1.json")
+    s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
+    s.change_env("Evaluation/Maps/2D/main/block_19.json")
     path = s.ComputePath()
     s.quadtree.visualize(path)

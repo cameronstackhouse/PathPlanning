@@ -522,12 +522,10 @@ def main():
         "manhattan",
     )
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_22.json",
+        "Evaluation/Maps/2D/main/block_15.json",
     )
     #dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     path = dstar.ComputePath()
-
-    print(path)
 
     # dstar.plot()
 
