@@ -30,7 +30,9 @@ class TreeNode:
         init_val = (self.x, self.y) in self.env.obs
         for i in range(self.x, self.x + self.width):
             for j in range(self.y, self.y + self.height):
-                if ((i, j) in self.env.obs or (i, j) in self.env.dynamic_obs_cells) != init_val:
+                if (
+                    (i, j) in self.env.obs or (i, j) in self.env.dynamic_obs_cells
+                ) != init_val:
                     return False
         return True
 
@@ -91,7 +93,7 @@ class TreeNode:
             self.right_top.partition(leafs)
             self.left_bottom.partition(leafs)
             self.right_bottom.partition(leafs)
-        
+
     def first_inconsistent(self):
         current = self
         while current is not None:
@@ -99,8 +101,9 @@ class TreeNode:
                 return current
 
             current = current.parent
-        
+
         return None
+
 
 class QuadTree:
     def __init__(self, env) -> None:
@@ -151,6 +154,7 @@ class ADStarLite(DStar):
         super().__init__(s_start, s_goal, heuristic_type, time)
         self.heuristic_type = "manhattan"
         self.quadtree = None
+        self.speed = 6
 
     def change_env(self, map_name, obj_dir=None):
         new_env = super().change_env(map_name, obj_dir)
@@ -203,14 +207,68 @@ class ADStarLite(DStar):
                     neighbours.add(neighbor_center)
 
         return neighbours
-    
-    def run():
-        # TODO
-        pass
+
+    def find_leaf_with_point(self, point):
+        def traverse(node):
+            if node.is_leaf():
+                return node
+            for child in [
+                node.left_top,
+                node.right_top,
+                node.left_bottom,
+                node.right_bottom,
+            ]:
+                if child and child.contains_point(point):
+                    return traverse(child)
+            return None
+
+        return traverse(self.root)
+
+    def update(self):
+        current_pos = self.agent_pos
+        SIGHT = 3
+
+        sight_range = range(-SIGHT, SIGHT + 1)
+
+        repartition = False
+        affected_leafs = set()
+        for dx in sight_range:
+            for dy in sight_range:
+                check_pos = (current_pos[0] + dx, current_pos[1] + dy)
+                if check_pos in self.Env.dynamic_obs_cells:
+                    repartition = True
+                    leaf_containing_point = self.quadtree.find_leaf_containing_point(
+                        check_pos
+                    )
+                    if leaf_containing_point:
+                        affected_leafs.add(leaf_containing_point)
+
+        if repartition:
+            for leaf in affected_leafs:
+                leaf.first_inconsistent()
+                self.quadtree.partition(leaf)
+
+            self.plan_new_path()
+
+    def plan_new_path(self):
+        self.s_start = self.agent_pos
+        path = self.ComputePath()
+        self.quadtree.visualize(path)
+
+    def run(self):
+        path = self.ComputePath()
+
+        self.agent_pos = path[0]
+        GOAL = path[-1]
+
+        while self.agent_pos != GOAL:
+            self.update_object_positions()
+            self.update()
+            self.agent_pos = self.move(path)
+            print(self.agent_pos)
 
 
 if __name__ == "__main__":
     s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
-    s.change_env("Evaluation/Maps/2D/main/block_19.json")
-    path = s.ComputePath()
-    s.quadtree.visualize(path)
+    s.change_env("Evaluation/Maps/2D/main/block_10.json")
+    s.run()
