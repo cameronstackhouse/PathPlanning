@@ -207,6 +207,9 @@ class D_star_Lite(object):
             data = json.load(f)
 
         if data:
+            self.current_index = 0
+            self.agent_pos = None
+            self.dynamic_obs = []
             self.V = set()
             self.i = 0
             self.done = False
@@ -393,6 +396,7 @@ class D_star_Lite(object):
         return self.agent_pos
 
     def run(self):
+        # TODO
         self.agent_pos = self.x0
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)

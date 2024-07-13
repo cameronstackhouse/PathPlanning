@@ -74,9 +74,6 @@ class TreeNode:
                 self.env,
             )
 
-            self.left = [self.left_top, self.right_top]
-            self.right = [self.left_bottom, self.right_bottom]
-
             for child in [
                 self.left_top,
                 self.right_top,
