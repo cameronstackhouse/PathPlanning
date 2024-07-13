@@ -1,3 +1,4 @@
+import time
 from D_star_Lite import DStar
 
 import matplotlib.pyplot as plt
@@ -145,8 +146,6 @@ class QuadTree:
                 color = "green"
             elif node.is_uniform():
                 color = "black" if (node.x, node.y) in node.env.obs else "white"
-            else:
-                color = "gray"
             rect = patches.Rectangle(
                 (node.x, node.y),
                 node.width,
@@ -154,6 +153,18 @@ class QuadTree:
                 linewidth=1,
                 edgecolor="r",
                 facecolor=color,
+                fill=True,
+            )
+            ax.add_patch(rect)
+        
+        for cell in self.env.dynamic_obs_cells:
+            rect = patches.Rectangle(
+                (cell[0], cell[1]),
+                1,
+                1,
+                linewidth=1,
+                edgecolor="r",
+                facecolor="grey",
                 fill=True,
             )
             ax.add_patch(rect)
@@ -242,7 +253,7 @@ class ADStarLite(DStar):
 
         return traverse(self.quadtree.root)
 
-    def update(self):
+    def update(self, path):
         current_pos = self.agent_pos
         SIGHT = 3
 
@@ -262,13 +273,17 @@ class ADStarLite(DStar):
                         affected_leafs.add(leaf_containing_point)
 
         if repartition:
+            replan_time = time.time()
             self.update_costs_and_queue(affected_leafs)
-            self.plan_new_path()
+            new_path = self.plan_new_path()
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
+            return new_path
+        else:
+            return path
 
     def update_costs_and_queue(self, affected_leafs):
-        """
-        TODO fix
-        """
+    
         old_cells = set()
         new_cells = {}
 
@@ -301,33 +316,52 @@ class ADStarLite(DStar):
             for cell, leaf in new_cells.items():
                 self.rhs[cell] = float("inf")
                 self.g[cell] = float("inf")
-                self.leaf_nodes[cell] = self.quadtree.leafs[i]
+                self.leaf_nodes[cell] = leaf
                 self.UpdateVertex(cell)
 
     def plan_new_path(self):
         self.s_start = self.agent_pos
         path = self.ComputePath()
-        self.quadtree.visualize(path)
+        return path
 
     def run(self):
+        self.traversed_path.append(self.agent_pos)
+        start_time = time.time()
         path = self.ComputePath()
+        end_time = time.time() - start_time
+
+        self.compute_time = end_time
+        self.initial_path = path
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
-        self.agent_pos = path[0]
-        GOAL = path[-1]
+        start_time = time.time()
 
-        self.update_costs_and_queue([])
-        while self.agent_pos != GOAL:
-            self.update_object_positions()
-            self.update()
-            self.agent_pos = self.move(path)
-            print(self.agent_pos)
+        if path:
+            self.agent_pos = path[0]
+            GOAL = path[-1]
 
+            self.update_costs_and_queue([])
+            while self.agent_pos != GOAL:
+                self.update_object_positions() # Uses same as D* Lite
+                path = self.update(path)
+
+                if path is None:
+                    return None
+
+                self.agent_pos = self.move(path)
+                self.traversed_path.append(self.agent_pos)
+
+
+        end_time = time.time() - start_time
+        self.total_time = end_time
+        return self.traversed_path
 
 if __name__ == "__main__":
     s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
     s.change_env("Evaluation/Maps/2D/main/block_10.json")
     s.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
-    s.run()
+    path = s.run()
+
+    s.quadtree.visualize(path)

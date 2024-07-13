@@ -388,46 +388,49 @@ class DStar:
         return [(x + dx, y + dy) for dx in range(width) for dy in range(height)]
 
     def update_costs(self, path):
-        path_blocked = False
-        upcoming_path_cells = None
+        current_pos = self.agent_pos
+        SIGHT = 3
 
-        # ONLY DETECTS CHANGES LOCALLY
-        if self.current_index + self.speed < len(path):
-            upcoming_path_cells = set(path[self.current_index : self.current_index + 3])
-        else:
-            upcoming_path_cells = set(path[self.current_index : self.current_index + 3])
+        new_cells = set()
+        old_cells = set()
 
-        for obj in self.dynamic_objects:
-            old_pos = obj.old_pos
-            new_pos = obj.current_pos
-            width, height = obj.size
+        sight_range = range(-SIGHT, SIGHT + 1)
+        dynamic_obj_in_sight = False
 
-            new_cells = self.get_affected_cells(new_pos, width, height)
-
-            if any(cell in upcoming_path_cells for cell in new_cells):
-                path_blocked = True
+        for dx in sight_range:
+            for dy in sight_range:
+                check_pos = (current_pos[0] + dx, current_pos[1] + dy)
+                if check_pos in self.Env.dynamic_obs_cells:
+                    dynamic_obj_in_sight = True
+                    new_cells.add(check_pos)
+        
+        if dynamic_obj_in_sight:
+            for obj in self.dynamic_objects:
+                old_pos = obj.old_pos
+                new_pos = obj.current_pos
+                width, height = obj.size
 
                 old_cells = self.get_affected_cells(old_pos, width, height)
+                new_cells.update(self.get_affected_cells(new_pos, width, height))
+
+                all_cells = new_cells.union(old_cells)
 
                 for cell in old_cells:
-                    self.g[cell] = 1
-                    self.rhs[cell] = 1
-
+                    self.UpdateVertex(cell)
+                
                 for cell in new_cells:
                     self.g[cell] = float("inf")
                     self.rhs[cell] = float("inf")
+                
+                for cell in all_cells:
+                    self.UpdateVertex(cell)
 
-                for cell in old_cells + new_cells:
-                    for neighbour in self.get_neighbor(cell):
-                        self.UpdateVertex(neighbour)
+                replan_time = time.time()
+                new_path = self.ComputePath()
+                replan_time = time.time() - replan_time
+                self.replan_time.append(replan_time)
 
-        if path_blocked:
-
-            replan_time = time.time()
-            p = self.ComputePath()
-            replan_time = time.time() - replan_time
-            self.replan_time.append(replan_time)
-            return p
+                return new_path
         else:
             return self.initial_path
 
