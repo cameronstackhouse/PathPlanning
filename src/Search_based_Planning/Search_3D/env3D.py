@@ -241,6 +241,7 @@ class CustomEnv(env):
         super().__init__(xmin, ymin, zmin, xmax, ymax, zmax, resolution)
         self.data = data
         self.gen_obs()
+        self.covered_blocks = set()
 
     def gen_obs(self):
         grid = self.data["grid"]
@@ -283,8 +284,7 @@ class CustomEnv(env):
 
         Obstacles = []
         for i in cuboids:
-            i = np.array(i)
-        Obstacles.append([j for j in i])
+            Obstacles.append(np.array(i))
 
         self.balls = []
         self.blocks = np.array(Obstacles)

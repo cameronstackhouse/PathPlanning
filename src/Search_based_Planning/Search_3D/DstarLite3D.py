@@ -216,7 +216,6 @@ class D_star_Lite(object):
             self.Path = []
             self.Parent = {}
             self.km = 0
-            
 
             self.env = CustomEnv(data)
 
@@ -227,12 +226,12 @@ class D_star_Lite(object):
 
             self.OPEN = queue.MinheapPQ()
             self.OPEN.put(self.xt, self.CalculateKey(self.xt))
-            
+
             self.g = {}
             self.h = {}
             self.CLOSED = set()
             self.CHILDREN = {}
-            
+
             self.COST = defaultdict(lambda: defaultdict(dict))
 
             if obs_name:
@@ -414,11 +413,9 @@ class D_star_Lite(object):
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
-    D_lite.change_env(
-        "Evaluation/Maps/3D/block_map_25_3d/4_3d.json", "Evaluation/Maps/3D/obs.json"
-    )
+    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
     a = time.time()
-    D_lite.run()
-    print("used time (s) is " + str(time.time() - a))
+    # D_lite.run()
+    # print("used time (s) is " + str(time.time() - a))
 
     print(D_lite.agent_positions)

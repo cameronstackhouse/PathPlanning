@@ -117,7 +117,6 @@ class QuadTree:
     def update_leafs(self):
         self.leafs = []
         self._collect_leafs(self.root)
-        print(len(self.leafs))
 
     def _collect_leafs(self, node):
         if node.is_leaf():
