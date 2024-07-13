@@ -236,6 +236,8 @@ class D_star_Lite(object):
 
             if obs_name:
                 self.set_dynamic_obs(obs_name)
+            
+            return self.env
         else:
             print("Error, failed to load custom environment.")
 

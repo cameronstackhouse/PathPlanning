@@ -1,6 +1,10 @@
+import queue
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import numpy as np
 from DstarLite3D import D_star_Lite
+
+from Search_3D.utils3D import children_non_uniform, cost, getDist, isinbound
 
 
 class TreeNode:
@@ -262,12 +266,120 @@ class Octree:
 
 class ADStarLite(D_star_Lite):
     def __init__(self, resolution=1):
-        super().__init__(resolution)
+        self.name = "AD* Lite"
+        new_env = super().__init__(resolution)
+        self.octree = None
+        self.speed = 6
+
+    def change_env(self, map_name, obs_name=None):
+        new_env = super().change_env(map_name, obs_name)
+        self.octree = Octree(new_env)
+
+        self.rhs = {}
+        self.g = {}
+        self.leaf_nodes = {}
+        for leaf in self.octree.leafs:
+            center = (
+                leaf.x + leaf.width // 2,
+                leaf.y + leaf.height // 2,
+                leaf.z + leaf.depth // 2,
+            )
+
+            self.rhs[center] = float("inf")
+            self.g[center] = float("inf")
+            self.leaf_nodes[center] = leaf
+
+        self.rhs[self.xt] = 0.0
+        self.OPEN = queue.MinheapPQ()
+        self.OPEN.put(self.xt, self.CalculateKey(self.xt))
+
+    # TODO look at methods to override to make function
+
+    def updatecost(self, range_changed=None, new=None, old=None, mode=False):
+        CHANGED = set()
+        for xi in self.CLOSED:
+            if isinbound(old, xi, mode) or isinbound(new, xi, mode):
+                newchildren = set(children_non_uniform(self, xi))  # B
+                self.CHILDREN[xi] = newchildren
+                for xj in newchildren:
+                    self.COST[xi][xj] = cost(self, xi, xj)
+                CHANGED.add(xi)
+        return CHANGED
+
+    def getcost(self, xi, xj):
+        # use a LUT for getting the costd
+        if xi not in self.COST:
+            for xj, xjcost in children_non_uniform(self, xi, settings=1):
+                self.COST[xi][xj] = cost(self, xi, xj, xjcost)
+        # this might happen when there is a node changed.
+        if xj not in self.COST[xi]:
+            self.COST[xi][xj] = cost(self, xi, xj)
+        return self.COST[xi][xj]
+
+    def getchildren(self, xi):
+        if xi not in self.CHILDREN:
+            allchild = children_non_uniform(self, xi)
+            self.CHILDREN[xi] = set(allchild)
+        return self.CHILDREN[xi]
+
+    # TODO maybe update vertex
+    # TODO maybe compute shortest path
+
+    def path(self, s_start=None):
+        """After ComputeShortestPath() returns, one can then follow a shortest path from x_init to
+        x_goal by always moving from the current vertex s, starting at x_init,
+        to any successor s' that minimizes cBest(s,s') + g(s') until x_goal is reached (ties can be broken arbitrarily).
+        """
+        path = []
+        s_goal = self.xt
+        if not s_start:
+            s = self.x0
+        else:
+            s = s_start
+        ind = 0
+        while s != s_goal:
+            if s == self.x0:
+                children = [
+                    i
+                    for i in self.CLOSED
+                    if getDist(s, i)
+                    <= max(
+                        self.leaf_nodes[s].width,
+                        self.leaf_nodes[s].height,
+                        self.leaf_nodes[s].depth,
+                    )
+                    * np.sqrt(3)
+                ]
+            else:
+                children = list(self.CHILDREN[s])
+
+            snext = children[
+                np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
+            ]
+            path.append([s, snext])
+            s = snext
+            if ind > 100:
+                break
+            ind += 1
+        return path
+
+    def path(self, s_start=None):
+        pass
+
+    def run(self):
+        self.agent_pos = self.x0
+        self.ComputeShortestPath()
+        self.Path = self.path(self.x0)
+
+        self.V = set()
+        while self.agent_pos != self.xt:
+            pass
 
 
 if __name__ == "__main__":
     plan = ADStarLite(1)
-    plan.change_env("Evaluation/Maps/3D/block_map_25_3d/2_3d.json")
+    plan.change_env("Evaluation/Maps/3D/block_map_25_3d/17_3d.json")
     tree = Octree(plan.env)
 
+    print(len(tree.leafs))
     tree.visualize()
