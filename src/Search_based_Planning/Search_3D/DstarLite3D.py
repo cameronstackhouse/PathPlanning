@@ -68,14 +68,14 @@ class D_star_Lite(object):
             (-1, 0, 1): np.sqrt(2),
             (0, 1, -1): np.sqrt(2),
             (0, -1, 1): np.sqrt(2),
-            (1, 1, 1): np.sqrt(3),
-            (-1, -1, -1): np.sqrt(3),
-            (1, -1, -1): np.sqrt(3),
-            (-1, 1, -1): np.sqrt(3),
-            (-1, -1, 1): np.sqrt(3),
-            (1, 1, -1): np.sqrt(3),
-            (1, -1, 1): np.sqrt(3),
-            (-1, 1, 1): np.sqrt(3),
+            # (1, 1, 1): np.sqrt(3),
+            # (-1, -1, -1): np.sqrt(3),
+            # (1, -1, -1): np.sqrt(3),
+            # (-1, 1, -1): np.sqrt(3),
+            # (-1, -1, 1): np.sqrt(3),
+            # (1, 1, -1): np.sqrt(3),
+            # (1, -1, 1): np.sqrt(3),
+            # (-1, 1, 1): np.sqrt(3),
         }
         self.dynamic_obs = []
         self.env = env(resolution=resolution)
@@ -236,7 +236,7 @@ class D_star_Lite(object):
 
             if obs_name:
                 self.set_dynamic_obs(obs_name)
-            
+
             return self.env
         else:
             print("Error, failed to load custom environment.")
@@ -305,6 +305,58 @@ class D_star_Lite(object):
                 break
             ind += 1
         return path
+
+    def visualise(self, path):
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d")
+
+        # Plot the environment blocks
+        for block in self.env.blocks:
+            x, y, z = block[0], block[1], block[2]
+            dx, dy, dz = block[3] - block[0], block[4] - block[1], block[5] - block[2]
+            ax.bar3d(x, y, z, dx, dy, dz, color="b", alpha=0.5)
+
+        # Plot the dynamic obstacles
+        for obj in self.dynamic_obs:
+            x, y, z = obj.current_pos
+            dx, dy, dz = obj.size
+            ax.bar3d(x, y, z, dx, dy, dz, color="r", alpha=0.5)
+
+        # Plot the path
+        path_points = np.array([point[0] for point in path])
+        ax.plot(
+            path_points[:, 0],
+            path_points[:, 1],
+            path_points[:, 2],
+            color="g",
+            marker="o",
+        )
+
+        ax.scatter(
+            self.env.start[0],
+            self.env.start[1],
+            self.env.start[2],
+            color="g",
+            s=100,
+            label="Start",
+        )
+        ax.scatter(
+            self.env.goal[0],
+            self.env.goal[1],
+            self.env.goal[2],
+            color="r",
+            s=100,
+            label="Goal",
+        )
+
+        # Set labels
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_title("D* Lite Path visualisation")
+        ax.legend()
+
+        plt.show()
 
     def move_dynamic_obs(self):
         self.Path = []
@@ -420,4 +472,8 @@ if __name__ == "__main__":
     # D_lite.run()
     # print("used time (s) is " + str(time.time() - a))
 
-    print(D_lite.agent_positions)
+    D_lite.ComputeShortestPath()
+    path = D_lite.path()
+
+    D_lite.visualise(path)
+    # print(path)

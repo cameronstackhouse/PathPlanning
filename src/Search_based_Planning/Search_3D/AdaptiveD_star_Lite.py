@@ -224,6 +224,33 @@ class Octree:
                 if child:
                     self._collect_leafs(child)
 
+    def get(self, point):
+        current_node = self.root
+        while not current_node.is_leaf():
+            if current_node.one.contains_point(point):
+                current_node = current_node.one
+            elif current_node.two.contains_point(point):
+                current_node = current_node.two
+            elif current_node.three.contains_point(point):
+                current_node = current_node.three
+            elif current_node.four.contains_point(point):
+                current_node = current_node.four
+            elif current_node.five.contains_point(point):
+                current_node = current_node.five
+            elif current_node.six.contains_point(point):
+                current_node = current_node.six
+            elif current_node.seven.contains_point(point):
+                current_node = current_node.seven
+            elif current_node.eight.contains_point(point):
+                current_node = current_node.eight
+            else:
+                return None
+
+        if current_node.is_leaf() and not current_node.contains_point(point):
+            return None
+
+        return current_node
+
     def visualize(self, path=None):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
@@ -267,7 +294,7 @@ class Octree:
 class ADStarLite(D_star_Lite):
     def __init__(self, resolution=1):
         self.name = "AD* Lite"
-        new_env = super().__init__(resolution)
+        super().__init__(resolution)
         self.octree = None
         self.speed = 6
 
@@ -291,9 +318,8 @@ class ADStarLite(D_star_Lite):
 
         self.rhs[self.xt] = 0.0
         self.OPEN = queue.MinheapPQ()
+        self.V = set()
         self.OPEN.put(self.xt, self.CalculateKey(self.xt))
-
-    # TODO look at methods to override to make function
 
     def updatecost(self, range_changed=None, new=None, old=None, mode=False):
         CHANGED = set()
@@ -322,49 +348,64 @@ class ADStarLite(D_star_Lite):
             self.CHILDREN[xi] = set(allchild)
         return self.CHILDREN[xi]
 
-    # TODO maybe update vertex
-    # TODO maybe compute shortest path
+    def ComputeShortestPath(self):
+        while self.OPEN.top_key() < self.CalculateKey(self.x0) or self.getrhs(
+            self.x0
+        ) != self.getg(self.x0):
+            kold = self.OPEN.top_key()
+            u = self.OPEN.get()
+            self.V.add(u)
+            self.CLOSED.add(u)
+            if not self.done:
+                if self.x0 == u:
+                    self.x0 = u
+                    break
+            if kold < self.CalculateKey(u):
+                self.OPEN.put(u, self.CalculateKey(u))
+            if self.getg(u) > self.getrhs(u):
+                self.g[u] = self.rhs[u]
+            else:
+                self.g[u] = np.inf
+                self.UpdateVertex(u)
+            for s in self.getchildren(u):
+                self.UpdateVertex(s)
+
+            self.ind += 1
 
     def path(self, s_start=None):
-        """After ComputeShortestPath() returns, one can then follow a shortest path from x_init to
-        x_goal by always moving from the current vertex s, starting at x_init,
-        to any successor s' that minimizes cBest(s,s') + g(s') until x_goal is reached (ties can be broken arbitrarily).
+        """
+        Extracts the path to the goal
         """
         path = []
+
         s_goal = self.xt
+
         if not s_start:
             s = self.x0
         else:
             s = s_start
         ind = 0
         while s != s_goal:
-            if s == self.x0:
-                children = [
-                    i
-                    for i in self.CLOSED
-                    if getDist(s, i)
-                    <= max(
-                        self.leaf_nodes[s].width,
-                        self.leaf_nodes[s].height,
-                        self.leaf_nodes[s].depth,
-                    )
-                    * np.sqrt(3)
-                ]
-            else:
-                children = list(self.CHILDREN[s])
-
+            children = list(self.CHILDREN[s])
+            
+            if path:
+                previous_node = path[-1][0]
+                if previous_node in children:
+                    children.remove(previous_node)
+            
             snext = children[
                 np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
             ]
             path.append([s, snext])
             s = snext
+
             if ind > 100:
                 break
             ind += 1
         return path
 
-    def path(self, s_start=None):
-        pass
+    # TODO maybe update vertex
+    # TODO maybe compute shortest path
 
     def run(self):
         self.agent_pos = self.x0
@@ -377,9 +418,12 @@ class ADStarLite(D_star_Lite):
 
 
 if __name__ == "__main__":
-    plan = ADStarLite(1)
-    plan.change_env("Evaluation/Maps/3D/block_map_25_3d/17_3d.json")
-    tree = Octree(plan.env)
+    ADStarlite = ADStarLite(1)
+    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/14_3d.json")
 
-    print(len(tree.leafs))
-    tree.visualize()
+    ADStarlite.ComputeShortestPath()
+    path = ADStarlite.path()
+
+    print(path)
+    ADStarlite.visualise(path)
+    # print(a)

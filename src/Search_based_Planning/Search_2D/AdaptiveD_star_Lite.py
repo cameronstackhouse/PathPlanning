@@ -152,7 +152,7 @@ class QuadTree:
                 fill=True,
             )
             ax.add_patch(rect)
-        
+
         for cell in self.env.dynamic_obs_cells:
             rect = patches.Rectangle(
                 (cell[0], cell[1]),
@@ -279,7 +279,7 @@ class ADStarLite(DStar):
             return path
 
     def update_costs_and_queue(self, affected_leafs):
-    
+
         old_cells = set()
         new_cells = {}
 
@@ -340,7 +340,7 @@ class ADStarLite(DStar):
 
             self.update_costs_and_queue([])
             while self.agent_pos != GOAL:
-                self.update_object_positions() # Uses same as D* Lite
+                self.update_object_positions()  # Uses same as D* Lite
                 path = self.update(path)
 
                 if path is None:
@@ -349,10 +349,10 @@ class ADStarLite(DStar):
                 self.agent_pos = self.move(path)
                 self.traversed_path.append(self.agent_pos)
 
-
         end_time = time.time() - start_time
         self.total_time = end_time
         return self.traversed_path
+
 
 if __name__ == "__main__":
     s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))

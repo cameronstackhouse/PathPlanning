@@ -349,35 +349,127 @@ def children_non_uniform(initparams, x, settings=0):
     allchild = []
     allcost = []
 
-    leaf = initparams.leaf_nodes[x]
+    current_leaf = initparams.leaf_nodes[x]
 
-    for direc in initparams.Alldirec:
-        child = (
-            x[0] + direc[0] * leaf.width,
-            x[1] + direc[1] * leaf.height,
-            x[2] + direc[2] * leaf.depth,
-        )
-
-        if any([isinobb(i, child) for i in initparams.env.OBB]):
-            continue
-        if any([isinball(i, child) for i in initparams.env.balls]):
-            continue
-        if any([isinbound(i, child) for i in initparams.env.blocks]):
-            continue
-        if isinbound(initparams.env.boundary, child):
-            allchild.append(child)
-            allcost.append(
+    for leaf in initparams.octree.leafs:
+        if leaf.coords != current_leaf.coords:
+            if (
                 (
-                    child,
-                    initparams.Alldirec[direc]
-                    * max(leaf.width, leaf.height, leaf.depth),
+                    current_leaf.x + current_leaf.width == leaf.x
+                    or current_leaf.x == leaf.x + leaf.width
                 )
-            )
+                and (
+                    current_leaf.y < leaf.y + leaf.height
+                    and current_leaf.y + current_leaf.height > leaf.y
+                )
+                and (
+                    current_leaf.z < leaf.z + leaf.depth
+                    and current_leaf.z + current_leaf.depth > leaf.z
+                )
+            ):
+                neighbor_center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+                allchild.append(neighbor_center)
+                allcost.append(
+                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                )
+
+            # Check for y-aligned neighbors
+            if (
+                (
+                    current_leaf.y + current_leaf.height == leaf.y
+                    or current_leaf.y == leaf.y + leaf.height
+                )
+                and (
+                    current_leaf.x < leaf.x + leaf.width
+                    and current_leaf.x + current_leaf.width > leaf.x
+                )
+                and (
+                    current_leaf.z < leaf.z + leaf.depth
+                    and current_leaf.z + current_leaf.depth > leaf.z
+                )
+            ):
+                neighbor_center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+                allchild.append(neighbor_center)
+                allcost.append(
+                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                )
+
+            # Check for z-aligned neighbors
+            if (
+                (
+                    current_leaf.z + current_leaf.depth == leaf.z
+                    or current_leaf.z == leaf.z + leaf.depth
+                )
+                and (
+                    current_leaf.x < leaf.x + leaf.width
+                    and current_leaf.x + current_leaf.width > leaf.x
+                )
+                and (
+                    current_leaf.y < leaf.y + leaf.height
+                    and current_leaf.y + current_leaf.height > leaf.y
+                )
+            ):
+                neighbor_center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+                allchild.append(neighbor_center)
+                allcost.append(
+                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                )
 
     if settings == 0:
         return allchild
     if settings == 1:
         return allcost
+
+    # for direc in initparams.Alldirec:
+    #     neighbour_coords = (
+    #         x[0] + direc[0] * (leaf.width),
+    #         x[1] + direc[1] * (leaf.height),
+    #         x[2] + direc[2] * (leaf.depth),
+    #     )
+
+    #     neighbour_leaf = initparams.octree.get(neighbour_coords)
+
+    #     if neighbour_leaf is None:
+    #         continue
+
+    #     child = (
+    #         neighbour_leaf.coords[0],
+    #         neighbour_leaf.coords[1],
+    #         neighbour_leaf.coords[2]
+    #     )
+
+    #     if any([isinobb(i, child) for i in initparams.env.OBB]):
+    #         continue
+    #     if any([isinball(i, child) for i in initparams.env.balls]):
+    #         continue
+    #     if any([isinbound(i, child) for i in initparams.env.blocks]):
+    #         continue
+    #     if isinbound(initparams.env.boundary, child):
+    #         allchild.append(child)
+    #         allcost.append(
+    #             (
+    #                 child,
+    #                 initparams.Alldirec[direc]
+    #                 * max(leaf.width, leaf.height, leaf.depth),
+    #             )
+    #         )
+
+    # if settings == 0:
+    #     return allchild
+    # if settings == 1:
+    #     return allcost
 
 
 def obstacleFree(initparams, x):
