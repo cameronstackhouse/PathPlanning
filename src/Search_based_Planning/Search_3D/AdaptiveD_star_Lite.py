@@ -1,10 +1,11 @@
 import queue
+import time
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 from DstarLite3D import D_star_Lite
 
-from Search_3D.utils3D import children_non_uniform, cost, getDist, isinbound
+from Search_3D.utils3D import children_non_uniform, cost, isinbound
 
 
 class TreeNode:
@@ -433,11 +434,6 @@ class ADStarLite(D_star_Lite):
         while s != s_goal:
             children = list(self.CHILDREN[s])
 
-            # if path:
-            #     previous_node = path[-1][0]
-            #     if previous_node in children:
-            #         children.remove(previous_node)
-
             snext = children[
                 np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
             ]
@@ -456,15 +452,22 @@ class ADStarLite(D_star_Lite):
 
         self.V = set()
         while self.agent_pos != self.xt:
-            pass
+            self.env.start = self.x0
+            self.move_dynamic_obs()
+            self.move(self.Path)
+            self.agent_positions.append(self.agent_pos)
+
+            t += 1
 
 
 if __name__ == "__main__":
     ADStarlite = ADStarLite(1)
-    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/24_3d.json")
+    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/19_3d.json")
 
+    t = time.time()
     ADStarlite.ComputeShortestPath()
     path = ADStarlite.path()
+    print(time.time() - t)
 
     # print(path)
     ADStarlite.visualise(path)

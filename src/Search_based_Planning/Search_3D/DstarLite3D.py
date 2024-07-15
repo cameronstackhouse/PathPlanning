@@ -377,7 +377,7 @@ class D_star_Lite(object):
                 self.UpdateVertex(u)
             self.ComputeShortestPath()
 
-        self.Path = self.path(self.x0)
+            self.Path = self.path(self.x0)
 
     def move(self, path, mps=6):
         if self.current_index >= len(path) - 1:
@@ -467,13 +467,16 @@ class D_star_Lite(object):
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
-    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
+    # TODO Error with map 5!!
     a = time.time()
+    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/19_3d.json")
     # D_lite.run()
     # print("used time (s) is " + str(time.time() - a))
 
     D_lite.ComputeShortestPath()
     path = D_lite.path()
+    
+    print(time.time() - a)
 
     D_lite.visualise(path)
     # print(path)
