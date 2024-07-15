@@ -316,7 +316,8 @@ class ADStarLite(D_star_Lite):
             self.g[center] = float("inf")
             self.leaf_nodes[center] = leaf
 
-        self.rhs[self.xt] = 0.0
+        self.rhs = {self.xt: 0}
+        self.h = {}
         self.OPEN = queue.MinheapPQ()
         self.V = set()
         self.OPEN.put(self.xt, self.CalculateKey(self.xt))
@@ -387,25 +388,36 @@ class ADStarLite(D_star_Lite):
         ind = 0
         while s != s_goal:
             children = list(self.CHILDREN[s])
-            
+
             if path:
                 previous_node = path[-1][0]
                 if previous_node in children:
                     children.remove(previous_node)
-            
+
             snext = children[
                 np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
             ]
             path.append([s, snext])
             s = snext
 
-            if ind > 100:
+            if ind > 500:
                 break
             ind += 1
         return path
 
     # TODO maybe update vertex
-    # TODO maybe compute shortest path
+    def UpdateVertex(self, u):
+        if self.xt != u:
+            if u in self.CHILDREN and len(self.CHILDREN[u]) == 0:
+                self.rhs = np.inf
+            else:
+                self.rhs[u] = min(
+                    [self.getcost(s, u) + self.getg(s) for s in self.getchildren(u)]
+                )
+
+        self.OPEN.check_remove(u)
+        if self.getg(u) != self.getrhs(u):
+            self.OPEN.put(u, self.CalculateKey(u))
 
     def run(self):
         self.agent_pos = self.x0
@@ -419,11 +431,11 @@ class ADStarLite(D_star_Lite):
 
 if __name__ == "__main__":
     ADStarlite = ADStarLite(1)
-    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/14_3d.json")
+    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/7_3d.json")
 
     ADStarlite.ComputeShortestPath()
     path = ADStarlite.path()
 
-    print(path)
+    # print(path)
     ADStarlite.visualise(path)
     # print(a)

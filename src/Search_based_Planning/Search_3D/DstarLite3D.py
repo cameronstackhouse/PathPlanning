@@ -234,8 +234,8 @@ class D_star_Lite(object):
 
             self.COST = defaultdict(lambda: defaultdict(dict))
 
-            if obs_name:
-                self.set_dynamic_obs(obs_name)
+            # if obs_name:
+            #     self.set_dynamic_obs(obs_name)
 
             return self.env
         else:

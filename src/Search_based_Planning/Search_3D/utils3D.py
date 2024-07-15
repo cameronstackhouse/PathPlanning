@@ -350,6 +350,11 @@ def children_non_uniform(initparams, x, settings=0):
     allcost = []
 
     current_leaf = initparams.leaf_nodes[x]
+    current_center = (
+        current_leaf.x + current_leaf.width // 2,
+        current_leaf.y + current_leaf.height // 2,
+        current_leaf.z + current_leaf.depth // 2,
+    )
 
     for leaf in initparams.octree.leafs:
         if leaf.coords != current_leaf.coords:
@@ -373,9 +378,10 @@ def children_non_uniform(initparams, x, settings=0):
                     leaf.z + leaf.depth // 2,
                 )
                 allchild.append(neighbor_center)
-                allcost.append(
-                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                distance = np.linalg.norm(
+                    np.array(current_center) - np.array(neighbor_center)
                 )
+                allcost.append((neighbor_center, distance))
 
             # Check for y-aligned neighbors
             if (
@@ -398,9 +404,10 @@ def children_non_uniform(initparams, x, settings=0):
                     leaf.z + leaf.depth // 2,
                 )
                 allchild.append(neighbor_center)
-                allcost.append(
-                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                distance = np.linalg.norm(
+                    np.array(current_center) - np.array(neighbor_center)
                 )
+                allcost.append((neighbor_center, distance))
 
             # Check for z-aligned neighbors
             if (
@@ -423,10 +430,10 @@ def children_non_uniform(initparams, x, settings=0):
                     leaf.z + leaf.depth // 2,
                 )
                 allchild.append(neighbor_center)
-                allcost.append(
-                    (neighbor_center, max(leaf.width, leaf.height, leaf.depth))
+                distance = np.linalg.norm(
+                    np.array(current_center) - np.array(neighbor_center)
                 )
-
+                allcost.append((neighbor_center, distance))
     if settings == 0:
         return allchild
     if settings == 1:
