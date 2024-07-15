@@ -261,6 +261,50 @@ class Octree:
         for leaf in self.leafs:
             self._draw_cube(ax, leaf)
 
+        if path is not None:
+            path_points = [point[0] for point in path] + [path[-1][1]]
+            path_points = np.array(path_points)
+
+            for segment in path:
+                start, end = segment
+                ax.plot(
+                    [start[0], end[0]],
+                    [start[1], end[1]],
+                    [start[2], end[2]],
+                    color="g",
+                )
+
+            ax.scatter(
+                path_points[:, 0],
+                path_points[:, 1],
+                path_points[:, 2],
+                color="g",
+                marker="o",
+            )
+
+            ax.scatter(
+                self.env.start[0],
+                self.env.start[1],
+                self.env.start[2],
+                color="g",
+                s=100,
+                label="Start",
+            )
+            ax.scatter(
+                self.env.goal[0],
+                self.env.goal[1],
+                self.env.goal[2],
+                color="r",
+                s=100,
+                label="Goal",
+            )
+
+        ax.set_xlabel("X")
+        ax.set_ylabel("Y")
+        ax.set_zlabel("Z")
+        ax.set_title("AD* Lite Octree Visualization")
+        ax.legend()
+
         plt.show()
 
     def _draw_cube(self, ax, node):
@@ -389,10 +433,10 @@ class ADStarLite(D_star_Lite):
         while s != s_goal:
             children = list(self.CHILDREN[s])
 
-            if path:
-                previous_node = path[-1][0]
-                if previous_node in children:
-                    children.remove(previous_node)
+            # if path:
+            #     previous_node = path[-1][0]
+            #     if previous_node in children:
+            #         children.remove(previous_node)
 
             snext = children[
                 np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
@@ -400,24 +444,10 @@ class ADStarLite(D_star_Lite):
             path.append([s, snext])
             s = snext
 
-            if ind > 500:
+            if ind > 100:
                 break
             ind += 1
         return path
-
-    # TODO maybe update vertex
-    def UpdateVertex(self, u):
-        if self.xt != u:
-            if u in self.CHILDREN and len(self.CHILDREN[u]) == 0:
-                self.rhs = np.inf
-            else:
-                self.rhs[u] = min(
-                    [self.getcost(s, u) + self.getg(s) for s in self.getchildren(u)]
-                )
-
-        self.OPEN.check_remove(u)
-        if self.getg(u) != self.getrhs(u):
-            self.OPEN.put(u, self.CalculateKey(u))
 
     def run(self):
         self.agent_pos = self.x0
@@ -431,11 +461,12 @@ class ADStarLite(D_star_Lite):
 
 if __name__ == "__main__":
     ADStarlite = ADStarLite(1)
-    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/7_3d.json")
+    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/24_3d.json")
 
     ADStarlite.ComputeShortestPath()
     path = ADStarlite.path()
 
     # print(path)
     ADStarlite.visualise(path)
+
     # print(a)
