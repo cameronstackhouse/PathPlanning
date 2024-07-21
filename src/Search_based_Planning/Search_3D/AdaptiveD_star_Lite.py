@@ -394,6 +394,96 @@ class ADStarLite(D_star_Lite):
             self.CHILDREN[xi] = set(allchild)
         return self.CHILDREN[xi]
 
+    def in_dobs(self, point):
+        for obj in self.dynamic_obs:
+            if obj.contains_point(point):
+                return True
+
+        return False
+
+    def update(self, path):
+        current_pos = self.agent_pos
+        SIGHT = 3
+
+        sight_range = range(-SIGHT, SIGHT + 1)
+
+        repartition = False
+        affected_leafs = set()
+        for dx in sight_range:
+            for dy in sight_range:
+                for dz in sight_range:
+                    check_pos = (
+                        current_pos[0] + dx,
+                        current_pos[1] + dy,
+                        current_pos[2] + dz,
+                    )
+
+                    if self.in_dobs(check_pos):
+                        repartition = True
+                        leaf_containing_point = self.octree.find_leaf_containing_point(
+                            check_pos
+                        )
+
+                        if leaf_containing_point:
+                            affected_leafs.add(leaf_containing_point)
+
+        if repartition:
+            replan_time = time.time()
+            self.update_costs_and_queue(affected_leafs)
+            new_path = self.plan_new_path()
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
+            return new_path
+        else:
+            return path
+
+    def update_costs_and_queue(self, affected_leafs):
+        old_cells = set()
+        new_cells = {}
+
+        for leaf in affected_leafs:
+            for x in range(leaf.x, leaf.x + leaf.width):
+                for y in range(leaf.y, leaf.y + leaf.height):
+                    for z in range(leaf.z, leaf.z + leaf.depth):
+                        node_center = (
+                            x + leaf.width // 2,
+                            y + leaf.height // 2,
+                            z + leaf.width // 2,
+                        )
+
+                        old_cells.add(node_center)
+
+        for leaf in affected_leafs:
+            self.octree.partition(leaf)
+
+        if len(affected_leafs) > 0:
+            self.octree.update_leafs()
+
+            for leaf in self.octree.leafs:
+                for x in range(leaf.x, leaf.x + leaf.width):
+                    for y in range(leaf.y, leaf.y + leaf.height):
+                        for z in range(leaf.z, leaf.z + leaf.depth):
+                            midpoint = (
+                                x + leaf.width // 2,
+                                y + leaf.height // 2,
+                                z + leaf.width // 2,
+                            )
+                            new_cells[midpoint] = leaf
+
+            for cell in old_cells:
+                if cell in self.rhs:
+                    del self.rhs[cell]
+                if cell in self.g:
+                    del self.g[cell]
+                if cell in self.OPEN:
+                    del self.OPEN[cell]
+
+            for cell, leaf in new_cells.items():
+                self.rhs[cell] = float("inf")
+                self.g[cell] = float("inf")
+                self.leaf_nodes[cell] = leaf
+                self.UpdateVertex(cell)
+
     def ComputeShortestPath(self):
         while self.OPEN.top_key() < self.CalculateKey(self.x0) or self.getrhs(
             self.x0
@@ -443,30 +533,49 @@ class ADStarLite(D_star_Lite):
             if ind > 100:
                 break
             ind += 1
+        
         return path
 
+    def move_dynamic_obs(self):
+        for obj in self.dynamic_obs:
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
+            n_changed = self.updatecost(True, new, old)
+
     def run(self):
+        # TODO make sure works
         self.agent_pos = self.x0
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)
 
         self.V = set()
-        while self.agent_pos != self.xt:
-            self.env.start = self.x0
-            self.move_dynamic_obs()
-            self.move(self.Path)
-            self.agent_positions.append(self.agent_pos)
 
-            t += 1
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
+        while self.agent_pos != self.xt:
+
+            self.move_dynamic_obs()
+            path = self.update()
+
+            if path is None:
+                return None
+
+            self.agent_pos = self.move(path)
+            self.traversed_path.append(self.agent_pos)
+
+        return self.traversed_path
 
 
 if __name__ == "__main__":
     ADStarlite = ADStarLite(1)
-    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/19_3d.json")
+    ADStarlite.change_env("Evaluation/Maps/3D/block_map_25_3d/3_3d.json")
 
     t = time.time()
     ADStarlite.ComputeShortestPath()
     path = ADStarlite.path()
+    print(path)
     print(time.time() - t)
 
     # print(path)

@@ -281,9 +281,6 @@ class Rrt:
             print("Error, dynamic objects could not be loaded")
 
     def in_dynamic_obj(self, node, obj):
-        """
-        TODO
-        """
         x, y = node.coords
         x0, y0 = obj.current_pos
         width, height = obj.size

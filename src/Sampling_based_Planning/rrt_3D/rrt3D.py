@@ -71,6 +71,19 @@ class rrt:
         self.ind = 0
         # self.fig = plt.figure(figsize=(10, 8))
 
+        # Dynamic variables TODO
+        self.dynamic_obs = []
+
+    def in_dynamic_obj(self, pos, obj):
+        x, y, z = pos
+        x0, y0, z0 = obj.current_pos
+        width, height, depth = obj.size
+        return (
+            (x0 <= x <= x0 + width)
+            and (y0 <= y <= y0 + height)
+            and (z0 <= z <= z0 + depth)
+        )
+
     def wireup(self, x, y):
         # self.E.add_edge([s, y])  # add edge
         self.Parent[x] = y

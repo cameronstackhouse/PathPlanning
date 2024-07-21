@@ -45,6 +45,19 @@ class DynamicObj:
 
         return new_pos
 
+    def contains_point(self, point):
+        px, py = point
+        x1, y1 = self.corners[0]
+        x2, y2 = self.corners[1]
+        x3, y3 = self.corners[2]
+        x4, y4 = self.corners[3]
+
+        if min(x1, x2, x3, x4) <= px <= max(x1, x2, x3, x4) and min(
+            y1, y2, y3, y4
+        ) <= py <= max(y1, y2, y3, y4):
+            return True
+        return False
+
 
 class D_star_Lite(object):
     # Original version of the D*lite
@@ -106,6 +119,8 @@ class D_star_Lite(object):
         self.agent_pos = None
         self.agent_positions = []
         self.speed = 6
+        self.dobs_dir = None
+        self.traversed_path = []
 
     def updatecost(self, range_changed=None, new=None, old=None, mode=False):
         # scan graph for changed Cost, if Cost is changed update it
@@ -202,6 +217,7 @@ class D_star_Lite(object):
         """
         TODO
         """
+        self.dobs_dir = obs_name
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -324,6 +340,10 @@ class D_star_Lite(object):
 
         # Plot the path
         path_points = np.array([point[0] for point in path])
+        # print(f"path: {path}")
+        path_points = np.vstack([path_points, self.env.goal])
+
+        # print(f"path points: {path_points}")
         ax.plot(
             path_points[:, 0],
             path_points[:, 1],
@@ -359,7 +379,6 @@ class D_star_Lite(object):
         plt.show()
 
     def move_dynamic_obs(self):
-        self.Path = []
         changed = None
         for obj in self.dynamic_obs:
             old, new = self.env.move_block(
@@ -449,7 +468,7 @@ class D_star_Lite(object):
         return self.agent_pos
 
     def run(self):
-        # TODO
+        # TODO make sure works
         self.agent_pos = self.x0
         self.ComputeShortestPath()
         self.Path = self.path(self.x0)
@@ -475,7 +494,7 @@ if __name__ == "__main__":
 
     D_lite.ComputeShortestPath()
     path = D_lite.path()
-    
+
     print(time.time() - a)
 
     D_lite.visualise(path)

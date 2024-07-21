@@ -216,9 +216,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
-                if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
-                    Node(goal_pos), obj
-                ):
+                if self.in_dynamic_obj(
+                    Node(current_pos), obj
+                ) or self.in_dynamic_obj(Node(goal_pos), obj):
                     collision_detected = True
 
                 # Restore the original position
@@ -234,6 +234,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
     def change_env(self, map_name, obj_dir=None):
         super().change_env(map_name, obj_dir)
+        self.dobs_dir = obj_dir
         self.agent_positions = [self.s_start.coords]
 
     def plot(self):
@@ -270,8 +271,8 @@ if __name__ == "__main__":
         global_time=3,
     )
     rrt.change_env(
-        "Evaluation/Maps/2D/block_map_25/block_9.json"
-        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+        "Evaluation/Maps/2D/block_map_25/block_9.json",
+        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
     success = rrt.run()

@@ -41,9 +41,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.replanning_time = []
 
     def regrow(self):
-        """
-        TODO
-        """
         self.V.clear()
         self.E.clear()
         self.ellipsoid = None
@@ -55,22 +52,46 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.V = [current_pos]
         self.E = []
 
-        self.run()
+        result = self.run()
 
-        if self.Path is not None:
+        if result:
             self.current_index = 0
             return self.Path
         else:
             return None
 
     def reconnect(self, path):
-        """
-        TODO
-        """
         current_pos = self.agent_pos
         goal_pos = path[self.current_index + 1]
 
         time_steps = int(self.time)
+
+        for t in range(1, time_steps + 1):
+            collision_detected = False
+            for obj in self.dynamic_obs:
+                future_pos = [
+                    obj.current_pos[0] + obj.velocity[0] * t,
+                    obj.current_pos[1] + obj.velocity[1] * t,
+                    obj.current_pos[2] + obj.velocity[2] * t,
+                ]
+
+                original_pos = obj.current_pos
+                obj.current_pos = future_pos
+
+                # Check for collisions
+                if self.in_dynamic_obj(current_pos, obj) or self.in_dynamic_obj(
+                    goal_pos, obj
+                ):
+                    collision_detected = True
+
+                obj.current_pos = original_pos
+
+                if collision_detected:
+                    break
+
+            if not collision_detected:
+                return True
+        return False
 
     def move_dynamic_obs(self):
         """
@@ -82,6 +103,9 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             )
 
     def move(self, path, mps=6):
+        """
+        TODO change
+        """
         if self.current_index >= len(path) - 1:
             return self.env.goal
 

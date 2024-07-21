@@ -338,7 +338,6 @@ class ADStarLite(DStar):
             self.agent_pos = path[0]
             GOAL = path[-1]
 
-            self.update_costs_and_queue([])
             while self.agent_pos != GOAL:
                 self.update_object_positions()  # Uses same as D* Lite
                 path = self.update(path)
