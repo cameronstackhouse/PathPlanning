@@ -75,12 +75,9 @@ class SRrtEdge(RrtEdge):
                 if found:
                     break
 
-                visualization(self)
                 self.i += 1
             self.ind += 1
         self.done = True
-        visualization(self)
-        plt.show()
 
         if self.Path:
             return True
@@ -121,4 +118,8 @@ class SRrtEdge(RrtEdge):
 
 if __name__ == "__main__":
     p = SRrtEdge()
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/10_3d.json")
     p.run()
+    
+    visualization(p)
+    plt.show()

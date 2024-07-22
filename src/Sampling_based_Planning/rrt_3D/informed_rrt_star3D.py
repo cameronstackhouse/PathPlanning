@@ -1,4 +1,5 @@
-# informed RRT star in 3D
+# TODO make workable for evaluation
+
 """
 This is IRRT* code for 3D
 @author: yue qi 

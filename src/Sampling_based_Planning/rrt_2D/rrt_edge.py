@@ -259,7 +259,6 @@ class RrtEdge(Rrt):
             while not np.array_equal(current, GOAL):
                 current = global_path[self.current_index]
                 self.update_object_positions()
-                self.update_world_view()
                 new_coords = self.move(global_path, self.speed)
 
                 if new_coords[0] is None:

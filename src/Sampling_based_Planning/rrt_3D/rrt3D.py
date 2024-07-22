@@ -90,6 +90,8 @@ class rrt:
         self.agent_pos = None
         self.distance_travelled = 0
         self.time = 3
+        self.compute_time = None
+        self.speed = 6
 
         self.dynamic_obs = []
 
@@ -131,8 +133,17 @@ class rrt:
             # if the goal is really reached
 
         self.done = True
-        # visualization(self)
-        # plt.show()
+        
+        return self.Path
+
+    def move_dynamic_obs(self):
+        """
+        TODO
+        """
+        for obj in self.dynamic_obs:
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
 
     def move(self, path, mps=6):
         """

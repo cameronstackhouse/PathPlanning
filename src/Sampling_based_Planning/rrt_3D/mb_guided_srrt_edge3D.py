@@ -1,5 +1,3 @@
-import json
-import math
 import os
 import sys
 import time
@@ -26,10 +24,6 @@ from rrt_3D.utils3D import (
 
 
 class MbGuidedSrrtEdge(GuidedSrrtEdge):
-    """
-    TODO
-    """
-
     def __init__(self, t=0.1, m=10000):
         super().__init__()
         self.t = t
@@ -99,22 +93,19 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                             best_path_dist = D
                             self.update_ellipsoid(best_path)
 
-                # visualization(self)
+                # TODO investigate
                 self.i += 1
 
         self.done = True
-        print(best_path_dist)
 
-        if self.Path:
-            visualization(self)
-            plt.show()
-            return True
-        else:
-            return False
+        return self.Path
 
 
 if __name__ == "__main__":
-    TIME = 2.53
+    TIME = 5
     p = MbGuidedSrrtEdge(TIME)
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
     p.planning()
+
+    visualization(p)
+    plt.show()

@@ -219,7 +219,7 @@ if __name__ == "__main__":
         start,
         end,
         goal_sample_rate,
-        global_time=3,
+        global_time=5,
     )
     rrt.change_env(
         "Evaluation/Maps/2D/block_map_25/block_9.json",

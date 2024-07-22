@@ -19,7 +19,6 @@ from rrt_3D.utils3D import (
     isCollide,
     nearest,
     visualization,
-    cost,
     path,
 )
 
@@ -57,7 +56,7 @@ class RrtEdge(rrt):
                 new_edge = Edge(xnearest, xnew)
                 self.E.append(new_edge)
                 self.V.append(xnew)
-                self.flag[xnew] = 'Valid'
+                self.flag[xnew] = "Valid"
                 self.wireup(tuple(xnew), tuple(xnearest))
 
                 goal_dist = getDist(xnew, self.xt)
@@ -80,9 +79,6 @@ class RrtEdge(rrt):
             return False
 
     def nearest(self, point, edge_list):
-        """
-        TODO
-        """
         nearest_node = nearest(self, point)
         nearest_edge_dist, nearest_edge_proj, nearest_edge = (
             self.nearest_edge_projection(edge_list, point)
@@ -98,9 +94,6 @@ class RrtEdge(rrt):
             return nearest_node
 
     def nearest_edge_projection(self, edge_list, n):
-        """
-        TODO description.
-        """
         min_distance = float("inf")
         proj = None
         nearest_edge = None
@@ -139,7 +132,58 @@ class RrtEdge(rrt):
         proj_coords = P_A + P1
 
         return proj_coords
-    
+
+    def run(self):
+        self.x0 = tuple(self.env.start)
+        self.xt = tuple(self.env.goal)
+        prev_coords = self.x0
+
+        start_time = time.time()
+        path = self.planning()
+        start_time = time.time() - start_time
+
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
+        start_time = time.time()
+        if path:
+            self.compute_time = start_time
+            start = self.env.start
+            goal = self.env.goal
+
+            current = start
+            self.agent_pos = current
+
+            while self.agent_pos != goal:
+                self.move_dynamic_obs()
+                new_coords = self.move(path, self.speed)
+                if new_coords[0] is None:
+                    start_replan = time.time()
+                    self.E = []
+                    self.flag = {}
+                    self.V = [self.agent_pos]
+                    self.ind = 0
+
+                    new_path = self.planning()
+                    end_replan = time.time() - start_replan
+                    self.replanning_time.append(end_replan)
+
+                    if not new_path:
+                        self.agent_positions.append(self.agent_pos)
+                        return None
+                    else:
+                        path = new_path
+                        self.current_index = 0
+                        self.agent_positions.append(self.agent_pos)
+                else:
+                    self.agent_positions.append(new_coords)
+                    self.agent_pos = new_coords
+
+                    self.distance_travelled += getDist(prev_coords, new_coords)
+                    prev_coords = new_coords
+        else:
+            return False
+
 
 if __name__ == "__main__":
     p = RrtEdge()

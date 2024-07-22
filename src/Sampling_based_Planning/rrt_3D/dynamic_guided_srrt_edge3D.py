@@ -1,8 +1,10 @@
 import json
 import os
 import sys
+import time
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 sys.path.append(
@@ -10,17 +12,8 @@ sys.path.append(
 )
 
 from rrt_3D.env3D import CustomEnv
-from rrt_3D.utils3D import getDist, sampleFree, nearest, isCollide
-from rrt_3D.plot_util3D import (
-    set_axes_equal,
-    draw_block_list,
-    draw_Spheres,
-    draw_obb,
-    draw_line,
-    make_transparent,
-)
+from rrt_3D.utils3D import getDist, sampleFree, nearest, isCollide, visualization
 from rrt_3D.mb_guided_srrt_edge3D import MbGuidedSrrtEdge
-from rrt_3D.rrt3D import DynamicObj
 
 
 class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
@@ -39,7 +32,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.V = [current_pos]
         self.E = []
 
-        result = self.run()
+        result = self.planning()
 
         if result:
             self.current_index = 0
@@ -62,6 +55,17 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                     obj.current_pos[2] + obj.velocity[2] * t,
                 ]
 
+                future_agent_pos = [
+                    current_pos[0] + (goal_pos[0] - current_pos[0]) * (t / time_steps),
+                    current_pos[1] + (goal_pos[1] - current_pos[1]) * (t / time_steps),
+                    current_pos[2] + (goal_pos[2] - current_pos[2]) * (t / time_steps),
+                ]
+
+                seg_distance = getDist(current_pos, future_agent_pos)
+
+                if getDist(current_pos, future_pos) >= seg_distance:
+                    break
+
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
@@ -80,52 +84,39 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                 return True
         return False
 
-    def move_dynamic_obs(self):
-        """
-        TODO
-        """
-        for obj in self.dynamic_obs:
-            old, new = self.env.move_block(
-                a=obj.velocity, block_to_move=obj.index, mode="translation"
-            )
-
-    def main(self):
+    def run(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
         prev_coords = self.x0
 
-        self.agent_pos = self.x0
-        self.agent_positions.append(self.agent_pos)
-
-        # Find initial path
-        path = self.run()
-        self.done = True
+        start_time = time.time()
+        path = self.planning()
+        start_time = time.time() - start_time
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
-        t = 0
+        start_time = time.time()
 
         if path:
-            path = self.Path
+            self.compute_time = start_time
             start = self.env.start
             goal = self.env.goal
 
             current = start
+            self.agent_pos = current
 
-            current = np.array(current)
-            GOAL = np.array(goal)
-            while not np.array_equal(current, GOAL):
+            while self.agent_pos != goal:
                 self.move_dynamic_obs()
-
                 new_coords = self.move(path)
-                if new_coords is None:
+                if new_coords[0] is None:
                     if not self.reconnect():
                         new_path = self.regrow()
                         if not new_path:
                             self.agent_positions.append(self.agent_pos)
                             return False
                         else:
+                            self.current_index = 0
                             path = new_path
 
                     self.agent_positions.append(self.agent_pos)
@@ -138,8 +129,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                     self.distance_travelled += getDist(prev_coords, new_coords)
                     prev_coords = new_coords
 
-                t += 1
-            self.Path = path
             return True
 
         else:
@@ -151,27 +140,16 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         z2 = z1 + depth
         return (x1, y1, z1, x2, y2, z2)
 
-    def change_env(self, map_name, obs_name=None):
-        data = None
-        with open(map_name) as f:
-            data = json.load(f)
-
-        if data:
-            self.current_index = 0
-            self.agent_positions = []
-            self.agent_pos = None
-            self.distance_travelled = 0
-            self.dynamic_obs = []
-
-            self.env = CustomEnv(data)
-
-            # if obs_name:
-            #     self.set_dynamic_obs(obs_name)
-
 
 if __name__ == "__main__":
-    rrt = DynamicGuidedSrrtEdge(1)
+    rrt = DynamicGuidedSrrtEdge(t=5)
     rrt.change_env(
-        "Evaluation/Maps/3D/block_map_25_3d/6_3d.json", "Evaluation/Maps/3D/obs.json"
+        "Evaluation/Maps/3D/block_map_25_3d/12_3d.json", "Evaluation/Maps/3D/obs.json"
     )
-    res = rrt.main()
+
+    res = rrt.planning()
+
+    print(res)
+
+    visualization(rrt)
+    plt.show()
