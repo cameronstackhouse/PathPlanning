@@ -57,14 +57,11 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         if global_path:
             global_path = global_path[::-1]
-            current = global_path[self.current_index]
             GOAL = global_path[-1]
 
-            current = np.array(current)
             GOAL = np.array(GOAL)
             # While the final node has not been reached
-            while not np.array_equal(current, GOAL):
-                current = global_path[self.current_index]
+            while not np.array_equal(self.agent_pos, GOAL):
                 self.update_object_positions()
                 self.update_world_view()
 
@@ -91,7 +88,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
                 else:
                     self.agent_positions.append(new_coords)
-                    current = new_coords
                     self.agent_pos = new_coords
 
                     self.distance_travelled += self.utils.euclidian_distance(
@@ -116,10 +112,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         current_pos = self.agent_pos
         next_node = path[self.current_index + 1]
-
-        # Checks for collision between current point and the waypoint node
-        if self.utils.is_collision(Node(current_pos), Node(next_node)):
-            return [None, None]
 
         seg_distance = self.utils.euclidian_distance(current_pos, next_node)
 
@@ -216,12 +208,27 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                     obj.current_pos[1] + obj.velocity[1] * t,
                 ]
 
+                future_agent_pos = [
+                    current_pos[0] + (goal_pos[0] - current_pos[0]) * (t / time_steps),
+                    current_pos[1] + (goal_pos[1] - current_pos[1]) * (t / time_steps),
+                ]
+
+                seg_distance = self.utils.euclidian_distance(
+                    current_pos, future_agent_pos
+                )
+
+                if (
+                    self.utils.euclidian_distance(current_pos, future_pos)
+                    >= seg_distance
+                ):
+                    break
+
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
-                if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
-                    Node(goal_pos), obj
-                ):
+                if self.in_dynamic_obj(
+                    Node(future_agent_pos), obj
+                ) or self.in_dynamic_obj(Node(goal_pos), obj):
                     collision_detected = True
 
                 # Restore the original position
