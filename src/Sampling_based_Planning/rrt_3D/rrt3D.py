@@ -53,6 +53,19 @@ class DynamicObj:
 
         return new_pos
 
+    def predict_future_positions(self, prediction_horizon):
+        future_positions = []
+
+        for i in range(1, prediction_horizon + 1):
+            future_position = (
+                self.current_pos[0] + (self.velocity[0] * i),
+                self.current_pos[1] + (self.velocity[1] * i),
+                self.current_pos[2] + (self.velocity[2] * i),
+            )
+            future_positions.append(future_position)
+
+        return future_positions
+
 
 class rrt:
     def __init__(self):
@@ -71,8 +84,16 @@ class rrt:
         self.ind = 0
         # self.fig = plt.figure(figsize=(10, 8))
 
-        # Dynamic variables TODO
+        # Dynamic variables
+        self.current_index = 0
+        self.agent_positions = []
+        self.agent_pos = None
+        self.distance_travelled = 0
+        self.time = 3
+
         self.dynamic_obs = []
+
+        self.replanning_time = []
 
     def in_dynamic_obj(self, pos, obj):
         x, y, z = pos
@@ -88,7 +109,7 @@ class rrt:
         # self.E.add_edge([s, y])  # add edge
         self.Parent[x] = y
 
-    def run(self):
+    def planning(self):
         self.V.append(self.x0)
         while self.ind < self.maxiter:
             xrand = sampleFree(self)
@@ -113,10 +134,69 @@ class rrt:
         # visualization(self)
         # plt.show()
 
+    def move(self, path, mps=6):
+        """
+        Attempts to move the agent forward by a fixed amount of meters per second.
+        """
+        if self.current_index >= len(path) - 1:
+            return self.xt
+
+        current_pos = self.agent_pos
+        next_node = path[self.current_index + 1]
+
+        seg_distance = getDist(current_pos, next_node)
+
+        direction = (
+            (next_node[0] - current_pos[0]) / seg_distance,
+            (next_node[1] - current_pos[1]) / seg_distance,
+            (next_node[2] - current_pos[2]) / seg_distance,
+        )
+
+        new_pos = (
+            current_pos[0] + direction[0] * mps,
+            current_pos[1] + direction[1] * mps,
+            current_pos[2] + direction[2] * mps,
+        )
+
+        # Checks for overshoot
+        if getDist(current_pos, new_pos) >= seg_distance:
+            self.agent_pos = next_node
+            self.current_index += 1
+            return next_node
+
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current_pos[0] + direction[0] * mps * t,
+                current_pos[1] + direction[1] * mps * t,
+                current_pos[2] + direction[2] * mps * t,
+            )
+
+            if getDist(current_pos, future_pos) >= seg_distance:
+                break
+
+            future_uav_positions.append(future_pos)
+
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_obs:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
+
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(future_pos, dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None]
+
+                    dynamic_object.current_pos = original_pos
+
+        return new_pos
+
     def change_env(self, map_name, obs_name=None):
-        """
-        TODO
-        """
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -132,12 +212,41 @@ class rrt:
 
             self.x0 = tuple(self.env.start)
             self.xt = tuple(self.env.goal)
+
+            self.dobs_dir = obs_name
         else:
             print("Error, failed to load custom environment.")
+
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+                new_obj.corners = self.corner_coords(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.current_pos[2],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                    new_obj.size[2],
+                )
+
+                new_obj.index = len(self.env.blocks) - 1
+                self.dynamic_obs.append(new_obj)
+
+                self.env.new_block_corners(new_obj.corners)
 
 
 if __name__ == "__main__":
     p = rrt()
     starttime = time.time()
-    p.run()
+    p.planning()
     print("time used = " + str(time.time() - starttime))

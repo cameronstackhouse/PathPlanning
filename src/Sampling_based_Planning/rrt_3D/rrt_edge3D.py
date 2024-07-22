@@ -43,7 +43,7 @@ class RrtEdge(rrt):
         self.stepsize = float("inf")
         self.flag = {}
 
-    def run(self):
+    def planning(self):
         self.V.append(self.x0)
         best_path = None
         best_path_dist = float("inf")
@@ -139,10 +139,10 @@ class RrtEdge(rrt):
         proj_coords = P_A + P1
 
         return proj_coords
-
+    
 
 if __name__ == "__main__":
     p = RrtEdge()
     starttime = time.time()
-    p.run()
+    p.planning()
     print("Time used = " + str(time.time() - starttime))

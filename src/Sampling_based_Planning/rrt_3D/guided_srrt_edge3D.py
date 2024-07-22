@@ -107,7 +107,7 @@ class GuidedSrrtEdge(SRrtEdge):
         else:
             return sampleFree(self)
 
-    def run(self):
+    def planning(self):
         self.V.append(self.x0)
         best_path = None
         best_path_dist = float("inf")
@@ -168,6 +168,6 @@ class GuidedSrrtEdge(SRrtEdge):
 
 if __name__ == "__main__":
     p = GuidedSrrtEdge()
-    p.run()
+    p.planning()
     
     print(p.Path)

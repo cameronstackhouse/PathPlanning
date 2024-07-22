@@ -295,10 +295,9 @@ class DStar:
 
             self.agent_pos = self.s_start
 
-            return self.Env
+            self.dobs_dir = obj_dir
 
-            # if obj_dir:
-            #     self.set_dynamic_obs(obj_dir)
+            return self.Env
         else:
             print("Error, map not found")
 
@@ -311,8 +310,6 @@ class DStar:
 
         current = self.agent_pos
         next = path[self.current_index + 1]
-
-        # No need to check for collisions, this is already done in the updating of costs
 
         seg_distance = self.euclidean_distance(current, next)
 
@@ -403,7 +400,7 @@ class DStar:
                 if check_pos in self.Env.dynamic_obs_cells:
                     dynamic_obj_in_sight = True
                     new_cells.add(check_pos)
-        
+
         if dynamic_obj_in_sight:
             for obj in self.dynamic_objects:
                 old_pos = obj.old_pos
@@ -417,11 +414,11 @@ class DStar:
 
                 for cell in old_cells:
                     self.UpdateVertex(cell)
-                
+
                 for cell in new_cells:
                     self.g[cell] = float("inf")
                     self.rhs[cell] = float("inf")
-                
+
                 for cell in all_cells:
                     self.UpdateVertex(cell)
 
@@ -527,7 +524,7 @@ def main():
     dstar.change_env(
         "Evaluation/Maps/2D/main/block_15.json",
     )
-    #dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+    # dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     path = dstar.ComputePath()
 
     # dstar.plot()

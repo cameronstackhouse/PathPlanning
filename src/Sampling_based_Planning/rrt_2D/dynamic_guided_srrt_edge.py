@@ -103,65 +103,6 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
             self.total_time = time.time() - start_time
             return None
 
-    def move(self, path, mps=6):
-        """
-        Attempts to move the agent forward by a fixed amount of meters per second.
-        """
-        if self.current_index >= len(path) - 1:
-            return self.s_goal.coords
-
-        current_pos = self.agent_pos
-        next_node = path[self.current_index + 1]
-
-        seg_distance = self.utils.euclidian_distance(current_pos, next_node)
-
-        direction = (
-            (next_node[0] - current_pos[0]) / seg_distance,
-            (next_node[1] - current_pos[1]) / seg_distance,
-        )
-
-        new_pos = (
-            current_pos[0] + direction[0] * mps,
-            current_pos[1] + direction[1] * mps,
-        )
-
-        # Checks for overshoot
-        if self.utils.euclidian_distance(current_pos, new_pos) >= seg_distance:
-            self.agent_pos = next_node
-            self.current_index += 1
-            return next_node
-
-        future_uav_positions = []
-        PREDICTION_HORIZON = 4
-        for t in range(1, PREDICTION_HORIZON):
-            future_pos = (
-                current_pos[0] + direction[0] * mps * t,
-                current_pos[1] + direction[1] * mps * t,
-            )
-
-            if self.utils.euclidian_distance(current_pos, future_pos) >= seg_distance:
-                break
-
-            future_uav_positions.append(future_pos)
-
-        for future_pos in future_uav_positions:
-            for dynamic_object in self.dynamic_objects:
-                dynamic_future_pos = dynamic_object.predict_future_positions(
-                    PREDICTION_HORIZON
-                )
-
-                for pos in dynamic_future_pos:
-                    original_pos = dynamic_object.current_pos
-                    dynamic_object.current_pos = pos
-
-                    if self.in_dynamic_obj(Node(future_pos), dynamic_object):
-                        dynamic_object.current_pos = original_pos
-                        return [None, None]
-
-                    dynamic_object.current_pos = original_pos
-
-        return new_pos
-
     def regrow(self):
         """
         Regrows the tree to try and find path from current to end node.
@@ -285,8 +226,5 @@ if __name__ == "__main__":
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
-    success = rrt.run()
-
-    print(success)
-
+    rrt.run()
     rrt.plot()

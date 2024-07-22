@@ -283,8 +283,7 @@ class CustomEnv(env):
 
         Obstacles = []
         for i in cuboids:
-            i = np.array(i)
-        Obstacles.append([j for j in i])
+            Obstacles.append(np.array(i))
 
         self.balls = []
         self.blocks = np.array(Obstacles)

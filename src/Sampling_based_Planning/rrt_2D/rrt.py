@@ -403,10 +403,6 @@ class Rrt:
         current_pos = self.agent_pos
         next_node = path[self.current_index + 1]
 
-        # Checks for collision between current point and the waypoint node
-        if self.utils.is_collision(Node(current_pos), Node(next_node)):
-            return [None, None]
-
         seg_distance = self.utils.euclidian_distance(current_pos, next_node)
 
         direction = (
@@ -425,7 +421,6 @@ class Rrt:
             self.current_index += 1
             return next_node
 
-        # TODO: Check for collision within next x amount of time (maybe based on speed)
         future_uav_positions = []
         PREDICTION_HORIZON = 4
         for t in range(1, PREDICTION_HORIZON):
@@ -433,6 +428,10 @@ class Rrt:
                 current_pos[0] + direction[0] * mps * t,
                 current_pos[1] + direction[1] * mps * t,
             )
+
+            if self.utils.euclidian_distance(current_pos, future_pos) >= seg_distance:
+                break
+
             future_uav_positions.append(future_pos)
 
         for future_pos in future_uav_positions:
@@ -441,7 +440,6 @@ class Rrt:
                     PREDICTION_HORIZON
                 )
 
-                # check for future collisions
                 for pos in dynamic_future_pos:
                     original_pos = dynamic_object.current_pos
                     dynamic_object.current_pos = pos

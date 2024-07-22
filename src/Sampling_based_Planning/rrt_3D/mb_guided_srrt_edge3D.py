@@ -38,7 +38,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.E = []
         self.V = []
 
-    def run(self):
+    def planning(self):
         self.V.append(self.x0)
         self.flag[self.x0] = "Valid"
         best_path = None
@@ -106,6 +106,8 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         print(best_path_dist)
 
         if self.Path:
+            visualization(self)
+            plt.show()
             return True
         else:
             return False
@@ -114,5 +116,5 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 if __name__ == "__main__":
     TIME = 2.53
     p = MbGuidedSrrtEdge(TIME)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/4_3d.json")
-    p.run()
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
+    p.planning()

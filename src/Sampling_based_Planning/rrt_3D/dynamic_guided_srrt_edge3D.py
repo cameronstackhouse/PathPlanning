@@ -26,15 +26,6 @@ from rrt_3D.rrt3D import DynamicObj
 class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def __init__(self, t=0.1, m=10000):
         super().__init__(t, m)
-        self.current_index = 0
-        self.agent_positions = []
-        self.agent_pos = None
-        self.distance_travelled = 0
-        self.time = 3
-
-        self.dynamic_obs = []
-
-        self.replanning_time = []
 
     def regrow(self):
         self.V.clear()
@@ -98,74 +89,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                 a=obj.velocity, block_to_move=obj.index, mode="translation"
             )
 
-    def move(self, path, mps=6):
-        """
-        TODO change
-        """
-        if self.current_index >= len(path) - 1:
-            return self.env.goal
-
-        current_pos = self.agent_pos
-        next_node = path[self.current_index + 1][0]
-
-        seg_distance = getDist(current_pos, next_node)
-
-        direction = (
-            (next_node[0] - current_pos[0]) / seg_distance,
-            (next_node[1] - current_pos[1]) / seg_distance,
-            (next_node[2] - current_pos[2]) / seg_distance,
-        )
-
-        new_pos = (
-            current_pos[0] + direction[0] * mps,
-            current_pos[1] + direction[1] * mps,
-            current_pos[2] + direction[2] * mps,
-        )
-
-        # If the next position would be a collision, reroute
-        for obj in self.dynamic_obs:
-            if self.in_dynamic_obj(new_pos, obj):
-                return [None, None]
-
-        if getDist(current_pos, new_pos) >= seg_distance:
-            self.agent_pos = next_node
-            self.current_index += 1
-            return next_node
-
-        # TODO check for collision wothin x amount of time
-        future_uav_positions = []
-        PREDICTION_HORIZON = 3
-
-        for t in range(1, PREDICTION_HORIZON):
-            future_pos = (
-                current_pos[0] + direction[0] * mps * t,
-                current_pos[1] + direction[1] * mps * t,
-                current_pos[2] + direction[2] * mps * t,
-            )
-
-            if getDist(current_pos, new_pos) >= seg_distance:
-                break
-
-            future_uav_positions.append(future_pos)
-
-        for future_pos in future_uav_positions:
-            for dynamic_object in self.dynamic_obs:
-                dynamic_future_pos = dynamic_object.predict_future_positions(
-                    PREDICTION_HORIZON
-                )
-
-                for pos in dynamic_future_pos:
-                    original_pos = dynamic_object.current_pos
-                    dynamic_object.current_pos = pos
-
-                    if self.in_dynamic_obj(future_pos, dynamic_object):
-                        dynamic_object.current_pos = original_pos
-                        return [None, None]
-
-                    dynamic_object.current_pos = original_pos
-
-        return new_pos
-
     def main(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
@@ -177,6 +100,10 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         # Find initial path
         path = self.run()
         self.done = True
+
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
         t = 0
 
         if path:
@@ -238,35 +165,8 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
             self.env = CustomEnv(data)
 
-            if obs_name:
-                self.set_dynamic_obs(obs_name)
-
-    def set_dynamic_obs(self, filename):
-        obj_json = None
-        with open(filename) as f:
-            obj_json = json.load(f)
-
-        if obj_json:
-            for obj in obj_json["objects"]:
-                new_obj = DynamicObj()
-                new_obj.velocity = obj["velocity"]
-                new_obj.current_pos = obj["position"]
-                new_obj.old_pos = obj["position"]
-                new_obj.size = obj["size"]
-                new_obj.init_pos = new_obj.current_pos
-                new_obj.corners = self.corner_coords(
-                    new_obj.current_pos[0],
-                    new_obj.current_pos[1],
-                    new_obj.current_pos[2],
-                    new_obj.size[0],
-                    new_obj.size[1],
-                    new_obj.size[2],
-                )
-
-                new_obj.index = len(self.env.blocks) - 1
-                self.dynamic_obs.append(new_obj)
-
-                self.env.new_block_corners(new_obj.corners)
+            # if obs_name:
+            #     self.set_dynamic_obs(obs_name)
 
 
 if __name__ == "__main__":
