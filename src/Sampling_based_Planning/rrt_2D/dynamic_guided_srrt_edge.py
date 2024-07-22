@@ -1,5 +1,4 @@
 import copy
-import math
 import os
 import sys
 import time
@@ -12,7 +11,7 @@ sys.path.append(
 
 from rrt_2D.plotting import DynamicPlotting
 from rrt_2D.mb_guided_srrt_edge import MBGuidedSRrtEdge
-from rrt_2D.rrt import Node, DynamicObj
+from rrt_2D.rrt import Node
 
 
 class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
@@ -147,6 +146,10 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 current_pos[0] + direction[0] * mps * t,
                 current_pos[1] + direction[1] * mps * t,
             )
+
+            if self.utils.euclidian_distance(current_pos, future_pos) >= seg_distance:
+                break
+
             future_uav_positions.append(future_pos)
 
         for future_pos in future_uav_positions:
@@ -216,9 +219,9 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
                 original_pos = obj.current_pos
                 obj.current_pos = future_pos
 
-                if self.in_dynamic_obj(
-                    Node(current_pos), obj
-                ) or self.in_dynamic_obj(Node(goal_pos), obj):
+                if self.in_dynamic_obj(Node(current_pos), obj) or self.in_dynamic_obj(
+                    Node(goal_pos), obj
+                ):
                     collision_detected = True
 
                 # Restore the original position
@@ -257,7 +260,7 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
         plotter.obs_circle = self.env.obs_circle
         plotter.obs_rectangle = self.start_rect
 
-        plotter.animation(nodelist, path, "Test", animation=True)
+        plotter.animation(nodelist, self.agent_positions, "Test", animation=True)
 
 
 if __name__ == "__main__":

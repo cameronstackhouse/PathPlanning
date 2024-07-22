@@ -1,7 +1,3 @@
-"""
-TODO
-"""
-
 import json
 import os
 import sys
@@ -126,10 +122,47 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             current_pos[2] + direction[2] * mps,
         )
 
+        # If the next position would be a collision, reroute
+        for obj in self.dynamic_obs:
+            if self.in_dynamic_obj(new_pos, obj):
+                return [None, None]
+
         if getDist(current_pos, new_pos) >= seg_distance:
             self.agent_pos = next_node
             self.current_index += 1
             return next_node
+
+        # TODO check for collision wothin x amount of time
+        future_uav_positions = []
+        PREDICTION_HORIZON = 3
+
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current_pos[0] + direction[0] * mps * t,
+                current_pos[1] + direction[1] * mps * t,
+                current_pos[2] + direction[2] * mps * t,
+            )
+
+            if getDist(current_pos, new_pos) >= seg_distance:
+                break
+
+            future_uav_positions.append(future_pos)
+
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_obs:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
+
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(future_pos, dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None]
+
+                    dynamic_object.current_pos = original_pos
 
         return new_pos
 
@@ -233,7 +266,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                 new_obj.index = len(self.env.blocks) - 1
                 self.dynamic_obs.append(new_obj)
 
-                # TODO Add to env
                 self.env.new_block_corners(new_obj.corners)
 
 

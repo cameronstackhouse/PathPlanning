@@ -159,6 +159,7 @@ class DynamicPlotting(Plotting):
                 obj.current_pos = old_pos
 
     def plot_dynamic_objects(self):
+        dynamic_patches = []
         for obj in self.dynamic_objects:
             rect = patches.Rectangle(
                 (obj.current_pos[0], obj.current_pos[1]),
@@ -169,9 +170,20 @@ class DynamicPlotting(Plotting):
                 fill=True,
             )
             plt.gca().add_patch(rect)
+            dynamic_patches.append(rect)
+        return dynamic_patches
 
     def plot_agent(self, agent_pos):
-        plt.plot(agent_pos[0], agent_pos[1], "bo")
+        agent_patch = plt.Circle(agent_pos, radius=10.0, color='orange', zorder=10)
+        plt.gca().add_patch(agent_patch)
+        return agent_patch
+        
+    def update_plot_agent(self, agent_patch, agent_pos):
+        agent_patch.set_center(agent_pos) 
+    
+    def update_plot_dynamic_objects(self, dynamic_patches):
+        for obj, rect in zip(self.dynamic_objects, dynamic_patches):
+            rect.set_xy((obj.current_pos[0], obj.current_pos[1]))
 
     def animation(self, nodelist, path, name, animation=False):
         plt.ion()
@@ -180,18 +192,16 @@ class DynamicPlotting(Plotting):
         fig, ax = plt.subplots()
         self.plot_grid(name, ax)
         self.plot_path(path)
-        self.plot_dynamic_objects()
         self.plot_original_path(self.initial_path)
         plt.pause(1)
+        
+        dynamic_objects = self.plot_dynamic_objects()
+        agent = self.plot_agent(self.agent_pos[0])
 
         for i in range(self.t):
             self.update_dynamic_objects()
-            ax.clear()
-            self.plot_grid(name, ax)
-            self.plot_dynamic_objects()
-            self.plot_path(path)
-            self.plot_original_path(self.initial_path)
-            self.plot_agent(self.agent_pos[i])
+            self.update_plot_dynamic_objects(dynamic_objects)
+            self.update_plot_agent(agent, self.agent_pos[i])
             fig.canvas.draw()
             plt.pause(0.1)
 
