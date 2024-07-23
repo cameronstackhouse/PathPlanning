@@ -68,6 +68,7 @@ class DStar:
         self.U[self.s_goal] = self.CalculateKey(self.s_goal)  # THIS IS OPEN
         self.visited = set()
         self.count = 0
+        self.s_last = s_start
 
         # Data associated with traversal of the found path
         self.current_index = 0
@@ -75,6 +76,7 @@ class DStar:
         self.speed = 6
         self.time_steps = 0
         self.agent_pos = self.s_start
+        self.agent_positions = []
         self.traversed_path = []
         self.replan_time = []
         self.total_time = 0
@@ -106,13 +108,16 @@ class DStar:
 
     def ComputePath(self):
         start_time = time.time()
+
+        start_pos = self.s_start
+
         while True:
             if (len(self.U)) == 0:
                 return None
             if time.time() - start_time > self.time:
                 if (
-                    v >= self.CalculateKey(self.s_start)
-                    and self.rhs[self.s_start] == self.g[self.s_start]
+                    v >= self.CalculateKey(start_pos)
+                    and self.rhs[start_pos] == self.g[start_pos]
                 ):
                     break
                 else:
@@ -120,8 +125,8 @@ class DStar:
 
             s, v = self.TopKey()
             if (
-                v >= self.CalculateKey(self.s_start)
-                and self.rhs[self.s_start] == self.g[self.s_start]
+                v >= self.CalculateKey(start_pos)
+                and self.rhs[start_pos] == self.g[start_pos]
             ):
                 break
 
@@ -141,7 +146,8 @@ class DStar:
                 for x in self.get_neighbor(s):
                     self.UpdateVertex(x)
 
-        return self.path_to_end()
+        # return self.path_to_end()
+        return self.extract_path()
 
     def UpdateVertex(self, s):
         if s != self.s_goal:
@@ -164,7 +170,6 @@ class DStar:
         """
         :return: return the min key and its value.
         """
-
         s = min(self.U, key=self.U.get)
         return s, self.U[s]
 
@@ -241,7 +246,7 @@ class DStar:
         path = [self.s_start]
         s = self.s_start
 
-        for k in range(100):
+        for k in range(1000):
             g_list = {}
             for x in self.get_neighbor(s):
                 if not self.is_collision(s, x):
@@ -259,6 +264,7 @@ class DStar:
         plt.plot(px, py, linewidth=2)
         plt.plot(self.s_start[0], self.s_start[1], "bs")
         plt.plot(self.s_goal[0], self.s_goal[1], "gs")
+        plt.show()
 
     def change_env(self, map_name, obj_dir=None):
         data = None
@@ -306,7 +312,7 @@ class DStar:
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
         if self.current_index >= len(path) - 1:
-            return self.s_goal.coords
+            return self.s_goal
 
         current = self.agent_pos
         next = path[self.current_index + 1]
@@ -375,16 +381,27 @@ class DStar:
 
             if not (0 <= new_pos[0] < self.x and 0 <= new_pos[1] < self.y):
                 new_pos = prev_pos
-            object.prev_pos = object.current_pos
+            object.old_pos = object.current_pos
             object.current_pos = new_pos
 
             self.Env.update_dynamic_obj_pos(i, new_pos[0], new_pos[1])
 
     def get_affected_cells(self, position, width, height):
         x, y = position
-        return [(x + dx, y + dy) for dx in range(width) for dy in range(height)]
 
-    def update_costs(self, path):
+        x_max = self.Env.x_range
+        y_max = self.Env.y_range
+
+        affected_cells = [
+            (x + dx, y + dy)
+            for dx in range(width)
+            for dy in range(height)
+            if 0 <= (x + dx) < x_max and 0 <= (y + dy) < y_max
+        ]
+
+        return affected_cells
+
+    def update_costs(self):
         current_pos = self.agent_pos
         SIGHT = 3
 
@@ -402,34 +419,45 @@ class DStar:
                     new_cells.add(check_pos)
 
         if dynamic_obj_in_sight:
+            print("Dynamic objects detected in sight.")
+
+            self.s_start = self.agent_pos
+
+            path = [self.s_start]
+
+            self.km += self.h(self.s_last, self.s_start)
+
+            self.s_last = self.s_start
+
             for obj in self.dynamic_objects:
                 old_pos = obj.old_pos
-                new_pos = obj.current_pos
+                # new_pos = obj.current_pos
                 width, height = obj.size
 
-                old_cells = self.get_affected_cells(old_pos, width, height)
-                new_cells.update(self.get_affected_cells(new_pos, width, height))
+                # Determine affected cells by old and new positions of the object
+                old_cells.update(self.get_affected_cells(old_pos, width, height))
 
-                all_cells = new_cells.union(old_cells)
+            all_cells = new_cells.union(old_cells)
 
-                for cell in old_cells:
-                    self.UpdateVertex(cell)
+            for cell in old_cells:
+                self.UpdateVertex(cell)
 
-                for cell in new_cells:
-                    self.g[cell] = float("inf")
-                    self.rhs[cell] = float("inf")
+            for cell in new_cells:
+                self.g[cell] = float("inf")
+                self.rhs[cell] = float("inf")
 
-                for cell in all_cells:
-                    self.UpdateVertex(cell)
+            # Update neighbors of all affected cells
+            for cell in all_cells:
+                for neighbour in self.get_neighbor(cell):
+                    self.UpdateVertex(neighbour)
 
-                replan_time = time.time()
-                new_path = self.ComputePath()
-                replan_time = time.time() - replan_time
-                self.replan_time.append(replan_time)
+            self.visited = set()
+            self.ComputePath()
 
-                return new_path
-        else:
-            return self.initial_path
+        path = self.extract_path()
+
+        self.current_index = 0
+        return path
 
     def set_dynamic_obs(self, filename):
         obj_json = None
@@ -452,21 +480,12 @@ class DStar:
         else:
             print("Error, dynamic objects could not be loaded")
 
-    def get_covered_vertices(self, pos, size):
-        covered_vertices = []
-
-        x_start, y_start = pos
-        x_end, y_end = x_start + size[0], y_start + size[1]
-
-        for x in range(x_start, x_end):
-            for y in range(y_start, y_end):
-                covered_vertices.append((x, y))
-
-        return covered_vertices
-
-    def plot(self):
+    def plot(self, path):
         self.Plot.plot_grid("D* Lite")
-        self.plot_path(self.traversed_path)
+        if path:
+            self.plot_path(path)
+        else:
+            self.plot_path(self.agent_positions)
         plt.show()
 
     def run(self):
@@ -480,12 +499,12 @@ class DStar:
         end_time = time.time() - start_time
 
         self.compute_time = end_time
-
         self.initial_path = path
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
+        self.s_last = self.s_start
         start_time = time.time()
 
         if path:
@@ -496,20 +515,33 @@ class DStar:
             GOAL = np.array(GOAL)
 
             while not np.array_equal(current, GOAL):
+                if self.g[self.agent_pos] == float("inf"):
+                    return None
+
                 self.update_object_positions()
-                path = self.update_costs(path)
+                path = self.update_costs()
 
                 if path is None:
                     return None
 
                 current = self.move(path)
 
-                self.traversed_path.append(self.agent_pos)
+                self.agent_positions.append(self.agent_pos)
+
+                self.s_start = self.agent_pos
+
+                print(self.agent_pos)
 
         end_time = time.time() - start_time
         self.total_time = end_time
 
-        return self.traversed_path
+        return self.agent_positions
+
+    def plot_traversal(self):
+        """
+        TODO
+        """
+        pass
 
 
 def main():
@@ -519,15 +551,18 @@ def main():
     dstar = DStar(
         s_start,
         s_goal,
-        "manhattan",
+        "euclidian",
     )
+    # House 10 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_15.json",
+        "Evaluation/Maps/2D/main/block_10.json",
+        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    # dstar.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+
     path = dstar.ComputePath()
 
-    # dstar.plot()
+    if path:
+        dstar.plot(path)
 
 
 if __name__ == "__main__":
