@@ -51,12 +51,12 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
     if TYPE == "2D":
         algorithms = [
-            #DStar(START, END, "euclidean", time=5),
+            # DStar(START, END, "euclidean", time=5),
             MBGuidedSRrtEdge(START, END, 0.05, 10),
             MBGuidedSRrtEdge(START, END, 0.05, 20),
             MBGuidedSRrtEdge(START, END, 0.05, 30),
-            #RrtEdge(START, END, 0.05, 2000, time=5),
-            #IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
+            # RrtEdge(START, END, 0.05, 2000, time=5),
+            # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
         ]
 
     results = []
@@ -64,6 +64,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     for algorithm in algorithms:
         print(algorithm)
         # Measured metrics
+        traversed_paths = []
         path_len = []
         times = []
         energy = []
@@ -104,6 +105,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             if path:
                 success += 1
+                traversed_paths.append(path)
                 path_len.append(algorithms[0].utils.path_cost(path))
                 energy.append(algorithms[0].utils.path_energy(path))
                 times.append(total_time)
@@ -123,6 +125,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
             "CPU Usage": cpu_usage,
             "First success": first_successes,
             "Memory Used": memory_used,
+            "Travesed Path": traversed_paths,
         }
 
         results.append(result)
