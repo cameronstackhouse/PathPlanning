@@ -51,15 +51,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
     if TYPE == "2D":
         algorithms = [
-            DStar(START, END, "euclidean", time=5),
+            #DStar(START, END, "euclidean", time=5),
             MBGuidedSRrtEdge(START, END, 0.05, 5),
-            RrtEdge(START, END, 0.05, 2000, time=5),
-            IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
+            #RrtEdge(START, END, 0.05, 2000, time=5),
+            #IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
         ]
-
-    else:
-        # TODO 3D Algorithms
-        pass
 
     results = []
 
@@ -106,8 +102,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
 
             if path:
                 success += 1
-                path_len.append(algorithms[1].utils.path_cost(path))
-                energy.append(algorithms[1].utils.path_energy(path))
+                path_len.append(algorithms[0].utils.path_cost(path))
+                energy.append(algorithms[0].utils.path_energy(path))
                 times.append(total_time)
             else:
                 path_len.append(None)
@@ -172,7 +168,7 @@ def measure_cpu_usage(func, *args, **kwargs):
 def main():
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate("src/Evaluation/Maps/2D/main", TYPE="2D")
-    save_results(results, "evaluation_results.json")
+    save_results(results, "new_rrt_eval_results.json")
 
 
 if __name__ == "__main__":
