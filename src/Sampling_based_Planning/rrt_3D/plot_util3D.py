@@ -81,6 +81,7 @@ def draw_line(ax, SET, visibility=1, color=None):
 
 
 def visualization(initparams):
+    initparams.done = True
     if initparams.ind % 100 == 0 or initparams.done:
         #----------- list structure
         # V = np.array(list(initparams.V))
@@ -95,6 +96,8 @@ def visualization(initparams):
         edges = []
         for i in initparams.Parent:
             edges.append([i,initparams.Parent[i]])
+        
+        print(len(edges))
         #----------- end
         # generate axis objects
         ax = plt.subplot(111, projection='3d')
