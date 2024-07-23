@@ -28,6 +28,25 @@ class GuidedSrrtEdge(SRrtEdge):
         super().__init__()
         self.ellipsoid = None
         self.maxiter = 200
+    
+    # TODO look at
+    # def sample_unit_ball(self):
+    #     r = np.random.uniform(0.0, 1.0)
+    #     theta = np.random.uniform(0, np.pi)
+    #     phi = np.random.uniform(0, 2 * np.pi)
+    #     x = r * np.sin(theta) * np.cos(phi)
+    #     y = r * np.sin(theta) * np.sin(phi)
+    #     z = r * np.cos(theta)
+    #     return np.array([x, y, z])
+    
+    # def RotationToWorldFrame(self, xstart, xgoal):
+    #     d = getDist(xstart, xgoal)
+    #     xstart, xgoal = np.array(xstart), np.array(xgoal)
+    #     a1 = (xgoal - xstart) / d
+    #     M = np.outer(a1, [1, 0, 0])
+    #     U, S, V = np.linalg.svd(M)
+    #     C = U @ np.diag([1, 1, np.linalg.det(U) * np.linalg.det(V)]) @ V.T
+    #     return C
 
     def update_ellipsoid(self, path):
         self.E = []

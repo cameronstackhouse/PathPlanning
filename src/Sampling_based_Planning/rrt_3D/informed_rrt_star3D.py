@@ -42,6 +42,7 @@ from rrt_3D.plot_util3D import (
     make_transparent,
 )
 from rrt_3D.queue import MinheapPQ
+from rrt_3D.rrt3D import DynamicObj
 
 
 def CreateUnitSphere(r=1):
@@ -81,7 +82,7 @@ class IRRT:
         self.x0, self.xt = tuple(self.env.start), tuple(self.env.goal)
         self.Parent = {}
         self.Path = []
-        self.N = 500  # used for determining how many batches needed
+        self.N = 100  # used for determining how many batches needed
         self.ind = 0
         self.i = 0
         # rrt* near and other utils
@@ -99,6 +100,7 @@ class IRRT:
         # Dynamic planning variables
         self.agent_pos = None
         self.agent_positions = []
+        self.current_index = 0
 
     def planning(self):
         self.V = [self.xstart]
@@ -108,8 +110,6 @@ class IRRT:
 
         c = 1
         while self.ind <= self.N:
-            print(self.ind)
-            # print(self.i)
             if len(self.Xsoln) == 0:
                 cbest = np.inf
             else:
@@ -117,7 +117,7 @@ class IRRT:
             xrand = self.Sample(self.xstart, self.xgoal, cbest)
             xnearest = nearest(self, xrand)
             xnew, dist = steer(self, xnearest, xrand)
-            # print(xnew)
+
             collide, _ = isCollide(self, xnearest, xnew, dist=dist)
             if not collide:
                 self.V.append(xnew)
@@ -149,7 +149,6 @@ class IRRT:
                             self.Parent[xnear] = xnew
                 self.i += 1
                 if self.InGoalRegion(xnew):
-                    print("reached")
                     self.done = True
                     self.Parent[self.xgoal] = xnew
                     self.Path, _ = path(self)
@@ -159,7 +158,7 @@ class IRRT:
                 self.Path, _ = path(self, Path=[])
             self.ind += 1
 
-        return self.T
+        return self.Path
 
     def Sample(self, xstart, xgoal, cmax, bias=0.05):
         # sample within a eclipse
@@ -243,17 +242,88 @@ class IRRT:
 
             self.xstart = tuple(self.env.start)
             self.xgoal = tuple(self.env.goal)
-            
+
             self.x0 = self.xstart
             self.xt = self.xgoal
 
             self.dobs_dir = obs_name
 
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+                new_obj.corners = self.corner_coords(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.current_pos[2],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                    new_obj.size[2],
+                )
+
+                new_obj.index = len(self.env.blocks) - 1
+                self.dynamic_obs.append(new_obj)
+
+                self.env.new_block_corners(new_obj.corners)
+
+    def run(self):
+        self.x0 = tuple(self.env.start)
+        self.xt = tuple(self.env.goal)
+        prev_coords = self.x0
+
+        path = self.planning()
+
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
+        if len(path) > 0:
+            start = self.env.start
+            end = self.env.goal
+
+            current = start
+            self.agent_pos = current
+
+            # Traverse the found path
+            while self.agent_pos != end:
+                self.move_dynamic_obs()  # TODO
+                new_coords = self.move(path, self.speed)  # TODO
+                if new_coords[0] is None:
+                    # Replan from current pos
+                    self.Parent = {}
+                    self.xstart = self.agent_pos
+                    self.x0 = self.agent_pos
+                    self.ind = 0
+                    self.i = 0
+
+                    new_path = self.planning()
+
+                    if len(path) > 0:
+                        path = new_path
+                        self.current_index = 0
+                        self.agent_positions.append(self.agent_pos)
+                    else:
+                        self.agent_positions.append(self.agent_pos)
+                        return None
+                else:
+                    pass
+
+        else:
+            return False
+
 
 if __name__ == "__main__":
-    A = IRRT(show_ellipse=False)
-    A.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
-    A.planning()
+    rrt = IRRT()
+    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/17_3d.json")
+    path = rrt.planning()
 
-    visualization(A)
+    visualization(rrt)
     plt.show()
