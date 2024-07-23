@@ -45,8 +45,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
     algorithms = [
         # DStar(START, END, "euclidian"),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=10),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=20),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=30),
         # RrtEdge(START, END, 0.05, 2000, time=5),
         # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
     ]
@@ -61,6 +63,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
         energy = []
         replan_time = []
         success = 0
+        traversed_path = []
 
         cpu_usage = []
         memory_used = []
@@ -89,9 +92,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
                 success += 1
                 path_len.append(algorithms[1].utils.path_cost(path))
                 energy.append(algorithms[1].utils.path_energy(path))
+                traversed_path.append(path)
             else:
                 path_len.append(None)
                 energy.append(None)
+                traversed_path.append(None)
 
         success /= NUM_MAPS
         result = {
@@ -103,6 +108,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             "Traversal Time": traversal_time,
             "CPU Usage": cpu_usage,
             "Memory Used": memory_used,
+            "Energy To Traverse": energy,
             "Replan Time": replan_time,
         }
 
@@ -117,7 +123,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    # save_results(results, "dynamic_eval_2D_results.json")
+    save_results(results, "srrt_dynamic_different_times.json")
 
 
 if __name__ == "__main__":
