@@ -52,7 +52,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
     if TYPE == "2D":
         algorithms = [
             #DStar(START, END, "euclidean", time=5),
-            MBGuidedSRrtEdge(START, END, 0.05, 5),
+            MBGuidedSRrtEdge(START, END, 0.05, 10),
+            MBGuidedSRrtEdge(START, END, 0.05, 20),
+            MBGuidedSRrtEdge(START, END, 0.05, 30),
             #RrtEdge(START, END, 0.05, 2000, time=5),
             #IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
         ]
@@ -168,7 +170,7 @@ def measure_cpu_usage(func, *args, **kwargs):
 def main():
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate("src/Evaluation/Maps/2D/main", TYPE="2D")
-    save_results(results, "new_rrt_eval_results.json")
+    save_results(results, "10_20_30_srrt_edge_results.json")
 
 
 if __name__ == "__main__":
