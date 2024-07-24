@@ -406,7 +406,7 @@ class DStar:
     def update_costs(self):
         current_pos = self.agent_pos
         SIGHT = 3
-        
+
         new_cells = set()
         old_cells = set()
 
@@ -424,8 +424,6 @@ class DStar:
                     new_cells.add(check_pos)
 
         if dynamic_obj_in_sight:
-            print("Dynamic objects detected in sight.")
-
             self.s_start = self.agent_pos
 
             path = [self.s_start]
@@ -557,8 +555,10 @@ class DStar:
 
         plotter.env = self.Env
         plotter.obs = self.Env.obs
+        plotter.xI = self.initial_path[0]
+        plotter.xG = self.s_goal
 
-        plotter.animation(self.agent_positions, "Test")
+        plotter.animation(self.agent_positions, "D* Lite Original Path vs Path Taken")
 
 
 def main():

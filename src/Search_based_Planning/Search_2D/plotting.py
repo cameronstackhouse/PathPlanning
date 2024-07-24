@@ -63,10 +63,10 @@ class Plotting:
         self.plot_path(path)
         plt.show()
 
-    def plot_grid(self, name, ax = None):
+    def plot_grid(self, name, ax=None):
         if ax is None:
             fig, ax = plt.subplots()
-        
+
         obs_x = [x[0] for x in self.obs]
         obs_y = [x[1] for x in self.obs]
 
@@ -75,7 +75,6 @@ class Plotting:
         plt.plot(obs_x, obs_y, "sk")
         plt.title(name)
         plt.axis("equal")
-        
 
     def plot_visited(self, visited, cl="gray"):
         if self.xI in visited:
@@ -112,7 +111,7 @@ class Plotting:
         path_y = [path[i][1] for i in range(len(path))]
 
         if not flag:
-            plt.plot(path_x, path_y, linewidth="3", color="r")
+            plt.plot(path_x, path_y, linewidth="3", color=cl)
         else:
             plt.plot(path_x, path_y, linewidth="3", color=cl)
 
@@ -175,6 +174,7 @@ class Plotting:
         ]
         return cl
 
+
 class DynamicPlotting(Plotting):
     def __init__(self, xI, xG, dynamic_objects, t, agent_pos, initial_path):
         super().__init__(xI, xG)
@@ -184,7 +184,7 @@ class DynamicPlotting(Plotting):
         self.t = t
         for obj in self.dynamic_objects:
             obj.current_pos = obj.init_pos
-    
+
     def update_dynamic_objects(self):
         for obj in self.dynamic_objects:
             old_pos = obj.current_pos
@@ -195,7 +195,7 @@ class DynamicPlotting(Plotting):
 
             if not (0 <= obj.current_pos[0] < 1000 and 0 <= obj.current_pos[1] < 1000):
                 obj.current_pos = old_pos
-    
+
     def plot_dynamic_objects(self):
         dynamic_patches = []
         for obj in self.dynamic_objects:
@@ -212,40 +212,41 @@ class DynamicPlotting(Plotting):
         return dynamic_patches
 
     def plot_agent(self, agent_pos):
-        agent_patch = plt.Circle(agent_pos, radius=10.0, color='orange', zorder=10)
+        agent_patch = plt.Circle(agent_pos, radius=10.0, color="orange", zorder=10)
         plt.gca().add_patch(agent_patch)
         return agent_patch
-        
+
     def update_plot_agent(self, agent_patch, agent_pos):
-        agent_patch.set_center(agent_pos) 
-    
+        agent_patch.set_center(agent_pos)
+
     def update_plot_dynamic_objects(self, dynamic_patches):
         for obj, rect in zip(self.dynamic_objects, dynamic_patches):
             rect.set_xy((obj.current_pos[0], obj.current_pos[1]))
-    
+
     def animation(self, path, name):
         plt.ion()
-        
+
         fig, ax = plt.subplots()
         self.plot_grid(name, ax)
-        self.plot_path(path)
-        self.plot_path(self.initial_path, cl="b")
+        self.plot_path(path, cl="b")
+        self.plot_path(self.initial_path)
         
-        
+        print(f"start: {self.xI}")
+
         plt.plot(self.xI[0], self.xI[1], "bs")
         plt.plot(self.xG[0], self.xG[1], "gs")
-        
+
         plt.pause(1)
-        
+
         dynamic_objects = self.plot_dynamic_objects()
         agent = self.plot_agent(self.agent_pos[0])
-        
+
         for i in range(self.t):
             self.update_dynamic_objects()
             self.update_plot_dynamic_objects(dynamic_objects)
             self.update_plot_agent(agent, self.agent_pos[i])
             fig.canvas.draw()
             plt.pause(0.1)
-        
+
         plt.ioff()
         plt.show()
