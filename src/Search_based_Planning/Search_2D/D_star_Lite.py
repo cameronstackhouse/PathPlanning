@@ -427,6 +427,7 @@ class DStar:
                     new_cells.add(check_pos)
 
         if dynamic_obj_in_sight:
+            print("REPLANNING")
             replan_start_time = time.time()
 
             self.s_start = self.agent_pos
@@ -523,13 +524,10 @@ class DStar:
         start_time = time.time()
 
         if path:
-            GOAL = path[-1]
+            GOAL = self.s_goal
 
             while self.agent_pos != GOAL:
-                if (
-                    self.g[self.agent_pos] == float("inf")
-                    or self.agent_pos in self.Env.dynamic_obs_cells
-                ):
+                if self.g[self.agent_pos] == float("inf"):
                     return None
 
                 self.update_object_positions()
@@ -539,10 +537,15 @@ class DStar:
                     return None
 
                 self.move(path)
+
+                if self.agent_pos in self.Env.dynamic_obs_cells:
+                    return None
+
                 self.agent_positions.append(self.agent_pos)
 
                 self.time_steps += 1
 
+                print(f"agent: {self.agent_pos}, goal: {GOAL}")
                 self.s_start = self.agent_pos
 
         end_time = time.time() - start_time
@@ -579,7 +582,7 @@ def main():
     )
     # Block 12 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_12.json",
+        "Evaluation/Maps/2D/main/block_9.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
