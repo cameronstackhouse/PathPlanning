@@ -55,7 +55,10 @@ class DStar:
         self.g, self.rhs, self.U = {}, {}, {}
         self.km = 0
 
-        self.name = "D* Lite"
+        if time != float("inf"):
+            self.name = f"D* Lite: {time}"
+        else:
+            self.name = "D* Lite"
         self.first_success = None
         self.time = time
 
@@ -424,6 +427,8 @@ class DStar:
                     new_cells.add(check_pos)
 
         if dynamic_obj_in_sight:
+            replan_start_time = time.time()
+
             self.s_start = self.agent_pos
 
             path = [self.s_start]
@@ -457,6 +462,9 @@ class DStar:
 
             self.visited = set()
             self.ComputePath()
+
+            replan_end_time = time.time() - replan_start_time
+            self.replan_time.append(replan_end_time)
 
         path = self.extract_path()
 
@@ -499,12 +507,13 @@ class DStar:
         and reacting to dynamic objects.
         """
         self.time_steps = 0
-        self.traversed_path.append(self.agent_pos)
+
         start_time = time.time()
         path = self.ComputePath()
-        end_time = time.time() - start_time
 
+        end_time = time.time() - start_time
         self.compute_time = end_time
+
         self.initial_path = path
 
         if self.dobs_dir:

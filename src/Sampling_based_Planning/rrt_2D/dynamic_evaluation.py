@@ -43,12 +43,12 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
+    dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
+
     algorithms = [
         # DStar(START, END, "euclidian"),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=10),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=20),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=30),
+        DStar(START, END, "euclidian"),
+        DStar(START, END, "euclidian", 5.0),
         # RrtEdge(START, END, 0.05, 2000, time=5),
         # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
     ]
@@ -90,8 +90,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
             if path is not None:
                 success += 1
-                path_len.append(algorithms[1].utils.path_cost(path))
-                energy.append(algorithms[1].utils.path_energy(path))
+                path_len.append(dummy_algo.utils.path_cost(path))
+                energy.append(dummy_algo.utils.path_energy(path))
                 traversed_path.append(path)
             else:
                 path_len.append(None)
@@ -102,6 +102,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
         result = {
             "Algorithm": algorithm.name,
             "Map Names": map_names,
+            "Path": traversed_path,
             "Success Rate": success,
             "Path Length": path_len,
             "Initial Calculation Time": compute_time,
@@ -112,9 +113,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             "Replan Time": replan_time,
         }
 
-        results = load_existing_data("dynamic_eval_2D_results_2.json")
+        # results = load_existing_data("dynamic_eval_2D_results_2.json")
         results.append(result)
-        save_data("dynamic_eval_2D_results_2.json", results)
+        # save_data("dynamic_eval_2D_results_2.json", results)
 
     return results
 
@@ -123,7 +124,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "srrt_dynamic_different_times.json")
+    save_results(results, "D* Lite 2D dynamic.json")
 
 
 if __name__ == "__main__":
