@@ -427,7 +427,6 @@ class DStar:
                     new_cells.add(check_pos)
 
         if dynamic_obj_in_sight:
-            print("REPLANNING")
             replan_start_time = time.time()
 
             self.s_start = self.agent_pos
@@ -545,7 +544,6 @@ class DStar:
 
                 self.time_steps += 1
 
-                print(f"agent: {self.agent_pos}, goal: {GOAL}")
                 self.s_start = self.agent_pos
 
         end_time = time.time() - start_time
