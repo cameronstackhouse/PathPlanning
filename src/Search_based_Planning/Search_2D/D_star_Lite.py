@@ -545,8 +545,6 @@ class DStar:
 
                 self.s_start = self.agent_pos
 
-                print(self.agent_pos)
-
         end_time = time.time() - start_time
         self.total_time = end_time
 
