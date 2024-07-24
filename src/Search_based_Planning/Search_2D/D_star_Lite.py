@@ -251,6 +251,9 @@ class DStar:
             for x in self.get_neighbor(s):
                 if not self.is_collision(s, x):
                     g_list[x] = self.g[x]
+
+            if not g_list:
+                return None
             s = min(g_list, key=g_list.get)
             path.append(s)
             if s == self.s_goal:
@@ -339,7 +342,6 @@ class DStar:
 
             if same_dir:
                 # Move the agent far forward without turning
-                self.current_index += 1
                 count = 0
                 while self.current_index < len(path) - 1:
                     next = path[self.current_index + 1]
@@ -413,6 +415,9 @@ class DStar:
 
         for dx in sight_range:
             for dy in sight_range:
+                if dx == 0 and dy == 0:
+                    continue
+
                 check_pos = (current_pos[0] + dx, current_pos[1] + dy)
                 if check_pos in self.Env.dynamic_obs_cells:
                     dynamic_obj_in_sight = True
@@ -431,11 +436,12 @@ class DStar:
 
             for obj in self.dynamic_objects:
                 old_pos = obj.old_pos
-                # new_pos = obj.current_pos
+                new_pos = obj.current_pos
                 width, height = obj.size
 
                 # Determine affected cells by old and new positions of the object
                 old_cells.update(self.get_affected_cells(old_pos, width, height))
+                new_cells.update(self.get_affected_cells(new_pos, width, height))
 
             all_cells = new_cells.union(old_cells)
 
@@ -494,7 +500,7 @@ class DStar:
         Runs the simulation involving pathfinding, traversing the found path,
         and reacting to dynamic objects.
         """
-        self.time_steps = 1
+        self.time_steps = 0
         self.traversed_path.append(self.agent_pos)
         start_time = time.time()
         path = self.ComputePath()
@@ -528,6 +534,7 @@ class DStar:
 
                 current = self.move(path)
 
+                self.agent_pos = current
                 self.agent_positions.append(self.agent_pos)
 
                 self.time_steps += 1
@@ -550,7 +557,6 @@ class DStar:
             self.agent_positions,
             self.initial_path,
         )
-        
 
         plotter.env = self.Env
         plotter.obs = self.Env.obs
@@ -569,14 +575,13 @@ def main():
     )
     # House 10 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_21.json",
+        "Evaluation/Maps/2D/main/block_12.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
     path = dstar.run()
 
-    if path:
-        dstar.plot_traversal()
+    dstar.plot_traversal()
 
 
 if __name__ == "__main__":

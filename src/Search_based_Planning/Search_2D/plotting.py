@@ -228,8 +228,13 @@ class DynamicPlotting(Plotting):
         
         fig, ax = plt.subplots()
         self.plot_grid(name, ax)
-        self.plot_path(self.initial_path, cl="b")
         self.plot_path(path)
+        self.plot_path(self.initial_path, cl="b")
+        
+        
+        plt.plot(self.xI[0], self.xI[1], "bs")
+        plt.plot(self.xG[0], self.xG[1], "gs")
+        
         plt.pause(1)
         
         dynamic_objects = self.plot_dynamic_objects()

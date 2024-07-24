@@ -359,7 +359,7 @@ class ADStarLite(DStar):
 
 if __name__ == "__main__":
     s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
-    s.change_env("Evaluation/Maps/2D/main/block_10.json")
+    s.change_env("Evaluation/Maps/2D/main/block_12.json")
     s.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     path = s.run()
     
