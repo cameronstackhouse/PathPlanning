@@ -284,6 +284,8 @@ class DStar:
             self.dynamic_objects = []
             self.current_index = 0
             self.traversed_path = []
+            self.agent_positions = []
+            self.agent_pos = self.s_start
             self.replan_time = []
 
             self.rhs = {}
@@ -580,7 +582,7 @@ def main():
     )
     # Block 12 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_9.json",
+        "Evaluation/Maps/2D/main/block_12.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 

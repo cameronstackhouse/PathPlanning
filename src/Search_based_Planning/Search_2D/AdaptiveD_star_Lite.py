@@ -173,11 +173,34 @@ class QuadTree:
         plt.gca().invert_yaxis()
         plt.show()
 
+    def find_leaf_contaning_point(self, point):
+        current_node = self.root
+
+        while not current_node.is_leaf():
+            if current_node.left_top and current_node.left_top.contains_point(point):
+                current_node = current_node.left_top
+            elif current_node.right_top and current_node.right_top.contains_point(
+                point
+            ):
+                current_node = current_node.right_top
+            elif current_node.left_bottom and current_node.left_bottom.contains_point(
+                point
+            ):
+                current_node = current_node.left_bottom
+            elif current_node.right_bottom and current_node.right_bottom.contains_point(
+                point
+            ):
+                current_node = current_node.right_bottom
+            else:
+                return None
+
+        return current_node
+
 
 class ADStarLite(DStar):
     def __init__(self, s_start, s_goal, heuristic_type, time=...):
         super().__init__(s_start, s_goal, heuristic_type, time)
-        self.heuristic_type = "manhattan"
+        self.heuristic_type = heuristic_type
         self.quadtree = None
         self.speed = 6
 
@@ -200,6 +223,7 @@ class ADStarLite(DStar):
         self.U[self.s_goal] = self.CalculateKey(self.s_goal)
 
     def get_neighbor(self, s):
+        # TODO LOOK AT!
         neighbours = set()
         current_leaf = self.leaf_nodes[s]
 
@@ -249,12 +273,14 @@ class ADStarLite(DStar):
 
         return traverse(self.quadtree.root)
 
-    def update(self, path):
-        # TODO Change
+    def update_costs(self, path):
         current_pos = self.agent_pos
         SIGHT = 3
 
         sight_range = range(-SIGHT, SIGHT + 1)
+
+        new_cells = set()
+        old_cells = set()
 
         repartition = False
         affected_leafs = set()
@@ -263,7 +289,7 @@ class ADStarLite(DStar):
                 check_pos = (current_pos[0] + dx, current_pos[1] + dy)
                 if check_pos in self.Env.dynamic_obs_cells:
                     repartition = True
-                    leaf_containing_point = self.quadtree.find_leaf_containing_point(
+                    leaf_containing_point = self.quadtree.find_leaf_contaning_point(
                         check_pos
                     )
                     if leaf_containing_point:
@@ -271,7 +297,28 @@ class ADStarLite(DStar):
 
         if repartition:
             replan_time = time.time()
+
             self.update_costs_and_queue(affected_leafs)
+
+            self.s_start = self.agent_pos
+            path = [self.s_start]
+
+            self.km += self.h(self.s_last, self.s_start)
+
+            self.s_last = self.s_start
+
+            for obj in self.dynamic_objects:
+                old_pos = obj.old_pos
+                new_pos = obj.current_pos
+                width, height = obj.size
+
+                old_cells.update(self.get_affected_cells(old_pos, width, height))
+                new_cells.update(self.get_affected_cells(new_pos, width, height))
+
+            # Find the leafs the new cells belong to, they will be entirely objects
+            # and update
+            all_cells = new_cells.union(old_cells)
+
             new_path = self.plan_new_path()
             replan_time = time.time() - replan_time
             self.replan_time.append(replan_time)
@@ -314,6 +361,7 @@ class ADStarLite(DStar):
                 self.rhs[cell] = float("inf")
                 self.g[cell] = float("inf")
                 self.leaf_nodes[cell] = leaf
+                print(f"cell: {cell}")
                 self.UpdateVertex(cell)
 
     def plan_new_path(self):
@@ -322,7 +370,7 @@ class ADStarLite(DStar):
         return path
 
     def run(self):
-        self.traversed_path.append(self.agent_pos)
+        self.agent_positions.append(self.agent_pos)
         start_time = time.time()
         path = self.ComputePath()
         end_time = time.time() - start_time
@@ -342,8 +390,8 @@ class ADStarLite(DStar):
             while self.agent_pos != GOAL:
                 print(self.agent_pos)
 
-                self.update_object_positions()  # Uses same as D* Lite
-                path = self.update(path)
+                self.update_object_positions()
+                path = self.update_costs(path)
 
                 if path is None:
                     return None
@@ -358,12 +406,15 @@ class ADStarLite(DStar):
 
 
 if __name__ == "__main__":
-    s = ADStarLite((0, 0), (1, 0), "manhattan", time=float("inf"))
-    s.change_env("Evaluation/Maps/2D/main/block_12.json")
+    s = ADStarLite((0, 0), (1, 0), "euclidian", time=float("inf"))
+    s.change_env("Evaluation/Maps/2D/main/block_15.json")
     s.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
-    path = s.run()
+    #path = s.run()
     
-    if path:
-        s.plot_traversal()
+    path = s.ComputePath()
 
-    #s.quadtree.visualize(path)
+    if path:
+        # s.plot_traversal()
+        s.quadtree.visualize(path)
+
+    # s.quadtree.visualize(path)
