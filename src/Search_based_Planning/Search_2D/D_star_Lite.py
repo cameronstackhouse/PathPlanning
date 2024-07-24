@@ -381,8 +381,8 @@ class DStar:
             prev_pos = object.current_pos
             new_pos = object.update_pos()
 
-            if not (0 <= new_pos[0] < self.x and 0 <= new_pos[1] < self.y):
-                new_pos = prev_pos
+            new_pos = prev_pos
+
             object.old_pos = object.current_pos
             object.current_pos = new_pos
 
@@ -406,7 +406,7 @@ class DStar:
     def update_costs(self):
         current_pos = self.agent_pos
         SIGHT = 3
-
+        
         new_cells = set()
         old_cells = set()
 
@@ -516,14 +516,13 @@ class DStar:
         start_time = time.time()
 
         if path:
-            current = path[self.current_index]
             GOAL = path[-1]
 
-            current = np.array(current)
-            GOAL = np.array(GOAL)
-
-            while not np.array_equal(current, GOAL):
-                if self.g[self.agent_pos] == float("inf"):
+            while self.agent_pos != GOAL:
+                if (
+                    self.g[self.agent_pos] == float("inf")
+                    or self.agent_pos in self.Env.dynamic_obs_cells
+                ):
                     return None
 
                 self.update_object_positions()
@@ -532,9 +531,7 @@ class DStar:
                 if path is None:
                     return None
 
-                current = self.move(path)
-
-                self.agent_pos = current
+                self.move(path)
                 self.agent_positions.append(self.agent_pos)
 
                 self.time_steps += 1
@@ -573,7 +570,7 @@ def main():
         s_goal,
         "euclidian",
     )
-    # House 10 to debug!
+    # Block 12 to debug!
     dstar.change_env(
         "Evaluation/Maps/2D/main/block_12.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
