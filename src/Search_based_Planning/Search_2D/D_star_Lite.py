@@ -470,6 +470,7 @@ class DStar:
                 new_obj.velocity = obj["velocity"]
                 new_obj.current_pos = obj["position"]
                 new_obj.old_pos = obj["position"]
+                new_obj.init_pos = obj["position"]
                 new_obj.size = obj["size"]
                 new_obj.init_pos = new_obj.current_pos
 
@@ -493,6 +494,7 @@ class DStar:
         Runs the simulation involving pathfinding, traversing the found path,
         and reacting to dynamic objects.
         """
+        self.time_steps = 1
         self.traversed_path.append(self.agent_pos)
         start_time = time.time()
         path = self.ComputePath()
@@ -528,6 +530,8 @@ class DStar:
 
                 self.agent_positions.append(self.agent_pos)
 
+                self.time_steps += 1
+
                 self.s_start = self.agent_pos
 
                 print(self.agent_pos)
@@ -538,10 +542,20 @@ class DStar:
         return self.agent_positions
 
     def plot_traversal(self):
-        """
-        TODO
-        """
-        pass
+        plotter = plotting.DynamicPlotting(
+            self.s_start,
+            self.s_goal,
+            self.dynamic_objects,
+            self.time_steps,
+            self.agent_positions,
+            self.initial_path,
+        )
+        
+
+        plotter.env = self.Env
+        plotter.obs = self.Env.obs
+
+        plotter.animation(self.agent_positions, "Test")
 
 
 def main():
@@ -555,14 +569,14 @@ def main():
     )
     # House 10 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_10.json",
+        "Evaluation/Maps/2D/main/block_21.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
-    path = dstar.ComputePath()
+    path = dstar.run()
 
     if path:
-        dstar.plot(path)
+        dstar.plot_traversal()
 
 
 if __name__ == "__main__":

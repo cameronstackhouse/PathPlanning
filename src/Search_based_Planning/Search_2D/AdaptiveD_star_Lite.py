@@ -250,6 +250,7 @@ class ADStarLite(DStar):
         return traverse(self.quadtree.root)
 
     def update(self, path):
+        # TODO Change
         current_pos = self.agent_pos
         SIGHT = 3
 
@@ -339,6 +340,8 @@ class ADStarLite(DStar):
             GOAL = path[-1]
 
             while self.agent_pos != GOAL:
+                print(self.agent_pos)
+
                 self.update_object_positions()  # Uses same as D* Lite
                 path = self.update(path)
 
@@ -346,11 +349,12 @@ class ADStarLite(DStar):
                     return None
 
                 self.agent_pos = self.move(path)
-                self.traversed_path.append(self.agent_pos)
+                self.agent_positions.append(self.agent_pos)
+                self.time_steps += 1
 
         end_time = time.time() - start_time
         self.total_time = end_time
-        return self.traversed_path
+        return self.agent_positions
 
 
 if __name__ == "__main__":
@@ -358,5 +362,8 @@ if __name__ == "__main__":
     s.change_env("Evaluation/Maps/2D/main/block_10.json")
     s.dobs_dir = "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     path = s.run()
+    
+    if path:
+        s.plot_traversal()
 
-    s.quadtree.visualize(path)
+    #s.quadtree.visualize(path)

@@ -5,6 +5,7 @@ Plot tools 2D
 
 import os
 import sys
+from matplotlib import patches
 import matplotlib.pyplot as plt
 
 sys.path.append(
@@ -62,7 +63,10 @@ class Plotting:
         self.plot_path(path)
         plt.show()
 
-    def plot_grid(self, name):
+    def plot_grid(self, name, ax = None):
+        if ax is None:
+            fig, ax = plt.subplots()
+        
         obs_x = [x[0] for x in self.obs]
         obs_y = [x[1] for x in self.obs]
 
@@ -71,6 +75,7 @@ class Plotting:
         plt.plot(obs_x, obs_y, "sk")
         plt.title(name)
         plt.axis("equal")
+        
 
     def plot_visited(self, visited, cl="gray"):
         if self.xI in visited:
@@ -169,3 +174,73 @@ class Plotting:
             "blueviolet",
         ]
         return cl
+
+class DynamicPlotting(Plotting):
+    def __init__(self, xI, xG, dynamic_objects, t, agent_pos, initial_path):
+        super().__init__(xI, xG)
+        self.dynamic_objects = dynamic_objects
+        self.agent_pos = agent_pos
+        self.initial_path = initial_path
+        self.t = t
+        for obj in self.dynamic_objects:
+            obj.current_pos = obj.init_pos
+    
+    def update_dynamic_objects(self):
+        for obj in self.dynamic_objects:
+            old_pos = obj.current_pos
+            obj.current_pos = [
+                obj.current_pos[0] + obj.velocity[0],
+                obj.current_pos[1] + obj.velocity[1],
+            ]
+
+            if not (0 <= obj.current_pos[0] < 1000 and 0 <= obj.current_pos[1] < 1000):
+                obj.current_pos = old_pos
+    
+    def plot_dynamic_objects(self):
+        dynamic_patches = []
+        for obj in self.dynamic_objects:
+            rect = patches.Rectangle(
+                (obj.current_pos[0], obj.current_pos[1]),
+                obj.size[0],
+                obj.size[1],
+                edgecolor="red",
+                facecolor="red",
+                fill=True,
+            )
+            plt.gca().add_patch(rect)
+            dynamic_patches.append(rect)
+        return dynamic_patches
+
+    def plot_agent(self, agent_pos):
+        agent_patch = plt.Circle(agent_pos, radius=10.0, color='orange', zorder=10)
+        plt.gca().add_patch(agent_patch)
+        return agent_patch
+        
+    def update_plot_agent(self, agent_patch, agent_pos):
+        agent_patch.set_center(agent_pos) 
+    
+    def update_plot_dynamic_objects(self, dynamic_patches):
+        for obj, rect in zip(self.dynamic_objects, dynamic_patches):
+            rect.set_xy((obj.current_pos[0], obj.current_pos[1]))
+    
+    def animation(self, path, name):
+        plt.ion()
+        
+        fig, ax = plt.subplots()
+        self.plot_grid(name, ax)
+        self.plot_path(self.initial_path, cl="b")
+        self.plot_path(path)
+        plt.pause(1)
+        
+        dynamic_objects = self.plot_dynamic_objects()
+        agent = self.plot_agent(self.agent_pos[0])
+        
+        for i in range(self.t):
+            self.update_dynamic_objects()
+            self.update_plot_dynamic_objects(dynamic_objects)
+            self.update_plot_agent(agent, self.agent_pos[i])
+            fig.canvas.draw()
+            plt.pause(0.1)
+        
+        plt.ioff()
+        plt.show()
