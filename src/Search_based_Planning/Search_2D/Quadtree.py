@@ -14,6 +14,12 @@ class TreeNode:
         self.parent = None
         self.env = env
         self.coords = [x, y]
+    
+    def clear(self):
+        self.left_top = None
+        self.right_top = None
+        self.left_bottom = None
+        self.right_bottom = None
 
     def is_leaf(self):
         return (

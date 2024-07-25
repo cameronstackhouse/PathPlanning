@@ -22,6 +22,21 @@ class Env:
         self.dynamic_obs = []
         self.dynamic_obs_cells = set()
 
+    def in_dynamic_object(self, x, y, flag=False):
+        for rectangle in self.dynamic_obs:
+            if not rectangle.known and flag:
+                next
+
+            left = rectangle.current_pos[0]
+            right = left + rectangle.size[0]
+            bottom = rectangle.current_pos[1]
+            top = bottom + rectangle.size[1]
+
+            if left <= x <= right and bottom <= y <= top:
+                rectangle.known = True
+                return True
+        return False
+
     def add_dynamic_object(self, dynamic_obj):
         self.dynamic_obs.append(dynamic_obj)
         cells_covered = self.get_covered_cells(dynamic_obj)

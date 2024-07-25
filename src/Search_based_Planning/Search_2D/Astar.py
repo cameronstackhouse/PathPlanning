@@ -9,6 +9,8 @@ import sys
 import math
 import heapq
 
+from DynamicObj import DynamicObj
+
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
 )
@@ -37,12 +39,31 @@ class AStar:
 
         self.dobs_dir = None
         self.agent_positions = []
+        self.agent_pos = s_start
+
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.init_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+
+                self.dynamic_objects.append(new_obj)
+
+                # Add to the env
+                self.Env.dynamic_obs.append(new_obj)
+        else:
+            print("Error, dynamic objects could not be loaded")
 
     def change_env(self, map_name, dobs_dir=None):
-        """
-        TODO
-        """
-
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -65,6 +86,7 @@ class AStar:
 
             self.dobs_dir = dobs_dir
             self.agent_positions = []
+            self.agent_pos = self.s_start
 
             return self.Env
         else:
@@ -219,6 +241,9 @@ class AStar:
         s = self.s_goal
 
         while True:
+            if s not in PARENT:
+                return None
+            
             s = PARENT[s]
             path.append(s)
 
