@@ -124,7 +124,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "D* Lite 2D dynamic.json")
+    save_results(results, "AD* Lite.json")
 
 
 if __name__ == "__main__":

@@ -35,7 +35,10 @@ class AStar:
         self.PARENT = dict()  # recorded parent
         self.g = dict()  # cost to come
 
-    def change_env(self, map_name):
+        self.dobs_dir = None
+        self.agent_positions = []
+
+    def change_env(self, map_name, dobs_dir=None):
         """
         TODO
         """
@@ -49,11 +52,21 @@ class AStar:
             self.s_goal = tuple(data["goal"])
             self.Env = env.CustomEnv(data)
             self.obs = self.Env.obs
-            
+
+            self.OPEN = []  # priority queue / OPEN set
+            self.CLOSED = []  # CLOSED set / VISITED order
+            self.PARENT = dict()  # recorded parent
+            self.g = dict()  # cost to come
+
             self.plot.env = self.Env
             self.plot.xI = self.s_start
             self.plot.xG = self.s_goal
             self.plot.obs = self.Env.obs
+
+            self.dobs_dir = dobs_dir
+            self.agent_positions = []
+
+            return self.Env
         else:
             print("Error, map not found")
 
@@ -239,6 +252,7 @@ def main():
 
     path = astar.planning()
     astar.plot.animation(path, [], "A* Path")
+
 
 if __name__ == "__main__":
     main()
