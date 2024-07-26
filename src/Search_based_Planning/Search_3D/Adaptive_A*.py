@@ -7,6 +7,7 @@ from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
+from Search_3D import DynamicObj
 
 
 class AdaptiveAStar(Weighted_A_star):
@@ -43,6 +44,12 @@ class AdaptiveAStar(Weighted_A_star):
         self.agent_pos = None
         self.dobs_dir = None
         self.current_index = 0
+        self.initial_path = None
+        self.time_steps = 0
+
+    def plot_traversal(self):
+        # TODO
+        pass
 
     def visualise(self, path):
         fig = plt.figure()
@@ -136,6 +143,41 @@ class AdaptiveAStar(Weighted_A_star):
             self.OPEN = queue.MinheapPQ()
             self.OPEN.put(self.x0, self.g[self.x0] + heuristic_fun(self, self.x0))
             self.lastpoint = self.x0
+
+    def move_dynamic_obs(self):
+        for obj in self.dynamic_obs:
+            obj.current_pos = obj.update_pos()
+
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
+
+    def set_dynamic_obs(self, filename):
+        obj_json = None
+        with open(filename) as f:
+            obj_json = json.load(f)
+
+        if obj_json:
+            for obj in obj_json["objects"]:
+                new_obj = DynamicObj()
+                new_obj.velocity = obj["velocity"]
+                new_obj.current_pos = obj["position"]
+                new_obj.old_pos = obj["position"]
+                new_obj.size = obj["size"]
+                new_obj.init_pos = new_obj.current_pos
+                new_obj.corners = self.corner_coords(
+                    new_obj.current_pos[0],
+                    new_obj.current_pos[1],
+                    new_obj.current_pos[2],
+                    new_obj.size[0],
+                    new_obj.size[1],
+                    new_obj.size[2],
+                )
+
+                new_obj.index = len(self.env.blocks) - 1
+                self.dynamic_obs.append(new_obj)
+
+                self.env.new_block_corners(new_obj.corners)
 
     def children_non_uniform(self, x, settings=0):
         allchild = []
@@ -284,15 +326,99 @@ class AdaptiveAStar(Weighted_A_star):
         else:
             return None
 
+    def move(self):
+        pass
+
+    def replan(self, path):
+        current_pos = self.agent_pos
+        SIGHT = 3
+        sight_range = range(-SIGHT, SIGHT + 1)
+        dynamic_obj_in_sight = False
+
+        affected_leafs = set()
+        for dx in sight_range:
+            for dy in sight_range:
+                for dz in sight_range:
+                    if dx == 0 and dy == 0 and dz == 0:
+                        continue
+
+                    check_pos = (
+                        round(current_pos[0] + dx),
+                        round(current_pos[1] + dy),
+                        round(current_pos[2] + dz),
+                    )
+
+                    # TODO, check if in object
+
+        if dynamic_obj_in_sight:
+            for leaf in affected_leafs:
+                leaf.clear()
+                self.octree.partition(leaf)
+
+            self.octree.update_leafs()
+
+            for leaf in self.octree.leafs:
+                center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+
+                self.leaf_nodes[center] = leaf
+
+            self.leaf_nodes[self.agent_pos] = self.octree.get(self.agent_pos)
+
+            # Replan TODO reset stuff
+
+            path = self.compute_path()
+
+            if path:
+                path = path[::-1]
+            else:
+                return None
+
+            self.current_index = 0
+
+        return path
+
+    def run(self):
+        path = self.compute_path()
+
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
+        if path:
+            path = path[::-1]
+            self.agent_pos = self.env.start
+            self.agent_positions.append(self.agent_pos)
+
+            self.initial_path = path
+
+            while self.agent_pos != self.env.goal:
+                self.move_dynamic_obs()
+                path = self.replan(path)
+
+                if path is None:
+                    return None
+
+                self.agent_pos = self.move(path)
+                self.agent_positions.append(self.agent_pos)
+                self.time_steps += 1
+
+            return self.agent_positions
+        else:
+            return None
+
 
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     # Check with this, going through objects
-    astar.change_env("Evaluation/Maps/3D/block_map_25_3d/10_3d.json")
+    astar.change_env("Evaluation/Maps/3D/block_map_25_3d/3_3d.json")
 
     path = astar.compute_path()
 
     print(path)
 
     if path:
-        astar.visualise(path[::-1])
+        path = path[::-1]
+        astar.visualise(path)

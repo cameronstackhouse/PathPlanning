@@ -23,6 +23,16 @@ class TreeNode:
         self.env = env
         self.coords = [x, y, z]
 
+    def clear(self):
+        self.one = None
+        self.two = None
+        self.three = None
+        self.four = None
+        self.five = None
+        self.six = None
+        self.seven = None
+        self.eight = None
+
     def is_leaf(self):
         return (
             self.one is None
