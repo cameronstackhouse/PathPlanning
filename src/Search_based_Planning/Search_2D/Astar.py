@@ -243,7 +243,7 @@ class AStar:
         while True:
             if s not in PARENT:
                 return None
-            
+
             s = PARENT[s]
             path.append(s)
 
