@@ -169,11 +169,19 @@ class AdaptiveAStar(Weighted_A_star):
                         leaf.y + leaf.height // 2,
                         leaf.z + leaf.depth // 2,
                     )
-                    allchild.append(neighbor_center)
-                    distance = np.linalg.norm(
-                        np.array(current_center) - np.array(neighbor_center)
+
+                    in_obj = (
+                        any([isinobb(i, neighbor_center) for i in self.env.OBB])
+                        or any([isinball(i, neighbor_center) for i in self.env.balls])
+                        or any([isinbound(i, neighbor_center) for i in self.env.blocks])
                     )
-                    allcost.append((neighbor_center, distance))
+
+                    if not in_obj and isinbound(self.env.boundary, neighbor_center):
+                        allchild.append(neighbor_center)
+                        distance = np.linalg.norm(
+                            np.array(current_center) - np.array(neighbor_center)
+                        )
+                        allcost.append((neighbor_center, distance))
 
                 # Check for y-aligned neighbors
                 if (
@@ -195,11 +203,19 @@ class AdaptiveAStar(Weighted_A_star):
                         leaf.y + leaf.height // 2,
                         leaf.z + leaf.depth // 2,
                     )
-                    allchild.append(neighbor_center)
-                    distance = np.linalg.norm(
-                        np.array(current_center) - np.array(neighbor_center)
+
+                    in_obj = (
+                        any([isinobb(i, neighbor_center) for i in self.env.OBB])
+                        or any([isinball(i, neighbor_center) for i in self.env.balls])
+                        or any([isinbound(i, neighbor_center) for i in self.env.blocks])
                     )
-                    allcost.append((neighbor_center, distance))
+
+                    if not in_obj and isinbound(self.env.boundary, neighbor_center):
+                        allchild.append(neighbor_center)
+                        distance = np.linalg.norm(
+                            np.array(current_center) - np.array(neighbor_center)
+                        )
+                        allcost.append((neighbor_center, distance))
 
                 # Check for z-aligned neighbors
                 if (
@@ -221,11 +237,19 @@ class AdaptiveAStar(Weighted_A_star):
                         leaf.y + leaf.height // 2,
                         leaf.z + leaf.depth // 2,
                     )
-                    allchild.append(neighbor_center)
-                    distance = np.linalg.norm(
-                        np.array(current_center) - np.array(neighbor_center)
+
+                    in_obj = (
+                        any([isinobb(i, neighbor_center) for i in self.env.OBB])
+                        or any([isinball(i, neighbor_center) for i in self.env.balls])
+                        or any([isinbound(i, neighbor_center) for i in self.env.blocks])
                     )
-                    allcost.append((neighbor_center, distance))
+
+                    if not in_obj and isinbound(self.env.boundary, neighbor_center):
+                        allchild.append(neighbor_center)
+                        distance = np.linalg.norm(
+                            np.array(current_center) - np.array(neighbor_center)
+                        )
+                        allcost.append((neighbor_center, distance))
         if settings == 0:
             return allchild
         if settings == 1:
@@ -263,7 +287,8 @@ class AdaptiveAStar(Weighted_A_star):
 
 if __name__ == "__main__":
     astar = AdaptiveAStar()
-    astar.change_env("Evaluation/Maps/3D/block_map_25_3d/6_3d.json")
+    # Check with this, going through objects
+    astar.change_env("Evaluation/Maps/3D/block_map_25_3d/10_3d.json")
 
     path = astar.compute_path()
 
