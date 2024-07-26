@@ -7,7 +7,7 @@ from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
-from Search_3D import DynamicObj
+from Search_3D.DynamicObj import DynamicObj
 
 
 class AdaptiveAStar(Weighted_A_star):
@@ -49,6 +49,9 @@ class AdaptiveAStar(Weighted_A_star):
 
     def plot_traversal(self):
         # TODO
+        # plotter = DynamicPlotting(
+            
+        # )
         pass
 
     def visualise(self, path):
@@ -106,6 +109,12 @@ class AdaptiveAStar(Weighted_A_star):
         ax.legend()
 
         plt.show()
+
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x1, y1, z1, x2, y2, z2)
 
     def change_env(self, map_name, obs_name=None):
         self.dobs_dir = obs_name
@@ -301,6 +310,9 @@ class AdaptiveAStar(Weighted_A_star):
         xt = self.xt
         xi = self.x0
         while self.OPEN:
+            if (self.OPEN.size()) == 0:
+                return None
+
             xi = self.OPEN.get()
             if xi not in self.CLOSED:
                 self.V.append(np.array(xi))
@@ -326,8 +338,74 @@ class AdaptiveAStar(Weighted_A_star):
         else:
             return None
 
-    def move(self):
-        pass
+    def move(self, path, mps=6):
+        if self.current_index >= len(path) - 1:
+            return self.xt
+
+        current = self.agent_pos
+        next = path[self.current_index + 1][1]
+
+        seg_distance = getDist(current, next)
+
+        direction = (
+            (next[0] - current[0]) / seg_distance,
+            (next[1] - current[1]) / seg_distance,
+            (next[2] - current[2]) / seg_distance,
+        )
+
+        new_pos = (
+            current[0] + direction[0] * mps,
+            current[1] + direction[1] * mps,
+            current[2] + direction[2] * mps,
+        )
+
+        if getDist(current, new_pos) >= seg_distance:
+            v1 = np.array(next) - np.array(current)
+            v2 = np.array(new_pos) - np.array(next)
+            dot_product = np.dot(v1, v2)
+
+            mag_v1 = np.linalg.norm(v1)
+            mag_v2 = np.linalg.norm(v2)
+
+            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+
+            if same_dir:
+                # Move the agent far forward without turning
+                self.current_index += 1
+                count = 0
+                while self.current_index < len(path) - 1:
+                    next = path[self.current_index + 1][1]
+
+                    seg_distance = getDist(current, next)
+                    direction = (
+                        (next[0] - current[0]) / seg_distance,
+                        (next[1] - current[1]) / seg_distance,
+                        (next[2] - current[2]) / seg_distance,
+                    )
+                    new_pos = (
+                        current[0] + direction[0] * mps,
+                        current[1] + direction[1] * mps,
+                        current[2] + direction[2] * mps,
+                    )
+                    v1 = np.array(next) - np.array(current)
+                    v2 = np.array(new_pos) - np.array(next)
+                    dot_product = np.dot(v1, v2)
+                    mag_v1 = np.linalg.norm(v1)
+                    mag_v2 = np.linalg.norm(v2)
+                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+                    if not same_dir or count >= mps - 1:
+                        break
+                    current = next
+                    self.agent_pos = current
+                    self.current_index += 1
+                    count += 1
+            else:
+                self.agent_pos = next
+                self.current_index += 1
+        else:
+            self.agent_pos = new_pos
+
+        return self.agent_pos
 
     def replan(self, path):
         current_pos = self.agent_pos
@@ -348,7 +426,20 @@ class AdaptiveAStar(Weighted_A_star):
                         round(current_pos[2] + dz),
                     )
 
-                    # TODO, check if in object
+                    # Checks if in object
+                    in_obj = (
+                        any([isinobb(i, check_pos) for i in self.env.OBB])
+                        or any([isinball(i, check_pos) for i in self.env.balls])
+                        or any([isinbound(i, check_pos) for i in self.env.blocks])
+                    )
+
+                    # TODO Change to only be dynamic obs!
+                    if in_obj and isinbound(self.env.boundary, check_pos):
+                        dynamic_obj_in_sight = True
+                        leaf_containing_point = self.octree.get(check_pos)
+
+                        if leaf_containing_point:
+                            affected_leafs.add(leaf_containing_point)
 
         if dynamic_obj_in_sight:
             for leaf in affected_leafs:
@@ -368,7 +459,19 @@ class AdaptiveAStar(Weighted_A_star):
 
             self.leaf_nodes[self.agent_pos] = self.octree.get(self.agent_pos)
 
-            # Replan TODO reset stuff
+            # Replan
+            self.start = self.agent_pos
+            self.g = {self.start: 0, self.goal: np.inf}
+            self.Parent = {}
+            self.CLOSED = set()
+            self.V = []
+            self.done = False
+            self.Path = []
+            self.ind = 0
+            self.x0 = self.start
+            self.OPEN = queue.MinheapPQ()
+            self.OPEN.put(self.x0, self.g[self.x0] + heuristic_fun(self, self.x0))
+            self.lastpoint = self.x0
 
             path = self.compute_path()
 
@@ -394,7 +497,8 @@ class AdaptiveAStar(Weighted_A_star):
 
             self.initial_path = path
 
-            while self.agent_pos != self.env.goal:
+            while tuple(self.agent_pos) != tuple(self.env.goal):
+                print(self.agent_pos)
                 self.move_dynamic_obs()
                 path = self.replan(path)
 
@@ -413,12 +517,16 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     # Check with this, going through objects
-    astar.change_env("Evaluation/Maps/3D/block_map_25_3d/3_3d.json")
+    astar.change_env(
+        "Evaluation/Maps/3D/block_map_25_3d/9_3d.json", "Evaluation/Maps/3D/obs.json"
+    )
 
-    path = astar.compute_path()
+    # # path = astar.compute_path()
+
+    path = astar.run()
 
     print(path)
 
-    if path:
-        path = path[::-1]
-        astar.visualise(path)
+    # if path:
+    #     # path = path[::-1]
+    #     astar.visualise(path)
