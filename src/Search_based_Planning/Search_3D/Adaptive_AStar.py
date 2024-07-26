@@ -1,5 +1,6 @@
 import json
 import queue
+import time
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -7,6 +8,7 @@ from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
+from Search_3D.plot_util3D import visualization
 from Search_3D.DynamicObj import DynamicObj
 
 
@@ -46,11 +48,13 @@ class AdaptiveAStar(Weighted_A_star):
         self.current_index = 0
         self.initial_path = None
         self.time_steps = 0
+        self.total_time = 0
+        self.compute_time = 0
 
     def plot_traversal(self):
         # TODO
         # plotter = DynamicPlotting(
-            
+
         # )
         pass
 
@@ -128,16 +132,17 @@ class AdaptiveAStar(Weighted_A_star):
             self.dynamic_obs = []
 
             self.env = CustomEnv(data)
-            self.octree = Octree(self.env)
+            # TODO ADD BACK IN
+            # self.octree = Octree(self.env)
 
-            self.leaf_nodes = {}
-            for leaf in self.octree.leafs:
-                center = (
-                    leaf.x + leaf.width // 2,
-                    leaf.y + leaf.height // 2,
-                    leaf.z + leaf.depth // 2,
-                )
-                self.leaf_nodes[center] = leaf
+            # self.leaf_nodes = {}
+            # for leaf in self.octree.leafs:
+            #     center = (
+            #         leaf.x + leaf.width // 2,
+            #         leaf.y + leaf.height // 2,
+            #         leaf.z + leaf.depth // 2,
+            #     )
+            #     self.leaf_nodes[center] = leaf
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
@@ -485,15 +490,22 @@ class AdaptiveAStar(Weighted_A_star):
         return path
 
     def run(self):
+        self.agent_positions = []
+
+        intial_planning_time = time.time()
         path = self.compute_path()
+        intial_planning_time = time.time() - intial_planning_time
+
+        self.compute_time = intial_planning_time
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
         if path:
+            traversal_time = time.time()
             path = path[::-1]
             self.agent_pos = self.env.start
-            self.agent_positions.append(self.agent_pos)
+            self.agent_positions.append(tuple(self.agent_pos))
 
             self.initial_path = path
 
@@ -503,12 +515,16 @@ class AdaptiveAStar(Weighted_A_star):
                 path = self.replan(path)
 
                 if path is None:
+                    traversal_time = time.time() - traversal_time
+                    self.total_time = traversal_time
                     return None
 
                 self.agent_pos = self.move(path)
-                self.agent_positions.append(self.agent_pos)
+                self.agent_positions.append(tuple(self.agent_pos))
                 self.time_steps += 1
 
+            traversal_time = time.time() - traversal_time
+            self.total_time = traversal_time
             return self.agent_positions
         else:
             return None
@@ -517,15 +533,22 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     # Check with this, going through objects
-    astar.change_env(
-        "Evaluation/Maps/3D/block_map_25_3d/9_3d.json", "Evaluation/Maps/3D/obs.json"
-    )
+    astar.change_env("Evaluation/Maps/3D/house_25_3d/0_3d.json")
+    
+    visualization(astar)
+    plt.show()
+    
+    
 
-    # # path = astar.compute_path()
+    #astar.octree.visualize()
+    
+    # "Evaluation/Maps/3D/obs.json"
 
-    path = astar.run()
+    # path = astar.compute_path()
 
-    print(path)
+    # path = astar.run()
+
+    # print(path)
 
     # if path:
     #     # path = path[::-1]
