@@ -136,15 +136,6 @@ class rrt:
 
         return self.Path
 
-    def move_dynamic_obs(self):
-        """
-        TODO look at
-        """
-        for obj in self.dynamic_obs:
-            old, new = self.env.move_block(
-                a=obj.velocity, block_to_move=obj.index, mode="translation"
-            )
-
     def move(self, path, mps=6):
         # TODO look at
         """

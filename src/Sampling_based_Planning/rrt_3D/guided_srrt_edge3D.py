@@ -28,25 +28,26 @@ class GuidedSrrtEdge(SRrtEdge):
         super().__init__()
         self.ellipsoid = None
         self.maxiter = 200
-    
-    # TODO look at
-    # def sample_unit_ball(self):
-    #     r = np.random.uniform(0.0, 1.0)
-    #     theta = np.random.uniform(0, np.pi)
-    #     phi = np.random.uniform(0, 2 * np.pi)
-    #     x = r * np.sin(theta) * np.cos(phi)
-    #     y = r * np.sin(theta) * np.sin(phi)
-    #     z = r * np.cos(theta)
-    #     return np.array([x, y, z])
-    
-    # def RotationToWorldFrame(self, xstart, xgoal):
-    #     d = getDist(xstart, xgoal)
-    #     xstart, xgoal = np.array(xstart), np.array(xgoal)
-    #     a1 = (xgoal - xstart) / d
-    #     M = np.outer(a1, [1, 0, 0])
-    #     U, S, V = np.linalg.svd(M)
-    #     C = U @ np.diag([1, 1, np.linalg.det(U) * np.linalg.det(V)]) @ V.T
-    #     return C
+
+    def sample_unit_ball(self):
+        # TODO credit
+        r = np.random.uniform(0.0, 1.0)
+        theta = np.random.uniform(0, np.pi)
+        phi = np.random.uniform(0, 2 * np.pi)
+        x = r * np.sin(theta) * np.cos(phi)
+        y = r * np.sin(theta) * np.sin(phi)
+        z = r * np.cos(theta)
+        return np.array([x, y, z])
+
+    def RotationToWorldFrame(self, xstart, xgoal):
+        # TODO credit
+        d = getDist(xstart, xgoal)
+        xstart, xgoal = np.array(xstart), np.array(xgoal)
+        a1 = (xgoal - xstart) / d
+        M = np.outer(a1, [1, 0, 0])
+        U, S, V = np.linalg.svd(M)
+        C = U @ np.diag([1, 1, np.linalg.det(U) * np.linalg.det(V)]) @ V.T
+        return C
 
     def update_ellipsoid(self, path):
         self.E = []
@@ -64,10 +65,6 @@ class GuidedSrrtEdge(SRrtEdge):
         center_y = (y1 + y2) / 2
         center_z = (z1 + z2) / 2
 
-        angle_xy = np.arctan2(y2 - y1, x2 - x1)
-        angle_xz = np.arctan2(z2 - z1, x2 - x1)
-        angle_yz = np.arctan2(z2 - z1, y2 - y1)
-
         semi_major_axis = np.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2) / 2
 
         max_distance = max(
@@ -75,8 +72,9 @@ class GuidedSrrtEdge(SRrtEdge):
             for x, y, z in unique_points
         )
 
-        # Set the semi-minor axis length
         semi_minor_axis = max_distance
+
+        rotation_matrix = self.RotationToWorldFrame((x1, y1, z1), (x2, y2, z2))
 
         self.ellipsoid = (
             center_x,
@@ -84,9 +82,7 @@ class GuidedSrrtEdge(SRrtEdge):
             center_z,
             semi_major_axis,
             semi_minor_axis,
-            angle_xy,
-            angle_xz,
-            angle_yz,
+            rotation_matrix,
         )
 
     def sampleFree(self):
@@ -97,34 +93,25 @@ class GuidedSrrtEdge(SRrtEdge):
                 center_z,
                 semi_major_axis,
                 semi_minor_axis,
-                angle_xy,
-                angle_xz,
-                angle_yz,
+                rotation_matrix,
             ) = self.ellipsoid
-            while True:
-                # Sample a point within a unit sphere
-                u, v, w = np.random.uniform(-1, 1, 3)
-                if u**2 + v**2 + w**2 <= 1:
-                    break
-                x_scaled = semi_major_axis * u
-                y_scaled = semi_minor_axis * v
-                z_scaled = semi_minor_axis * w
 
-                # Rotate the point by the given angles
-                x_rotated = x_scaled * np.cos(angle_xy) - y_scaled * np.sin(angle_xy)
-                y_rotated = x_scaled * np.sin(angle_xy) + y_scaled * np.cos(angle_xy)
-                z_rotated = z_scaled * np.cos(angle_xz) - x_scaled * np.sin(angle_xz)
-                z_rotated = z_scaled * np.cos(angle_yz) - y_scaled * np.sin(angle_yz)
+            u, v, w = self.sample_unit_ball()
 
-                # Translate the point to the ellipsoid center
-                x = center_x + x_rotated
-                y = center_y + y_rotated
-                z = center_z + z_rotated
+            x_scaled = semi_major_axis * u
+            y_scaled = semi_minor_axis * v
+            z_scaled = semi_minor_axis * w
 
-                return (x, y, z)
+            rotated_point = rotation_matrix @ np.array([x_scaled, y_scaled, z_scaled])
+
+            x = center_x + rotated_point[0]
+            y = center_y + rotated_point[1]
+            z = center_z + rotated_point[2]
+
+            return (x, y, z)
 
         else:
-            return sampleFree(self)
+            return self.sampleFree()
 
     def planning(self):
         self.V.append(self.x0)
@@ -152,7 +139,7 @@ class GuidedSrrtEdge(SRrtEdge):
                         self.Path = current_path
                         best_path = current_path
                         best_path_dist = D
-                        
+
                         print(f"PATH: {self.Path}")
                         self.update_ellipsoid(best_path)
 
@@ -191,5 +178,5 @@ class GuidedSrrtEdge(SRrtEdge):
 if __name__ == "__main__":
     p = GuidedSrrtEdge()
     p.planning()
-    
+
     print(p.Path)

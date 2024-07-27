@@ -133,7 +133,18 @@ class RrtEdge(rrt):
 
         return proj_coords
 
+    def move_dynamic_obs(self):
+        """
+        TODO look at
+        """
+        for obj in self.dynamic_obs:
+            old, new = self.env.move_block(
+                a=obj.velocity, block_to_move=obj.index, mode="translation"
+            )
+            obj.current_pos = obj.update_pos()
+
     def run(self):
+        # TODO check
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
         prev_coords = self.x0

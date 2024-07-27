@@ -107,10 +107,8 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 if __name__ == "__main__":
     TIME = 5
     p = MbGuidedSrrtEdge(TIME)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/15_3d.json")
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/2_3d.json")
     a = p.planning()
-    
-    print(a[::-1])
 
-    # visualization(p)
-    # plt.show()
+    visualization(p)
+    plt.show()

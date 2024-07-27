@@ -170,6 +170,8 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
+        self.agent_positions.append(tuple(self.x0))
+
         start_time = time.time()
 
         if path:
@@ -210,10 +212,10 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
-    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
+    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/18_3d.json")
 
     # "Evaluation/Maps/3D/obs.json"
 
-    res = rrt.planning()
+    res = rrt.run()
 
     print(res)
