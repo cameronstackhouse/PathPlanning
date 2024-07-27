@@ -1,4 +1,5 @@
 import json
+import time
 
 import numpy as np
 from utils3D import getDist, isCollide, near, nearest, steer
@@ -11,7 +12,7 @@ class AnytimeIRRTTStar(IRRT):
     def __init__(self, speed=6, time=float("inf")):
         super().__init__(False)
 
-        self.N = 500
+        self.N = 5000
 
         self.agent_pos = None
         self.agent_positions = []
@@ -19,6 +20,7 @@ class AnytimeIRRTTStar(IRRT):
         self.speed = speed
         self.distance_travelled = 0
         self.dynamic_obs = []
+        self.time = time
 
     def change_env(self, map_name, obs_name=None):
         data = None
@@ -30,6 +32,7 @@ class AnytimeIRRTTStar(IRRT):
             self.i = 0
             self.Path = []
             self.Parent = {}
+            self.ind = 0
 
             self.env = CustomEnv(data)
 
@@ -159,14 +162,26 @@ class AnytimeIRRTTStar(IRRT):
     def planning(self):
         """
         Adapted from yue qi's code for IRRT* in the original codebase.
+
+        The planning algorithm is now an anytime algorithm, bounded
+        by either time or max iteraions.
         """
         self.V = [self.xstart]
         self.E = set()
         self.Xsoln = set()
         self.T = (self.V, self.E)
 
+        best_path = None
+        best_path_dist = float("inf")
+
         c = 1
+        start_time = time.time()
         while self.ind <= self.N:
+            current_time = time.time()
+
+            if current_time - start_time > self.time:
+                break
+
             if len(self.Xsoln) == 0:
                 cbest = np.inf
             else:
@@ -208,12 +223,18 @@ class AnytimeIRRTTStar(IRRT):
                 if self.InGoalRegion(xnew):
                     self.done = True
                     self.Parent[self.xgoal] = xnew
-                    self.Path, _ = self.path_from_point(xnew)
+                    new_path, D = self.path_from_point(xnew)
+
+                    if D < best_path_dist:
+                        best_path_dist = D
+                        best_path = new_path
+                        self.Path = new_path
+                        print(D)
+
                     self.Xsoln.add(xnew)
-            # update path
             self.ind += 1
 
-        return self.Path
+        return best_path
 
     def run(self):
         self.x0 = tuple(self.env.start)
@@ -225,7 +246,7 @@ class AnytimeIRRTTStar(IRRT):
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
-        if len(path) > 0:
+        if path:
             path = path[::-1]
 
             start = self.env.start
@@ -250,7 +271,7 @@ class AnytimeIRRTTStar(IRRT):
 
                     new_path = self.planning()
 
-                    if len(path) > 0:
+                    if path:
                         path = new_path[::-1]
                         self.current_index = 0
                         self.agent_positions.append(tuple(self.agent_pos))
@@ -271,7 +292,7 @@ class AnytimeIRRTTStar(IRRT):
 
 
 if __name__ == "__main__":
-    rrt = AnytimeIRRTTStar()
+    rrt = AnytimeIRRTTStar(time=15)
     rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/13_3d.json")
 
     path = rrt.run()
