@@ -31,9 +31,7 @@ class Edge:
 
 class RrtEdge(rrt):
     """
-    Implements RRT-Edge in three dimensions.
-
-    TODO make anytime.
+    Implements an anytime, time bounded, RRT-Edge in three dimensions.
     """
 
     def __init__(self, time=float("inf")):
@@ -87,7 +85,6 @@ class RrtEdge(rrt):
                     new_path, D = self.path_from_point(xnew)
 
                     if D < best_path_dist:
-                        print(f"dist: {D}")
                         best_path = new_path
                         best_path_dist = D
 
@@ -98,8 +95,8 @@ class RrtEdge(rrt):
 
         self.Path = best_path
 
-        visualization(self)
-        plt.show()
+        # visualization(self)
+        # plt.show()
 
         return self.Path
 
@@ -172,8 +169,77 @@ class RrtEdge(rrt):
         else:
             print("Error, can't plot empty path")
 
+    def move(self, path, mps=6):
+        # TODO add in future check for future object positions!
+        if self.current_index >= len(path) - 1:
+            return self.xt
+
+        current = self.agent_pos
+        next = path[self.current_index + 1][1]
+
+        seg_distance = getDist(current, next)
+
+        direction = (
+            (next[0] - current[0]) / seg_distance,
+            (next[1] - current[1]) / seg_distance,
+            (next[2] - current[2]) / seg_distance,
+        )
+
+        new_pos = (
+            current[0] + direction[0] * mps,
+            current[1] + direction[1] * mps,
+            current[2] + direction[2] * mps,
+        )
+
+        if getDist(current, new_pos) >= seg_distance:
+            v1 = np.array(next) - np.array(current)
+            v2 = np.array(new_pos) - np.array(next)
+            dot_product = np.dot(v1, v2)
+
+            mag_v1 = np.linalg.norm(v1)
+            mag_v2 = np.linalg.norm(v2)
+
+            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+
+            if same_dir:
+                # Move the agent far forward without turning
+                self.current_index += 1
+                count = 0
+                while self.current_index < len(path) - 1:
+                    next = path[self.current_index + 1][1]
+
+                    seg_distance = getDist(current, next)
+                    direction = (
+                        (next[0] - current[0]) / seg_distance,
+                        (next[1] - current[1]) / seg_distance,
+                        (next[2] - current[2]) / seg_distance,
+                    )
+                    new_pos = (
+                        current[0] + direction[0] * mps,
+                        current[1] + direction[1] * mps,
+                        current[2] + direction[2] * mps,
+                    )
+                    v1 = np.array(next) - np.array(current)
+                    v2 = np.array(new_pos) - np.array(next)
+                    dot_product = np.dot(v1, v2)
+                    mag_v1 = np.linalg.norm(v1)
+                    mag_v2 = np.linalg.norm(v2)
+                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+                    if not same_dir or count >= mps - 1:
+                        break
+                    current = next
+                    self.agent_pos = current
+                    self.current_index += 1
+                    count += 1
+            else:
+                self.agent_pos = next
+                self.current_index += 1
+        else:
+            self.agent_pos = new_pos
+
+        return self.agent_pos
+
     def run(self):
-        # TODO check
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
         prev_coords = self.x0
@@ -187,6 +253,7 @@ class RrtEdge(rrt):
 
         start_time = time.time()
         if path:
+            path = path[::-1]
             self.compute_time = start_time
             start = self.env.start
             goal = self.env.goal
@@ -194,7 +261,9 @@ class RrtEdge(rrt):
             current = start
             self.agent_pos = current
 
-            while self.agent_pos != goal:
+            self.agent_positions.append(tuple(self.agent_pos))
+
+            while tuple(self.agent_pos) != tuple(goal):
                 self.move_dynamic_obs()
                 new_coords = self.move(path, self.speed)
                 if new_coords[0] is None:
@@ -212,7 +281,7 @@ class RrtEdge(rrt):
                         self.agent_positions.append(self.agent_pos)
                         return None
                     else:
-                        path = new_path
+                        path = new_path[::-1]
                         self.current_index = 0
                         self.agent_positions.append(self.agent_pos)
                 else:
@@ -221,15 +290,17 @@ class RrtEdge(rrt):
 
                     self.distance_travelled += getDist(prev_coords, new_coords)
                     prev_coords = new_coords
+
+            return self.agent_positions
         else:
-            return False
+            return None
 
 
 if __name__ == "__main__":
     p = RrtEdge(5)
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/13_3d.json")
     starttime = time.time()
-    a = p.planning()
+    a = p.run()
 
     print(a)
     print("Time used = " + str(time.time() - starttime))

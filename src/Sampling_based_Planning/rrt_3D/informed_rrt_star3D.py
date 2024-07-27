@@ -1,5 +1,3 @@
-# TODO make workable for evaluation
-
 """
 This is IRRT* code for 3D
 @author: yue qi 
@@ -7,6 +5,7 @@ source: J. D. Gammell, S. S. Srinivasa, and T. D. Barfoot, “Informed RRT*:
         Optimal sampling-based path planning focused via direct sampling of
         an admissible ellipsoidal heuristic,” in IROS, 2997–3004, 2014.
 """
+
 import json
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,16 +32,6 @@ from rrt_3D.utils3D import (
     path,
     visualization,
 )
-from rrt_3D.plot_util3D import (
-    set_axes_equal,
-    draw_block_list,
-    draw_Spheres,
-    draw_obb,
-    draw_line,
-    make_transparent,
-)
-from rrt_3D.queue import MinheapPQ
-from rrt_3D.rrt3D import DynamicObj
 
 
 def CreateUnitSphere(r=1):
@@ -226,98 +215,6 @@ class IRRT:
 
     def line(self, x, y):
         return getDist(x, y)
-
-    def change_env(self, map_name, obs_name=None):
-        data = None
-        with open(map_name) as f:
-            data = json.load(f)
-
-        if data:
-            self.V = []
-            self.i = 0
-            self.Path = []
-            self.Parent = {}
-
-            self.env = CustomEnv(data)
-
-            self.xstart = tuple(self.env.start)
-            self.xgoal = tuple(self.env.goal)
-
-            self.x0 = self.xstart
-            self.xt = self.xgoal
-
-            self.dobs_dir = obs_name
-
-    def set_dynamic_obs(self, filename):
-        obj_json = None
-        with open(filename) as f:
-            obj_json = json.load(f)
-
-        if obj_json:
-            for obj in obj_json["objects"]:
-                new_obj = DynamicObj()
-                new_obj.velocity = obj["velocity"]
-                new_obj.current_pos = obj["position"]
-                new_obj.old_pos = obj["position"]
-                new_obj.size = obj["size"]
-                new_obj.init_pos = new_obj.current_pos
-                new_obj.corners = self.corner_coords(
-                    new_obj.current_pos[0],
-                    new_obj.current_pos[1],
-                    new_obj.current_pos[2],
-                    new_obj.size[0],
-                    new_obj.size[1],
-                    new_obj.size[2],
-                )
-
-                new_obj.index = len(self.env.blocks) - 1
-                self.dynamic_obs.append(new_obj)
-
-                self.env.new_block_corners(new_obj.corners)
-
-    def run(self):
-        self.x0 = tuple(self.env.start)
-        self.xt = tuple(self.env.goal)
-        prev_coords = self.x0
-
-        path = self.planning()
-
-        if self.dobs_dir:
-            self.set_dynamic_obs(self.dobs_dir)
-
-        if len(path) > 0:
-            start = self.env.start
-            end = self.env.goal
-
-            current = start
-            self.agent_pos = current
-
-            # Traverse the found path
-            while self.agent_pos != end:
-                self.move_dynamic_obs()  # TODO
-                new_coords = self.move(path, self.speed)  # TODO
-                if new_coords[0] is None:
-                    # Replan from current pos
-                    self.Parent = {}
-                    self.xstart = self.agent_pos
-                    self.x0 = self.agent_pos
-                    self.ind = 0
-                    self.i = 0
-
-                    new_path = self.planning()
-
-                    if len(path) > 0:
-                        path = new_path
-                        self.current_index = 0
-                        self.agent_positions.append(self.agent_pos)
-                    else:
-                        self.agent_positions.append(self.agent_pos)
-                        return None
-                else:
-                    pass
-
-        else:
-            return False
 
 
 if __name__ == "__main__":

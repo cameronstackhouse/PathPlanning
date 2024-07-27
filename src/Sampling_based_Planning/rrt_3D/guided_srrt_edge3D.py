@@ -18,7 +18,6 @@ from rrt_3D.utils3D import (
     sampleFree,
     steer,
     isCollide,
-    visualization,
 )
 
 
@@ -29,7 +28,7 @@ class GuidedSrrtEdge(SRrtEdge):
         self.maxiter = 200
 
     def sample_unit_ball(self):
-        # TODO credit
+        # TODO credit author
         r = np.random.uniform(0.0, 1.0)
         theta = np.random.uniform(0, np.pi)
         phi = np.random.uniform(0, 2 * np.pi)
@@ -39,7 +38,7 @@ class GuidedSrrtEdge(SRrtEdge):
         return np.array([x, y, z])
 
     def RotationToWorldFrame(self, xstart, xgoal):
-        # TODO credit
+        # TODO credit author
         d = getDist(xstart, xgoal)
         xstart, xgoal = np.array(xstart), np.array(xgoal)
         a1 = (xgoal - xstart) / d

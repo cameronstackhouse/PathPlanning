@@ -27,6 +27,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         return (x1, y1, z1, x2, y2, z2)
 
     def move(self, path, mps=6):
+        # TODO add in future check for future object positions!
         if self.current_index >= len(path) - 1:
             return self.xt
 
@@ -176,6 +177,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         if path:
             path = path[::-1]
+            print(path)
             self.compute_time = start_time
             start = self.env.start
             goal = self.env.goal
