@@ -19,7 +19,6 @@ from rrt_3D.utils3D import (
     steer,
     isCollide,
     visualization,
-    path_from_point,
 )
 
 
@@ -133,7 +132,7 @@ class GuidedSrrtEdge(SRrtEdge):
                 goal_collide, _ = isCollide(self, xnew, self.xt, goal_dist)
                 if not goal_collide:
                     self.wireup(tuple(self.xt), tuple(xnew))
-                    current_path, D = path_from_point(self, tuple(xnew))
+                    current_path, D = self.path_from_point(tuple(xnew))
 
                     if D < best_path_dist:
                         self.Path = current_path
@@ -153,7 +152,7 @@ class GuidedSrrtEdge(SRrtEdge):
                     )
                     if not goal_partition_collide:
                         self.wireup(tuple(self.xt), tuple(partition_point))
-                        current_path, D = path_from_point(self, tuple(partition_point))
+                        current_path, D = self.path_from_point(tuple(partition_point))
 
                         if D < best_path_dist:
                             self.Path = current_path

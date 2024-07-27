@@ -36,21 +36,42 @@ class RrtEdge(rrt):
     TODO make anytime.
     """
 
-    def __init__(self):
+    def __init__(self, time=float("inf")):
         super().__init__()
         self.E = []
         self.stepsize = float("inf")
         self.flag = {}
 
+        self.initial_path = None
+        self.time = time
+
+    def path_from_point(self, point, dist=0):
+        path = [np.array([point, self.xt])]
+        dist += getDist(point, self.xt)
+        x = point
+        while x != self.x0:
+            x2 = self.Parent[x]
+            path.append(np.array([x2, x]))
+            dist += getDist(x, x2)
+            x = x2
+        return path, dist
+
     def planning(self):
         self.V.append(self.x0)
         best_path = None
         best_path_dist = float("inf")
+
+        start_time = time.time()
         while self.ind < self.maxiter:
+            current_time = time.time()
+
+            if current_time - start_time > self.time:
+                break
+
             xrand = sampleFree(self)
             xnearest = self.nearest(xrand, self.E)
             xnew, dist = steer(self, xnearest, xrand)
-            # TODO Getting key errors for parent, could be child stuff
+
             collide, _ = isCollide(self, xnearest, xnew, dist=dist)
             if not collide:
                 new_edge = Edge(xnearest, xnew)
@@ -63,20 +84,24 @@ class RrtEdge(rrt):
                 goal_collide, _ = isCollide(self, xnew, self.xt, goal_dist)
                 if not goal_collide:
                     self.wireup(tuple(self.xt), tuple(xnew))
-                    self.Path, D = path(self)
-                    print("Total distance = " + str(D))
-                    break
-                visualization(self)
+                    new_path, D = self.path_from_point(xnew)
+
+                    if D < best_path_dist:
+                        print(f"dist: {D}")
+                        best_path = new_path
+                        best_path_dist = D
+
+                # visualization(self)
                 self.i += 1
             self.ind += 1
         self.done = True
+
+        self.Path = best_path
+
         visualization(self)
         plt.show()
 
-        if self.Path:
-            return True
-        else:
-            return False
+        return self.Path
 
     def nearest(self, point, edge_list):
         nearest_node = nearest(self, point)
@@ -134,14 +159,18 @@ class RrtEdge(rrt):
         return proj_coords
 
     def move_dynamic_obs(self):
-        """
-        TODO look at
-        """
         for obj in self.dynamic_obs:
             old, new = self.env.move_block(
                 a=obj.velocity, block_to_move=obj.index, mode="translation"
             )
             obj.current_pos = obj.update_pos()
+
+    def plot_traversal(self, path):
+        # TODO
+        if len(path) > 0:
+            pass
+        else:
+            print("Error, can't plot empty path")
 
     def run(self):
         # TODO check
@@ -197,7 +226,10 @@ class RrtEdge(rrt):
 
 
 if __name__ == "__main__":
-    p = RrtEdge()
+    p = RrtEdge(5)
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/13_3d.json")
     starttime = time.time()
-    p.planning()
+    a = p.planning()
+
+    print(a)
     print("Time used = " + str(time.time() - starttime))
