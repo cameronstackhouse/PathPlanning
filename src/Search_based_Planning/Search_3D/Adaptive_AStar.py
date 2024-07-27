@@ -13,7 +13,7 @@ from Search_3D.DynamicObj import DynamicObj
 
 
 class AdaptiveAStar(Weighted_A_star):
-    def __init__(self):
+    def __init__(self, time=float("inf")):
         super().__init__(1)
         self.Alldirec = {
             (1, 0, 0): 1,
@@ -51,11 +51,10 @@ class AdaptiveAStar(Weighted_A_star):
         self.total_time = 0
         self.compute_time = 0
 
+        self.time = time
+
     def plot_traversal(self):
         # TODO
-        # plotter = DynamicPlotting(
-
-        # )
         pass
 
     def visualise(self, path):
@@ -132,7 +131,6 @@ class AdaptiveAStar(Weighted_A_star):
             self.dynamic_obs = []
 
             self.env = CustomEnv(data)
-            # TODO ADD BACK IN
             self.octree = Octree(self.env)
 
             self.leaf_nodes = {}
@@ -314,7 +312,15 @@ class AdaptiveAStar(Weighted_A_star):
     def compute_path(self):
         xt = self.xt
         xi = self.x0
+
+        start_time = time.time()
         while self.OPEN:
+            current_time = time.time()
+
+            # Checks if time limit is reached
+            if current_time - start_time > self.time:
+                return None
+
             if (self.OPEN.size()) == 0:
                 return None
 
