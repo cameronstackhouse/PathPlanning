@@ -32,6 +32,10 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.E = []
         self.V = []
 
+    def change_env(self, map_name, obs_name=None):
+        super().change_env(map_name, obs_name)
+        self.i = 0
+
     def planning(self):
         self.V.append(self.x0)
         self.flag[self.x0] = "Valid"
@@ -93,7 +97,6 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                             best_path_dist = D
                             self.update_ellipsoid(best_path)
 
-                # TODO investigate
                 self.i += 1
 
         self.done = True
@@ -104,8 +107,10 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 if __name__ == "__main__":
     TIME = 5
     p = MbGuidedSrrtEdge(TIME)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
-    p.planning()
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/15_3d.json")
+    a = p.planning()
+    
+    print(a[::-1])
 
-    visualization(p)
-    plt.show()
+    # visualization(p)
+    # plt.show()

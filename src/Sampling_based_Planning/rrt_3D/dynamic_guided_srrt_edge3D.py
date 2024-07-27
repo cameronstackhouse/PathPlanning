@@ -17,8 +17,83 @@ from rrt_3D.mb_guided_srrt_edge3D import MbGuidedSrrtEdge
 
 
 class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
-    def __init__(self, t=0.1, m=10000):
+    def __init__(self, t=1.0, m=10000):
         super().__init__(t, m)
+
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x1, y1, z1, x2, y2, z2)
+
+    def move(self, path, mps=6):
+        if self.current_index >= len(path) - 1:
+            return self.xt
+
+        current = self.agent_pos
+        next = path[self.current_index + 1][1]
+
+        seg_distance = getDist(current, next)
+
+        direction = (
+            (next[0] - current[0]) / seg_distance,
+            (next[1] - current[1]) / seg_distance,
+            (next[2] - current[2]) / seg_distance,
+        )
+
+        new_pos = (
+            current[0] + direction[0] * mps,
+            current[1] + direction[1] * mps,
+            current[2] + direction[2] * mps,
+        )
+
+        if getDist(current, new_pos) >= seg_distance:
+            v1 = np.array(next) - np.array(current)
+            v2 = np.array(new_pos) - np.array(next)
+            dot_product = np.dot(v1, v2)
+
+            mag_v1 = np.linalg.norm(v1)
+            mag_v2 = np.linalg.norm(v2)
+
+            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+
+            if same_dir:
+                # Move the agent far forward without turning
+                self.current_index += 1
+                count = 0
+                while self.current_index < len(path) - 1:
+                    next = path[self.current_index + 1][1]
+
+                    seg_distance = getDist(current, next)
+                    direction = (
+                        (next[0] - current[0]) / seg_distance,
+                        (next[1] - current[1]) / seg_distance,
+                        (next[2] - current[2]) / seg_distance,
+                    )
+                    new_pos = (
+                        current[0] + direction[0] * mps,
+                        current[1] + direction[1] * mps,
+                        current[2] + direction[2] * mps,
+                    )
+                    v1 = np.array(next) - np.array(current)
+                    v2 = np.array(new_pos) - np.array(next)
+                    dot_product = np.dot(v1, v2)
+                    mag_v1 = np.linalg.norm(v1)
+                    mag_v2 = np.linalg.norm(v2)
+                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+                    if not same_dir or count >= mps - 1:
+                        break
+                    current = next
+                    self.agent_pos = current
+                    self.current_index += 1
+                    count += 1
+            else:
+                self.agent_pos = next
+                self.current_index += 1
+        else:
+            self.agent_pos = new_pos
+
+        return self.agent_pos
 
     def regrow(self):
         self.V.clear()
@@ -87,7 +162,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def run(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
-        prev_coords = self.x0
 
         start_time = time.time()
         path = self.planning()
@@ -99,6 +173,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         start_time = time.time()
 
         if path:
+            path = path[::-1]
             self.compute_time = start_time
             start = self.env.start
             goal = self.env.goal
@@ -106,50 +181,39 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             current = start
             self.agent_pos = current
 
-            while self.agent_pos != goal:
+            while tuple(self.agent_pos) != tuple(goal):
+
                 self.move_dynamic_obs()
                 new_coords = self.move(path)
                 if new_coords[0] is None:
                     if not self.reconnect():
                         new_path = self.regrow()
                         if not new_path:
-                            self.agent_positions.append(self.agent_pos)
+                            self.agent_positions.append(tuple(self.agent_pos))
                             return False
                         else:
                             self.current_index = 0
                             path = new_path
 
-                    self.agent_positions.append(self.agent_pos)
+                    self.agent_positions.append(tuple(self.agent_pos))
 
                 else:
                     self.agent_positions.append(new_coords)
                     current = new_coords
                     self.agent_pos = new_coords
 
-                    self.distance_travelled += getDist(prev_coords, new_coords)
-                    prev_coords = new_coords
-
-            return True
+            return self.agent_positions
 
         else:
-            return False
-
-    def corner_coords(self, x1, y1, z1, width, height, depth):
-        x2 = x1 + width
-        y2 = y1 + height
-        z2 = z1 + depth
-        return (x1, y1, z1, x2, y2, z2)
+            return None
 
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
-    rrt.change_env(
-        "Evaluation/Maps/3D/block_map_25_3d/12_3d.json", "Evaluation/Maps/3D/obs.json"
-    )
+    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/12_3d.json")
+
+    # "Evaluation/Maps/3D/obs.json"
 
     res = rrt.planning()
 
     print(res)
-
-    visualization(rrt)
-    plt.show()

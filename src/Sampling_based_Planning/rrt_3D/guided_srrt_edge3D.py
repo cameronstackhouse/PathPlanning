@@ -152,6 +152,8 @@ class GuidedSrrtEdge(SRrtEdge):
                         self.Path = current_path
                         best_path = current_path
                         best_path_dist = D
+                        
+                        print(f"PATH: {self.Path}")
                         self.update_ellipsoid(best_path)
 
                 # Checks for direct path from points along the added edge to the goal
@@ -170,10 +172,11 @@ class GuidedSrrtEdge(SRrtEdge):
                             self.Path = current_path
                             best_path = current_path
                             best_path_dist = D
+                            print(f"PATH: {current_path}")
                             self.update_ellipsoid(best_path)
 
-                visualization(self)
-                self.i += 1
+                # visualization(self)
+                # self.i += 1
 
         self.done = True
 

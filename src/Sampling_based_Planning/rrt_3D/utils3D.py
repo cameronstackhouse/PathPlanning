@@ -282,7 +282,7 @@ def path_from_point(initparams, point, dist=0):
     x = point
     while x != initparams.x0:
         x2 = initparams.Parent[x]
-        path.append(np.array([x, x2]))
+        path.append(np.array([x2, x]))
         dist += getDist(x, x2)
         x = x2
     return path, dist

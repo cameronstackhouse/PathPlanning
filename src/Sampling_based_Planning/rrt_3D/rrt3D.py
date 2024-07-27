@@ -133,12 +133,12 @@ class rrt:
             # if the goal is really reached
 
         self.done = True
-        
+
         return self.Path
 
     def move_dynamic_obs(self):
         """
-        TODO
+        TODO look at
         """
         for obj in self.dynamic_obs:
             old, new = self.env.move_block(
@@ -146,6 +146,7 @@ class rrt:
             )
 
     def move(self, path, mps=6):
+        # TODO look at
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
