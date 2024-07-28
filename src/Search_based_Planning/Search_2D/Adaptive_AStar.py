@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from Astar import AStar
 from Quadtree import QuadTree
@@ -5,14 +6,21 @@ from plotting import DynamicPlotting
 
 
 class AdaptiveAStar(AStar):
-    def __init__(self, s_start, s_goal, heuristic_type):
-        super().__init__(s_start, s_goal, heuristic_type)
+    def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
+        super().__init__(s_start, s_goal, heuristic_type, time)
+        if time != float("inf"):
+            self.name = f"Adaptive A*: {time}"
+        else:
+            self.name = "Adaptive A*"
         self.quadtree = None
         self.speed = 6
         self.current_index = 0
         self.time_steps = 0
         self.dynamic_objects = []
         self.initial_path = None
+        self.compute_time = None
+        self.total_time = None
+        self.replan_time = []
 
     def euclidean_distance(self, point1, point2):
         point1 = np.array(point1)
@@ -41,6 +49,14 @@ class AdaptiveAStar(AStar):
 
     def change_env(self, map_name, dobs=None):
         new_env = super().change_env(map_name)
+
+        self.current_index = 0
+        self.initial_path = None
+        self.compute_time = None
+        self.total_time = None
+        self.replan_time = []
+        self.agent_positions = []
+
         self.quadtree = QuadTree(new_env)
 
         self.leaf_nodes = {}
@@ -56,7 +72,7 @@ class AdaptiveAStar(AStar):
             prev_pos = object.current_pos
             new_pos = object.update_pos()
 
-            #new_pos = prev_pos
+            # new_pos = prev_pos
 
             object.old_pos = object.current_pos
             object.current_pos = new_pos
@@ -216,6 +232,7 @@ class AdaptiveAStar(AStar):
 
         # 2. If changed, repartition affected nodes and replan
         if dynamic_obj_in_sight:
+            replan_time = time.time()
             # Repartition
             for leaf in affected_leafs:
                 leaf.clear()
@@ -242,14 +259,24 @@ class AdaptiveAStar(AStar):
             if path:
                 path = path[::-1]
             else:
+                replan_time = time.time() - replan_time
+                self.replan_time.append(replan_time)
                 return None
 
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
             self.current_index = 0
 
         return path
 
     def run(self):
+        initial_compute_start = time.time()
+
         path = self.planning()
+
+        initial_compute_time = time.time() - initial_compute_start
+
+        self.compute_time = initial_compute_time
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
@@ -261,6 +288,7 @@ class AdaptiveAStar(AStar):
 
             self.initial_path = path
 
+            traversal_time = time.time()
             while self.agent_pos != self.s_goal:
                 self.update_object_positions()
                 path = self.replan(path)
@@ -272,16 +300,18 @@ class AdaptiveAStar(AStar):
                 self.agent_positions.append(self.agent_pos)
                 self.time_steps += 1
 
+            traversal_time = time.time - traversal_time()
+            self.total_time = traversal_time
             return self.agent_positions
         else:
             return None
 
 
 if __name__ == "__main__":
-    s = AdaptiveAStar((0, 0), (0, 0), "euclidian")
-    # 23 best example
+    s = AdaptiveAStar((0, 0), (0, 0), "euclidian", time=10)
+    # 23 best example to show
     s.change_env(
-        "Evaluation/Maps/2D/main/block_23.json",
+        "Evaluation/Maps/2D/main/block_21.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 

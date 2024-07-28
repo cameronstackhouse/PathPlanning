@@ -8,6 +8,7 @@ import os
 import sys
 import math
 import heapq
+import time
 
 from DynamicObj import DynamicObj
 
@@ -21,10 +22,12 @@ from Search_2D import plotting, env
 class AStar:
     """AStar set the cost + heuristics as the priority"""
 
-    def __init__(self, s_start, s_goal, heuristic_type):
+    def __init__(self, s_start, s_goal, heuristic_type, time=float("inf")):
         self.s_start = s_start
         self.s_goal = s_goal
         self.heuristic_type = heuristic_type
+
+        self.time = time
 
         self.Env = env.Env()  # class Env
         self.plot = plotting.Plotting(s_start, s_goal)
@@ -97,6 +100,7 @@ class AStar:
         A_star Searching.
         :return: path, visited order
         """
+        start = time.time()
 
         self.PARENT[self.s_start] = self.s_start
         self.g[self.s_start] = 0
@@ -104,6 +108,9 @@ class AStar:
         heapq.heappush(self.OPEN, (self.f_value(self.s_start), self.s_start))
 
         while self.OPEN:
+            if time.time() - start > self.time:
+                break
+
             _, s = heapq.heappop(self.OPEN)
             self.CLOSED.append(s)
 

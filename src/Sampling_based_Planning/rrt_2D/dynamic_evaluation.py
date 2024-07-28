@@ -18,6 +18,7 @@ sys.path.append(
 )
 
 from Search_2D.D_star_Lite import DStar
+from Search_2D.Adaptive_AStar import AdaptiveAStar
 
 from glob import glob
 from pathlib import Path
@@ -47,10 +48,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
     algorithms = [
         # DStar(START, END, "euclidian"),
-        DStar(START, END, "euclidian"),
-        DStar(START, END, "euclidian", 5.0),
-        # RrtEdge(START, END, 0.05, 2000, time=5),
-        # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
+        # DStar(START, END, "euclidian", 5.0),
+        AdaptiveAStar(START, END, "euclidian"),
+        AdaptiveAStar(START, END, "euclidian", time=5),
     ]
 
     results = []
@@ -124,7 +124,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "AD* Lite.json")
+    save_results(results, "AD A*.json")
 
 
 if __name__ == "__main__":
