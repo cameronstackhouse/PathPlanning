@@ -1,8 +1,8 @@
 import time
 import numpy as np
-from Astar import AStar
-from Quadtree import QuadTree
-from plotting import DynamicPlotting
+from Search_2D.Astar import AStar
+from Search_2D.Quadtree import QuadTree
+from Search_2D.plotting import DynamicPlotting
 
 
 class AdaptiveAStar(AStar):
