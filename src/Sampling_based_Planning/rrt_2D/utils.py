@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 from scipy.integrate import quad
 from numpy.polynomial import polynomial
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
-                "/../../Sampling_based_Planning/")
+sys.path.append(
+    os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
+)
 
 from rrt_2D import env
 from rrt_2D.rrt import Node
@@ -36,11 +37,13 @@ class Utils:
         delta = self.delta
         obs_list = []
 
-        for (ox, oy, w, h) in self.obs_rectangle:
-            vertex_list = [[ox - delta, oy - delta],
-                           [ox + w + delta, oy - delta],
-                           [ox + w + delta, oy + h + delta],
-                           [ox - delta, oy + h + delta]]
+        for ox, oy, w, h in self.obs_rectangle:
+            vertex_list = [
+                [ox - delta, oy - delta],
+                [ox + w + delta, oy - delta],
+                [ox + w + delta, oy + h + delta],
+                [ox - delta, oy + h + delta],
+            ]
             obs_list.append(vertex_list)
 
         return obs_list
@@ -90,7 +93,7 @@ class Utils:
         o, d = self.get_ray(start, end)
         obs_vertex = self.get_obs_vertex()
 
-        for (v1, v2, v3, v4) in obs_vertex:
+        for v1, v2, v3, v4 in obs_vertex:
             if self.is_intersect_rec(start, end, o, d, v1, v2):
                 return True
             if self.is_intersect_rec(start, end, o, d, v2, v3):
@@ -100,7 +103,7 @@ class Utils:
             if self.is_intersect_rec(start, end, o, d, v4, v1):
                 return True
 
-        for (x, y, r) in self.obs_circle:
+        for x, y, r in self.obs_circle:
             if self.is_intersect_circle(o, d, [x, y], r):
                 return True
 
@@ -109,18 +112,22 @@ class Utils:
     def is_inside_obs(self, node):
         delta = self.delta
 
-        for (x, y, r) in self.obs_circle:
+        for x, y, r in self.obs_circle:
             if math.hypot(node.x - x, node.y - y) <= r + delta:
                 return True
 
-        for (x, y, w, h) in self.obs_rectangle:
-            if 0 <= node.x - (x - delta) <= w + 2 * delta \
-                    and 0 <= node.y - (y - delta) <= h + 2 * delta:
+        for x, y, w, h in self.obs_rectangle:
+            if (
+                0 <= node.x - (x - delta) <= w + 2 * delta
+                and 0 <= node.y - (y - delta) <= h + 2 * delta
+            ):
                 return True
 
-        for (x, y, w, h) in self.obs_boundary:
-            if 0 <= node.x - (x - delta) <= w + 2 * delta \
-                    and 0 <= node.y - (y - delta) <= h + 2 * delta:
+        for x, y, w, h in self.obs_boundary:
+            if (
+                0 <= node.x - (x - delta) <= w + 2 * delta
+                and 0 <= node.y - (y - delta) <= h + 2 * delta
+            ):
                 return True
 
         return False
@@ -134,7 +141,7 @@ class Utils:
     @staticmethod
     def get_dist(start, end):
         return math.hypot(end.x - start.x, end.y - start.y)
-    
+
     @staticmethod
     def euclidian_distance(p_1, p_2):
         return math.sqrt((p_2[0] - p_1[0]) ** 2 + (p_2[1] - p_1[1]) ** 2)
@@ -143,9 +150,9 @@ class Utils:
     def path_cost(path):
         total_distance = 0
         for i in range(len(path) - 1):
-            total_distance += Utils.euclidian_distance(path[i], path[i+1])
+            total_distance += Utils.euclidian_distance(path[i], path[i + 1])
         return total_distance
-    
+
     @staticmethod
     def calculate_turn_angle(p_1, p_2, p_3):
         v1 = np.array(p_1) - np.array(p_2)
@@ -161,7 +168,7 @@ class Utils:
         angle = np.arccos(cos_angle)
 
         return angle
-    
+
     @staticmethod
     def turn_energy(turn_power, degrees, speed):
         """
@@ -196,15 +203,15 @@ class Utils:
 
         def integrand_acc(x):
             return cubic_poly_acc(x)
-        
+
         def integrand_dec(x):
             return cubic_poly_dec(x)
 
-        fixed_speed = 6 # 6 m/s
+        fixed_speed = 6  # 6 m/s
         total_energy = 0
 
         for i in range(1, len(path)):
-            p_1 = path[i-1]
+            p_1 = path[i - 1]
             p_2 = path[i]
 
             distance = Utils.euclidian_distance(p_1, p_2)
@@ -218,8 +225,8 @@ class Utils:
             total_energy += energy_acc + energy_unform + energy_dec
 
             if i < len(path) - 1:
-                p_3 = path[i+1]
+                p_3 = path[i + 1]
                 angle = Utils.calculate_turn_angle(p_1, p_2, p_3)
                 total_energy += Utils.turn_energy(TURN_POWER, angle, TURN_SPEED)
-        
+
         return total_energy

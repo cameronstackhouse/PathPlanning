@@ -1,8 +1,9 @@
 import json
 import time
 
+from matplotlib import pyplot as plt
 import numpy as np
-from utils3D import getDist, isCollide, near, nearest, steer
+from utils3D import getDist, isCollide, near, nearest, steer, visualization
 from informed_rrt_star3D import IRRT
 from env3D import CustomEnv
 from DynamicObj import DynamicObj
@@ -22,7 +23,7 @@ class AnytimeIRRTTStar(IRRT):
         self.dynamic_obs = []
         self.time = time
 
-    def change_env(self, map_name, obs_name=None):
+    def change_env(self, map_name, obs_name=None, size=100):
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -34,7 +35,7 @@ class AnytimeIRRTTStar(IRRT):
             self.Parent = {}
             self.ind = 0
 
-            self.env = CustomEnv(data)
+            self.env = CustomEnv(data, zmax=size, xmax=size, ymax=size)
 
             self.xstart = tuple(self.env.start)
             self.xgoal = tuple(self.env.goal)
@@ -293,9 +294,11 @@ class AnytimeIRRTTStar(IRRT):
 
 if __name__ == "__main__":
     rrt = AnytimeIRRTTStar(time=15)
-    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/13_3d.json")
+    rrt.change_env("Evaluation/Maps/3D/house_25_3d/10_3d.json", size=28)
 
     path = rrt.run()
-    # NOTE, path is in same format as it is for SRRT-Edge
 
     print(path)
+
+    # visualization(rrt)
+    # plt.show()

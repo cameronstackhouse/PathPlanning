@@ -1,15 +1,20 @@
 import json
 import sys
 import os
+from threading import Thread
 import tracemalloc
+
+import numpy as np
+import psutil
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
 
 from rrt_3D.dynamic_guided_srrt_edge3D import DynamicGuidedSrrtEdge
-from rrt_3D.informed_rrt_star3D import IRRT
+from rrt_3D.adapted_IRRT_star import AnytimeIRRTTStar
 from rrt_3D.rrt_edge3D import RrtEdge
+from rrt_3D.utils3D import getDist
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
@@ -21,6 +26,90 @@ from glob import glob
 from pathlib import Path
 
 
+def save_results(results, name):
+    with open(name, "w") as f:
+        json.dump(results, f, indent=4)
+
+    print(f"Results saved to {name}")
+
+
+def path_cost(path):
+    cost = 0
+    for i in range(len(path) - 2):
+        current = path[i]
+        next = path[i + 1]
+
+        dist = getDist(current, next)
+        cost += dist
+
+    return cost
+
+
+def calculate_turn_angle(p_1, p_2, p_3):
+    pass
+
+
+def path_energy(path):
+    # TODO in 2D utils.py
+
+    x = np.array([0, 2, 4, 6])
+    # Power required (W) for each at 0, 2, 4, 6 m/s
+    P_acc = np.array([242, 235, 239, 249])
+    P_dec = np.array([245, 232, 230, 239])
+    P_v = [242, 245, 246, 268]
+    TURN_POWER = 260
+    TURN_SPEED = 2.07
+
+    cubic_coeffs_acc = np.polyfit(x, P_acc, 3)
+    cubic_poly_acc = np.poly1d(cubic_coeffs_acc)
+
+    cubic_coeffs_dec = np.polyfit(x, P_dec, 3)
+    cubic_poly_dec = np.poly1d(cubic_coeffs_dec)
+
+    def integrand_acc(x):
+        return cubic_poly_acc(x)
+
+    def integrand_dec(x):
+        return cubic_poly_dec(x)
+
+    fixed_speed = 6  # 6 m/s
+    total_energy = 0
+
+    for i in range(1, len(path)):
+        p_1 = path[i - 1]
+        p_2 = path[i]
+
+        distance = getDist(p_1, p_2)
+        time_uniform = distance / fixed_speed
+
+
+def measure_cpu_usage(func, *args, **kwargs):
+    """
+    Measures CPU utalisation of a function as a sum of the CPU percentage
+    utalised at each time step.
+    """
+
+    def measure():
+        while running:
+            cpu_percentages.append(psutil.cpu_percent(interval=0.1))
+
+    # process = psutil.Process()
+
+    cpu_percentages = []
+    running = True
+    measurement_thread = Thread(target=measure)
+    measurement_thread.start()
+
+    result = func(*args, **kwargs)
+
+    running = False
+    measurement_thread.join()
+
+    cpu_load = cpu_percentages
+
+    return (result, cpu_load)
+
+
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     START = (0, 0)
     END = (0, 0)
@@ -30,7 +119,12 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
-    algorithms = [AdaptiveAStar(), DynamicGuidedSrrtEdge(t=5), IRRT(), RrtEdge()]
+    algorithms = [
+        AdaptiveAStar(time=5),
+        DynamicGuidedSrrtEdge(t=5),
+        AnytimeIRRTTStar(time=5),
+        RrtEdge(time=5),
+    ]
 
     results = []
     for algorithm in algorithms:
@@ -105,4 +199,4 @@ def main():
 
 
 if __name__ == "__main__":
-    pass
+    main()
