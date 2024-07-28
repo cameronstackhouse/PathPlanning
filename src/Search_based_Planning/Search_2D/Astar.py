@@ -26,6 +26,7 @@ class AStar:
         self.s_start = s_start
         self.s_goal = s_goal
         self.heuristic_type = heuristic_type
+        self.dynamic_objects = []
 
         self.time = time
 

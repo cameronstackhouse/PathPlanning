@@ -50,6 +50,8 @@ class AdaptiveAStar(AStar):
     def change_env(self, map_name, dobs=None):
         new_env = super().change_env(map_name)
 
+        self.dynamic_objects = []
+
         self.current_index = 0
         self.initial_path = None
         self.compute_time = None
@@ -308,10 +310,10 @@ class AdaptiveAStar(AStar):
 
 
 if __name__ == "__main__":
-    s = AdaptiveAStar((0, 0), (0, 0), "euclidian", time=10)
+    s = AdaptiveAStar((0, 0), (0, 0), "euclidian")
     # 23 best example to show
     s.change_env(
-        "Evaluation/Maps/2D/main/block_21.json",
+        "Evaluation/Maps/2D/main/house_14.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
 
