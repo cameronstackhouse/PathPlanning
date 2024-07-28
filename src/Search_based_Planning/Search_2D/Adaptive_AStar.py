@@ -300,7 +300,7 @@ class AdaptiveAStar(AStar):
                 self.agent_positions.append(self.agent_pos)
                 self.time_steps += 1
 
-            traversal_time = time.time - traversal_time()
+            traversal_time = time.time() - traversal_time
             self.total_time = traversal_time
             return self.agent_positions
         else:
