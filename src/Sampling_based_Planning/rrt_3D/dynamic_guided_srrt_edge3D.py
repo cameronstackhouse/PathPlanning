@@ -202,6 +202,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             same_counter = 0
 
             while tuple(self.agent_pos) != tuple(goal):
+                print(f"current pos: {self.agent_pos}")
                 if same_counter == 20:
                     return None
 
@@ -210,16 +211,19 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                 if new_coords[0] is None:
                     replan_time = time.time()
                     if not self.reconnect(path):
+                        print("regrowing")
                         new_path = self.regrow()
                         self.replan_time.append(time.time() - replan_time)
                         if not new_path:
                             self.agent_positions.append(tuple(self.agent_pos))
                             return None
                         else:
+                            print("regrow successful")
                             self.current_index = 0
                             same_counter += 1
                             path = new_path
                     else:
+                        print("reconnect successful")
                         self.replan_time.append(time.time() - replan_time)
 
                     same_counter += 1
