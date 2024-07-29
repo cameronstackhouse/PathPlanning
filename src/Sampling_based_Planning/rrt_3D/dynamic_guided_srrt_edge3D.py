@@ -198,7 +198,13 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             current = start
             self.agent_pos = current
 
+            prev = self.agent_pos
+            same_counter = 0
+
             while tuple(self.agent_pos) != tuple(goal):
+                if same_counter == 10:
+                    return False
+
                 self.move_dynamic_obs()
                 new_coords = self.move(path)
                 if new_coords[0] is None:
@@ -211,16 +217,25 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                             return False
                         else:
                             self.current_index = 0
+                            same_counter += 1
                             path = new_path
                     else:
                         self.replan_time.append(time.time() - replan_time)
 
+                    same_counter += 1
                     self.agent_positions.append(tuple(self.agent_pos))
 
                 else:
                     self.agent_positions.append(new_coords)
                     current = new_coords
                     self.agent_pos = new_coords
+
+                    if prev == current:
+                        same_counter += 1
+                    else:
+                        same_counter = 0
+
+                    prev = current
 
             return self.agent_positions
 
