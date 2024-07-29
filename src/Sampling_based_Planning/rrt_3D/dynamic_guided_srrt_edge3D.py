@@ -230,7 +230,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                     current = new_coords
                     self.agent_pos = new_coords
 
-                    if prev == current:
+                    if tuple(prev) == tuple(current):
                         same_counter += 1
                     else:
                         same_counter = 0
