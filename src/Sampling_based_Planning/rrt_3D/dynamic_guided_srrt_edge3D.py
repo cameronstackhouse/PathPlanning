@@ -48,7 +48,9 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             return self.xt
 
         current = self.agent_pos
-        next = path[self.current_index + 1][1]
+        next = path[self.current_index][1]
+        
+        print(f"NEXT: {next}")
 
         seg_distance = getDist(current, next)
 
@@ -70,7 +72,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             return next
 
         future_uav_positions = []
-        PREDICTION_HORIZON = 4
+        PREDICTION_HORIZON = 3
         for t in range(1, PREDICTION_HORIZON):
             future_pos = (
                 current[0] + direction[0] * mps * t,
@@ -127,7 +129,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         if self.current_index + 1 >= len(path):
             return False
 
-        goal_pos = path[self.current_index + 1]
+        goal_pos = path[self.current_index][1]
 
         time_steps = int(round(self.t))
 
@@ -172,7 +174,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def run(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
-        
+
         self.dynamic_obs = []
 
         start_time = time.time()
@@ -227,19 +229,19 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
+    # rrt.change_env(
+    #     "Evaluation/Maps/3D/main/house_17_3d.json",
+    #     size=28,
+    # )
+
+    # res = rrt.run()
+
+    # print(res)
+
     rrt.change_env(
-        "Evaluation/Maps/3D/main/house_17_3d.json",
-        size=28,
-    )
-
-    res = rrt.run()
-    
-    print(res)
-
-
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/house_19_3d.json",
-        size=28,
+        map_name="Evaluation/Maps/3D/main/block_9_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+        size=100,
     )
 
     res = rrt.run()
