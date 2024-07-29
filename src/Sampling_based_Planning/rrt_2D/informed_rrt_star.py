@@ -357,7 +357,7 @@ class IRrtStar:
             self.V = [self.x_start]
             self.X_soln = set()
             self.path = None
-            
+
             self.dynamic_objects = []
             self.agent_positions = []
             self.time_steps = 0
@@ -433,6 +433,12 @@ class IRrtStar:
         else:
             print("Error, dynamic objects could not be loaded")
 
+    def in_dynamic_obj(self, node, obj):
+        x, y = node.coords
+        x0, y0 = obj.current_pos
+        width, height = obj.size
+        return (x0 <= x < x0 + width) and (y0 <= y < y0 + height)
+
     def move(self, path, mps=6):
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
@@ -442,10 +448,6 @@ class IRrtStar:
 
         current_pos = self.agent_pos
         next_node = path[self.current_index + 1]
-
-        # Checks for collision between current point and the waypoint node
-        if self.utils.is_collision(Node(current_pos), Node(next_node)):
-            return [None, None]
 
         seg_distance = self.utils.euclidian_distance(current_pos, next_node)
 
@@ -465,7 +467,34 @@ class IRrtStar:
             self.current_index += 1
             return next_node
 
-        # TODO: Check for collision within next x amount of time (maybe based on speed)
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current_pos[0] + direction[0] * mps * t,
+                current_pos[1] + direction[1] * mps * t,
+            )
+
+            if self.utils.euclidian_distance(current_pos, future_pos) >= seg_distance:
+                break
+
+            future_uav_positions.append(future_pos)
+
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_objects:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
+
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(Node(future_pos), dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None]
+
+                    dynamic_object.current_pos = original_pos
 
         return new_pos
 
@@ -514,10 +543,8 @@ class IRrtStar:
             current = np.array(current)
             GOAL = np.array(GOAL)
 
-            while not np.array_equal(current, GOAL):
-                current = global_path[self.current_index]
+            while not np.array_equal(self.agent_pos, GOAL):
                 self.update_object_positions()
-
                 new_coords = self.move(global_path, self.speed)
 
                 if new_coords[0] is None:

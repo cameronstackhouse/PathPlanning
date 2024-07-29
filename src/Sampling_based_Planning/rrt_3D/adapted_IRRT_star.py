@@ -1,9 +1,8 @@
 import json
 import time
 
-from matplotlib import pyplot as plt
 import numpy as np
-from utils3D import getDist, isCollide, near, nearest, steer, visualization
+from utils3D import getDist, isCollide, near, nearest, steer
 from informed_rrt_star3D import IRRT
 from env3D import CustomEnv
 from DynamicObj import DynamicObj
@@ -13,7 +12,8 @@ class AnytimeIRRTTStar(IRRT):
     def __init__(self, speed=6, time=float("inf")):
         super().__init__(False)
 
-        self.N = 5000
+        self.N = 50000
+        self.stepsize = 10
 
         self.agent_pos = None
         self.agent_positions = []
@@ -22,6 +22,19 @@ class AnytimeIRRTTStar(IRRT):
         self.distance_travelled = 0
         self.dynamic_obs = []
         self.time = time
+        self.compute_time = None
+        self.replanning_time = []
+        self.total_time = None
+
+    def in_dynamic_obj(self, pos, obj):
+        x, y, z = pos
+        x0, y0, z0 = obj.current_pos
+        width, height, depth = obj.size
+        return (
+            (x0 <= x <= x0 + width)
+            and (y0 <= y <= y0 + height)
+            and (z0 <= z <= z0 + depth)
+        )
 
     def change_env(self, map_name, obs_name=None, size=100):
         data = None
@@ -91,7 +104,6 @@ class AnytimeIRRTTStar(IRRT):
             obj.current_pos = obj.update_pos()
 
     def move(self, path, mps=6):
-        # TODO add in future check for future object positions!
         if self.current_index >= len(path) - 1:
             return self.xt
 
@@ -113,52 +125,41 @@ class AnytimeIRRTTStar(IRRT):
         )
 
         if getDist(current, new_pos) >= seg_distance:
-            v1 = np.array(next) - np.array(current)
-            v2 = np.array(new_pos) - np.array(next)
-            dot_product = np.dot(v1, v2)
+            self.agent_pos = next
+            self.current_index += 1
+            return next
 
-            mag_v1 = np.linalg.norm(v1)
-            mag_v2 = np.linalg.norm(v2)
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current[0] + direction[0] * mps * t,
+                current[1] + direction[1] * mps * t,
+                current[2] + direction[2] * mps * t,
+            )
 
-            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+            if getDist(current, future_pos) >= seg_distance:
+                break
 
-            if same_dir:
-                # Move the agent far forward without turning
-                self.current_index += 1
-                count = 0
-                while self.current_index < len(path) - 1:
-                    next = path[self.current_index + 1][1]
+            future_uav_positions.append(future_pos)
 
-                    seg_distance = getDist(current, next)
-                    direction = (
-                        (next[0] - current[0]) / seg_distance,
-                        (next[1] - current[1]) / seg_distance,
-                        (next[2] - current[2]) / seg_distance,
-                    )
-                    new_pos = (
-                        current[0] + direction[0] * mps,
-                        current[1] + direction[1] * mps,
-                        current[2] + direction[2] * mps,
-                    )
-                    v1 = np.array(next) - np.array(current)
-                    v2 = np.array(new_pos) - np.array(next)
-                    dot_product = np.dot(v1, v2)
-                    mag_v1 = np.linalg.norm(v1)
-                    mag_v2 = np.linalg.norm(v2)
-                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
-                    if not same_dir or count >= mps - 1:
-                        break
-                    current = next
-                    self.agent_pos = current
-                    self.current_index += 1
-                    count += 1
-            else:
-                self.agent_pos = next
-                self.current_index += 1
-        else:
-            self.agent_pos = new_pos
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_obs:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
 
-        return self.agent_pos
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(future_pos, dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None, None]
+
+                    dynamic_object.current_pos = original_pos
+
+        return new_pos
 
     def planning(self):
         """
@@ -230,7 +231,6 @@ class AnytimeIRRTTStar(IRRT):
                         best_path_dist = D
                         best_path = new_path
                         self.Path = new_path
-                        print(D)
 
                     self.Xsoln.add(xnew)
             self.ind += 1
@@ -242,8 +242,10 @@ class AnytimeIRRTTStar(IRRT):
         self.xt = tuple(self.env.goal)
         prev_coords = self.x0
 
+        planning_time = time.time()
         path = self.planning()
-
+        planning_time = time.time() - planning_time
+        self.compute_time = planning_time
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
@@ -258,10 +260,12 @@ class AnytimeIRRTTStar(IRRT):
             self.agent_positions.append(tuple(self.agent_pos))
 
             # Traverse the found path
+            start_time = time.time()
             while tuple(self.agent_pos) != tuple(end):
-                self.move_dynamic_obs()  # TODO
-                new_coords = self.move(path)  # TODO
+                self.move_dynamic_obs()
+                new_coords = self.move(path, self.speed)
                 if new_coords[0] is None:
+                    start_replan = time.time()
                     # Replan from current pos
                     self.Parent = {}
 
@@ -271,6 +275,9 @@ class AnytimeIRRTTStar(IRRT):
                     self.i = 0
 
                     new_path = self.planning()
+                    end_replan = time.time() - start_replan
+
+                    self.replanning_time.append(end_replan)
 
                     if path:
                         path = new_path[::-1]
@@ -286,6 +293,7 @@ class AnytimeIRRTTStar(IRRT):
                     self.distance_travelled += getDist(prev_coords, new_coords)
                     prev_coords = new_coords
 
+            self.total_time = time.time() - start_time
             return self.agent_positions
 
         else:
@@ -293,12 +301,9 @@ class AnytimeIRRTTStar(IRRT):
 
 
 if __name__ == "__main__":
-    rrt = AnytimeIRRTTStar(time=15)
-    rrt.change_env("Evaluation/Maps/3D/house_25_3d/10_3d.json", size=28)
+    rrt = AnytimeIRRTTStar(time=5)
+    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json", size=28)
 
     path = rrt.run()
 
     print(path)
-
-    # visualization(rrt)
-    # plt.show()
