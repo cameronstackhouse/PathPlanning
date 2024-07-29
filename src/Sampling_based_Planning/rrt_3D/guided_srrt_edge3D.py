@@ -13,12 +13,7 @@ sys.path.append(
 from rrt_edge3D import Edge
 from srrt_edge3D import SRrtEdge
 from rrt_3D.env3D import env
-from rrt_3D.utils3D import (
-    getDist,
-    sampleFree,
-    steer,
-    isCollide,
-)
+from rrt_3D.utils3D import getDist, sampleFree, steer, isCollide, visualization
 
 
 class GuidedSrrtEdge(SRrtEdge):
@@ -26,6 +21,12 @@ class GuidedSrrtEdge(SRrtEdge):
         super().__init__()
         self.ellipsoid = None
         self.maxiter = 200
+
+    def change_env(self, map_name, obs_name=None, size=None):
+        super().change_env(map_name, obs_name, size)
+        self.ellipsoid = None
+        self.Path = []
+        self.E = []
 
     def sample_unit_ball(self):
         # TODO credit author
@@ -113,6 +114,7 @@ class GuidedSrrtEdge(SRrtEdge):
 
     def planning(self):
         self.V.append(self.x0)
+        
         best_path = None
         best_path_dist = float("inf")
         for _ in range(self.maxiter):
@@ -138,14 +140,13 @@ class GuidedSrrtEdge(SRrtEdge):
                         best_path = current_path
                         best_path_dist = D
 
-                        print(f"PATH: {self.Path}")
                         self.update_ellipsoid(best_path)
 
                 # Checks for direct path from points along the added edge to the goal
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
                 for partition_point in partition_points:
-                    self.Parent[tuple(partition_point)] = tuple(new_edge.node_1)
+                    self.wireup(tuple(partition_point), tuple(new_edge.node_1))
                     goal_partition_collide, _ = isCollide(
                         self, partition_point, self.xt, goal_dist
                     )
@@ -157,15 +158,12 @@ class GuidedSrrtEdge(SRrtEdge):
                             self.Path = current_path
                             best_path = current_path
                             best_path_dist = D
-                            print(f"PATH: {current_path}")
                             self.update_ellipsoid(best_path)
 
                 # visualization(self)
                 # self.i += 1
 
         self.done = True
-
-        print(best_path_dist)
 
         if self.Path:
             return True
@@ -175,6 +173,27 @@ class GuidedSrrtEdge(SRrtEdge):
 
 if __name__ == "__main__":
     p = GuidedSrrtEdge()
+
+    p.change_env(
+        "Evaluation/Maps/3D/main/house_17_3d.json",
+        size=28
+    )
+
+    # visualization(p)
+    # plt.show()
+
+    print("1")
+    p.planning()
+
+    p.change_env(
+        "Evaluation/Maps/3D/main/house_19_3d.json",
+        size=28
+    )
+
+    # visualization(p)
+    # plt.show()
+
+    print("2")
     p.planning()
 
     print(p.Path)

@@ -1,9 +1,7 @@
 import math
 import os
 import sys
-import time
 from matplotlib import pyplot as plt
-import numpy as np
 
 
 sys.path.append(
@@ -11,16 +9,12 @@ sys.path.append(
 )
 
 from rrt_edge3D import RrtEdge, Edge
-from rrt_3D.env3D import env
 from rrt_3D.utils3D import (
     getDist,
     sampleFree,
     steer,
     isCollide,
-    near,
-    nearest,
     visualization,
-    cost,
     path,
 )
 
@@ -85,9 +79,6 @@ class SRrtEdge(RrtEdge):
             return False
 
     def calculate_k(self, edge):
-        """
-        TODO
-        """
         node_1 = edge.node_1
         node_2 = edge.node_2
 
@@ -96,9 +87,6 @@ class SRrtEdge(RrtEdge):
         return min(5, math.ceil(edge_len))
 
     def get_k_partitions(self, k, edge):
-        """
-        TODO
-        """
         x1, y1, z1 = edge.node_1
         x2, y2, z2 = edge.node_2
 
@@ -120,6 +108,6 @@ if __name__ == "__main__":
     p = SRrtEdge()
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/10_3d.json")
     p.run()
-    
+
     visualization(p)
     plt.show()

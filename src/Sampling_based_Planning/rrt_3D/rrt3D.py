@@ -43,7 +43,7 @@ class rrt:
         # self.E = edgeset()
         self.i = 0
         self.maxiter = 10000
-        self.stepsize = 0.5
+        self.stepsize = 5
         self.Path = []
         self.done = False
         self.x0 = tuple(self.env.start)
@@ -64,7 +64,7 @@ class rrt:
         self.dynamic_obs = []
 
         self.replanning_time = []
-    
+
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
         y2 = y1 + height
@@ -111,7 +111,6 @@ class rrt:
         return self.Path
 
     def move(self, path, mps=6):
-        # TODO look at
         """
         Attempts to move the agent forward by a fixed amount of meters per second.
         """
@@ -227,6 +226,19 @@ class rrt:
 
 if __name__ == "__main__":
     p = rrt()
-    starttime = time.time()
-    p.planning()
-    print("time used = " + str(time.time() - starttime))
+
+    p.change_env(
+        "Evaluation/Maps/3D/main/house_17_3d.json",
+    )
+    
+    print("1")
+
+    print(p.planning())
+
+    p.change_env(
+        "Evaluation/Maps/3D/main/house_19_3d.json",
+    )
+    
+    print("2")
+
+    print(p.planning())

@@ -282,7 +282,10 @@ class RrtEdge(rrt):
 
 if __name__ == "__main__":
     p = RrtEdge(5)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json", "Evaluation/Maps/3D/obs.json")
+    p.change_env(
+        "Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json",
+        "Evaluation/Maps/3D/obs.json",
+    )
     starttime = time.time()
     a = p.run()
 

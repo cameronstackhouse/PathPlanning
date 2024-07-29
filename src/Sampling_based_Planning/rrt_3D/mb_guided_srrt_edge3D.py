@@ -31,8 +31,11 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.E = []
         self.V = []
 
-    def change_env(self, map_name, obs_name=None):
-        super().change_env(map_name, obs_name)
+    def change_env(self, map_name, obs_name=None, size=None):
+        super().change_env(map_name, obs_name, size)
+        self.flag = {}
+        self.E = []
+        self.V = []
         self.i = 0
 
     def planning(self):
@@ -106,8 +109,12 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
 if __name__ == "__main__":
     TIME = 5
     p = MbGuidedSrrtEdge(TIME)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/2_3d.json")
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_2_3d.json")
     a = p.planning()
+    
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json")
 
+    p.planning()
+    
     visualization(p)
     plt.show()

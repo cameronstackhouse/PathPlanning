@@ -1,7 +1,9 @@
 import json
+import math
 import sys
 import os
 from threading import Thread
+from scipy.integrate import quad
 import tracemalloc
 
 import numpy as np
@@ -46,7 +48,39 @@ def path_cost(path):
 
 
 def calculate_turn_angle(p_1, p_2, p_3):
-    pass
+    x1, y1, z1 = p_1
+    x2, y2, z2 = p_2
+    x3, y3, z3 = p_3
+
+    A = (x2 - x1, y2 - y1, z2 - z1)
+    B = (x3 - x2, y3 - y2, z3 - z2)
+
+    dot_product = (A[0] * B[0]) + (A[1] * B[1]) + (A[2] * B[2])
+
+    magnitude_a = math.sqrt(A[0] ** 2 + A[1] ** 2 + A[2] ** 2)
+    magnitude_b = math.sqrt(B[0] ** 2 + B[1] ** 2 + B[2] ** 2)
+
+    if magnitude_a * magnitude_b == 0:
+        return 0
+
+    cos_theta = dot_product / (magnitude_a * magnitude_b)
+
+    cos_theta = max(-1, min(1, cos_theta))
+
+    theta_radians = math.acos(cos_theta)
+
+    theta_degrees = math.degrees(theta_radians)
+
+    return theta_degrees
+
+
+def turn_energy(turn_power, degrees, speed):
+    """
+    Calculates the energy consumption of turning given
+    the power required to turn per second, the number of degrees to turn,
+    and the speed of turning of the UAV.
+    """
+    return turn_power * (degrees / speed)
 
 
 def path_energy(path):
@@ -82,6 +116,19 @@ def path_energy(path):
         distance = getDist(p_1, p_2)
         time_uniform = distance / fixed_speed
 
+        energy_acc, _ = quad(integrand_acc, 0, fixed_speed)
+        energy_unform, _ = quad(integrand_dec, 0, fixed_speed)
+        energy_dec = time_uniform * P_v[-1]
+
+        total_energy += energy_acc + energy_unform + energy_dec
+
+        if i < len(path) - 1:
+            p_3 = path[i + 1]
+            angle = calculate_turn_angle(p_1, p_2, p_3)
+            total_energy += turn_energy(TURN_POWER, angle, TURN_SPEED)
+
+    return total_energy
+
 
 def measure_cpu_usage(func, *args, **kwargs):
     """
@@ -110,7 +157,7 @@ def measure_cpu_usage(func, *args, **kwargs):
     return (result, cpu_load)
 
 
-def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
+def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     START = (0, 0)
     END = (0, 0)
 
@@ -120,10 +167,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        AdaptiveAStar(time=5),
+        # AdaptiveAStar(time=5),
         DynamicGuidedSrrtEdge(t=5),
-        AnytimeIRRTTStar(time=5),
-        RrtEdge(time=5),
+        # AnytimeIRRTTStar(time=5),
+        # RrtEdge(time=5),
     ]
 
     results = []
@@ -143,8 +190,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
         for map in map_name_list:
             print(map)
-            algorithm.change_env(map)
-            algorithm.dobs_dir = OBJ_DIR
+
+            if str(map).startswith("src/Evaluation/Maps/3D/main/house_"):
+                algorithm.change_env(map_name=map, obs_name=HOUSE_OBJ_DIR, size=28)
+            else:
+                algorithm.change_env(map, OBJ_DIR)
 
             tracemalloc.start()
 
@@ -193,8 +243,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 def main():
     MAP_DIR = "src/Evaluation/Maps/3D/main/"
     OBJ_DIR = "src/Evaluation/Maps/3D/obs.json"
+    HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/obs.json"
 
-    results = evaluate(MAP_DIR, OBJ_DIR)
+    results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
     save_results(results, "3D Dynamic 5 Seconds")
 
 

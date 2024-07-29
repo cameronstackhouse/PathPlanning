@@ -5,7 +5,13 @@ import time
 
 import numpy as np
 import matplotlib.pyplot as plt
+import warnings
 
+warnings.filterwarnings(
+    "ignore",
+    category=RuntimeWarning,
+    message="invalid value encountered in double_scalars",
+)
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -19,6 +25,14 @@ from rrt_3D.mb_guided_srrt_edge3D import MbGuidedSrrtEdge
 class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def __init__(self, t=1.0, m=10000):
         super().__init__(t, m)
+        self.maxiter = float("inf")
+        self.replan_time = []
+        self.flag = {}
+        self.E = []
+        self.V = []
+
+    def change_env(self, map_name, obs_name=None, size=None):
+        super().change_env(map_name, obs_name, size)
 
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
@@ -151,6 +165,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def run(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
+        self.dynamic_obs = []
 
         start_time = time.time()
         path = self.planning()
@@ -176,14 +191,18 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                 self.move_dynamic_obs()
                 new_coords = self.move(path)
                 if new_coords[0] is None:
+                    replan_time = time.time()
                     if not self.reconnect(path):
                         new_path = self.regrow()
+                        self.replan_time.append(time.time() - replan_time)
                         if not new_path:
                             self.agent_positions.append(tuple(self.agent_pos))
                             return False
                         else:
                             self.current_index = 0
                             path = new_path
+                    else:
+                        self.replan_time.append(time.time() - replan_time)
 
                     self.agent_positions.append(tuple(self.agent_pos))
 
@@ -200,9 +219,19 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
-    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json")
+    rrt.change_env(
+        "Evaluation/Maps/3D/main/house_17_3d.json",
+        "Evaluation/Maps/3D/obs.json",
+        size=28,
+    )
 
-    # "Evaluation/Maps/3D/obs.json"
+    res = rrt.run()
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/house_19_3d.json",
+        obs_name="Evaluation/Maps/3D/obs.json",
+        size=28,
+    )
 
     res = rrt.run()
 
