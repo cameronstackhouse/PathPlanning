@@ -231,7 +231,6 @@ class RrtEdge(Rrt):
         """
         Attempts to run the algorithm to intitially find a global path and
         then traverse the environment while avoiding dynamic objects.
-        TODO.
         """
         self.initial_start = self.s_start
         self.start_rect = copy.deepcopy(self.env.obs_rectangle)
@@ -253,11 +252,12 @@ class RrtEdge(Rrt):
             current = global_path[self.current_index]
             GOAL = global_path[-1]
 
+            self.agent_positions.append(tuple(self.agent_pos))
+
             current = np.array(current)
             GOAL = np.array(GOAL)
             # While the final node has not been reached
             while not np.array_equal(current, GOAL):
-                current = global_path[self.current_index]
                 self.update_object_positions()
                 new_coords = self.move(global_path, self.speed)
 

@@ -18,8 +18,6 @@ from rrt_3D.utils3D import (
     steer,
     isCollide,
     nearest,
-    visualization,
-    path,
 )
 
 
@@ -39,6 +37,7 @@ class RrtEdge(rrt):
         self.E = []
         self.stepsize = float("inf")
         self.flag = {}
+        self.total_time = None
 
         self.initial_path = None
         self.time = time
@@ -88,15 +87,11 @@ class RrtEdge(rrt):
                         best_path = new_path
                         best_path_dist = D
 
-                # visualization(self)
                 self.i += 1
             self.ind += 1
         self.done = True
 
         self.Path = best_path
-
-        # visualization(self)
-        # plt.show()
 
         return self.Path
 
@@ -291,6 +286,7 @@ class RrtEdge(rrt):
                     self.distance_travelled += getDist(prev_coords, new_coords)
                     prev_coords = new_coords
 
+            self.total_time = time.time() - start_time
             return self.agent_positions
         else:
             return None
@@ -298,7 +294,7 @@ class RrtEdge(rrt):
 
 if __name__ == "__main__":
     p = RrtEdge(5)
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/13_3d.json")
+    p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json")
     starttime = time.time()
     a = p.run()
 

@@ -456,7 +456,6 @@ class Rrt:
         """
         Attempts to run the algorithm to intitially find a global path and
         then traverse the environment while avoiding dynamic objects.
-        TODO.
         """
         global_path = self.planning()[::-1]
         self.initial_path = global_path
