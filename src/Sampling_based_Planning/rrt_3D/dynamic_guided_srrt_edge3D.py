@@ -44,18 +44,21 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         return (x1, y1, z1, x2, y2, z2)
 
     def move(self, path, mps=6):
-        if self.current_index >= len(path) - 1:
-            return self.xt
+        if self.current_index >= len(path):
+            return self.agent_pos
 
         current = self.agent_pos
-        next = path[self.current_index][1]
 
-        seg_distance = getDist(current, next)
+        current_segment = path[self.current_index]
+
+        next_pos = current_segment[1]
+
+        seg_distance = getDist(current, next_pos)
 
         direction = (
-            (next[0] - current[0]) / seg_distance,
-            (next[1] - current[1]) / seg_distance,
-            (next[2] - current[2]) / seg_distance,
+            (next_pos[0] - current[0]) / seg_distance,
+            (next_pos[1] - current[1]) / seg_distance,
+            (next_pos[2] - current[2]) / seg_distance,
         )
 
         new_pos = (
@@ -65,9 +68,9 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         )
 
         if getDist(current, new_pos) >= seg_distance:
-            self.agent_pos = next
+            self.agent_pos = next_pos
             self.current_index += 1
-            return next
+            return next_pos
 
         future_uav_positions = []
         PREDICTION_HORIZON = 3
@@ -98,7 +101,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                         return [None, None, None]
 
                     dynamic_object.current_pos = original_pos
-
+        self.agent_pos = new_pos
         return new_pos
 
     def regrow(self):
@@ -237,7 +240,7 @@ if __name__ == "__main__":
     # print(res)
 
     rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_9_3d.json",
+        map_name="Evaluation/Maps/3D/main/block_13_3d.json",
         obs_name="Evaluation/Maps/3D/block_obs.json",
         size=100,
     )
