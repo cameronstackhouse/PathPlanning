@@ -49,8 +49,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         current = self.agent_pos
         next = path[self.current_index][1]
-        
-        print(f"NEXT: {next}")
 
         seg_distance = getDist(current, next)
 
