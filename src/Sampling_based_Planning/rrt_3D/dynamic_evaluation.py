@@ -169,6 +169,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     algorithms = [
         # AdaptiveAStar(time=5),
         DynamicGuidedSrrtEdge(t=5),
+        DynamicGuidedSrrtEdge(t=10),
+        DynamicGuidedSrrtEdge(t=20),
+        DynamicGuidedSrrtEdge(t=30),
         # AnytimeIRRTTStar(time=5),
         # RrtEdge(time=5),
     ]
@@ -242,11 +245,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
 def main():
     MAP_DIR = "src/Evaluation/Maps/3D/main/"
-    OBJ_DIR = "src/Evaluation/Maps/3D/obs.json"
-    HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/obs.json"
+    OBJ_DIR = "src/Evaluation/Maps/3D/block_obs.json"
+    HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "3D Dynamic 5 Seconds")
+    save_results(results, "3D Dynamic SRRT-Edge.json")
 
 
 if __name__ == "__main__":

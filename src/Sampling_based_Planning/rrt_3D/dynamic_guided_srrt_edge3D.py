@@ -30,6 +30,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.flag = {}
         self.E = []
         self.V = []
+        self.name = f"SRRT-Edge: {t}"
 
     def change_env(self, map_name, obs_name=None, size=None):
         super().change_env(map_name, obs_name, size)
@@ -114,7 +115,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         if result:
             self.current_index = 0
-            return self.Path
+            return result[::-1]
         else:
             return None
 
@@ -122,7 +123,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         current_pos = self.agent_pos
         goal_pos = path[self.current_index + 1]
 
-        time_steps = int(self.time)
+        time_steps = int(round(self.t))
 
         for t in range(1, time_steps + 1):
             collision_detected = False
