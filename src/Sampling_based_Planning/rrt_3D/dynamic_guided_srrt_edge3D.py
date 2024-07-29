@@ -179,9 +179,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.dynamic_obs = []
 
         start_time = time.time()
-        print("initial planning")
         path = self.planning()
-        print("finish initial planning")
         start_time = time.time() - start_time
 
         if self.dobs_dir:
@@ -204,28 +202,28 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             same_counter = 0
 
             while tuple(self.agent_pos) != tuple(goal):
-                print(f"current pos: {self.agent_pos}")
                 if same_counter == 20:
                     return None
+
+                for dynam_obj in self.dynamic_obs:
+                    if self.in_dynamic_obj(tuple(self.agent_pos), dynam_obj):
+                        return None
 
                 self.move_dynamic_obs()
                 new_coords = self.move(path)
                 if new_coords[0] is None:
                     replan_time = time.time()
                     if not self.reconnect(path):
-                        print("regrowing")
                         new_path = self.regrow()
                         self.replan_time.append(time.time() - replan_time)
                         if not new_path:
                             self.agent_positions.append(tuple(self.agent_pos))
                             return None
                         else:
-                            print("regrow successful")
                             self.current_index = 0
                             same_counter += 1
                             path = new_path
                     else:
-                        print("reconnect successful")
                         self.replan_time.append(time.time() - replan_time)
 
                     same_counter += 1
@@ -243,7 +241,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
                     prev = current
 
-            print(f"final path: {self.agent_positions}")
             return self.agent_positions
 
         else:
@@ -262,9 +259,33 @@ if __name__ == "__main__":
     # print(res)
 
     rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_13_3d.json",
+        map_name="Evaluation/Maps/3D/main/block_20_3d.json",
         obs_name="Evaluation/Maps/3D/block_obs.json",
-        size=100,
+    )
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_10_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_15_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_2_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_5_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_20_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
     )
 
     res = rrt.run()
