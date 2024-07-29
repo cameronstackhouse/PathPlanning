@@ -34,6 +34,8 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
     def change_env(self, map_name, obs_name=None, size=None):
         super().change_env(map_name, obs_name, size)
+        self.agent_positions = []
+        self.current_index = 0
 
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
@@ -121,6 +123,10 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
     def reconnect(self, path):
         current_pos = self.agent_pos
+
+        if self.current_index + 1 >= len(path):
+            return False
+
         goal_pos = path[self.current_index + 1]
 
         time_steps = int(round(self.t))
@@ -166,6 +172,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
     def run(self):
         self.x0 = tuple(self.env.start)
         self.xt = tuple(self.env.goal)
+        
         self.dynamic_obs = []
 
         start_time = time.time()
@@ -222,15 +229,16 @@ if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
     rrt.change_env(
         "Evaluation/Maps/3D/main/house_17_3d.json",
-        "Evaluation/Maps/3D/obs.json",
         size=28,
     )
 
     res = rrt.run()
+    
+    print(res)
+
 
     rrt.change_env(
         map_name="Evaluation/Maps/3D/main/house_19_3d.json",
-        obs_name="Evaluation/Maps/3D/obs.json",
         size=28,
     )
 
