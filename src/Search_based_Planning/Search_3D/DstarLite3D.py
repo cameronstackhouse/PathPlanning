@@ -212,6 +212,7 @@ class D_star_Lite(object):
                 self.UpdateVertex(s)
             # visualization(self)
             self.ind += 1
+        return self.path()
 
     def change_env(self, map_name, obs_name=None):
         """
@@ -467,35 +468,58 @@ class D_star_Lite(object):
 
         return self.agent_pos
 
-    def run(self):
-        # TODO make sure works
-        self.agent_pos = self.x0
-        self.ComputeShortestPath()
-        self.Path = self.path(self.x0)
-        t = 0
-        self.V = set()
-        while self.agent_pos != self.xt:
-            self.env.start = self.x0
-            self.move_dynamic_obs()
-            self.move(self.Path)
-            self.agent_positions.append(self.agent_pos)
+    def update_costs(self):
+        current_pos = self.agent_pos
+        SIGHT = 3
+        
+        # TODO
 
-            t += 1
+    def run(self):
+        start_time = time.time()
+        path = self.ComputeShortestPath()
+        end_time = time.time() - start_time
+        self.compute_time = end_time
+
+        self.initial_path = path
+
+        if self.dobs_dir:
+            self.set_dynamic_obs(self.dobs_dir)
+
+        start_time = time.time()
+
+        if path:
+            GOAL = self.xt
+
+            while tuple(self.agent_pos) != tuple(GOAL):
+                print(self.agent_pos)
+                self.move_dynamic_obs()
+                path = self.update_costs()
+
+                if path is None:
+                    return None
+
+                self.move(path)
+                self.agent_positions.append(self.agent_pos)
+
+                self.x0 = self.agent_pos
+        else:
+            return None
 
 
 if __name__ == "__main__":
 
     D_lite = D_star_Lite(1)
-    # TODO Error with map 5!!
+    # TODO Error with map 5!! CHECK FOR QUEUE LENGTH!
     a = time.time()
-    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/19_3d.json")
+    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/block_4_3d.json")
     # D_lite.run()
     # print("used time (s) is " + str(time.time() - a))
 
-    D_lite.ComputeShortestPath()
-    path = D_lite.path()
+    path = D_lite.run()
 
-    print(time.time() - a)
+    print(path)
 
-    D_lite.visualise(path)
+    # print(time.time() - a)
+
+    # D_lite.visualise(path)
     # print(path)

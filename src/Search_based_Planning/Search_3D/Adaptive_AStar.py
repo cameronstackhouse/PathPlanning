@@ -150,7 +150,7 @@ class AdaptiveAStar(Weighted_A_star):
             #         leaf.z + leaf.depth // 2,
             #     )
             #     self.leaf_nodes[center] = leaf
-            
+
             self.octree = None
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
@@ -464,6 +464,7 @@ class AdaptiveAStar(Weighted_A_star):
                             affected_leafs.add(leaf_containing_point)
 
         if dynamic_obj_in_sight:
+            replan_time = time.time()
             for leaf in affected_leafs:
                 leaf.clear()
                 self.octree.partition(leaf)
@@ -500,8 +501,12 @@ class AdaptiveAStar(Weighted_A_star):
             if path:
                 path = path[::-1]
             else:
+                replan_time = time.time() - replan_time
+                self.replan_time.append(replan_time)
                 return None
 
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
             self.current_index = 0
 
         return path
@@ -519,15 +524,14 @@ class AdaptiveAStar(Weighted_A_star):
             self.set_dynamic_obs(self.dobs_dir)
 
         if path:
-            traversal_time = time.time()
             path = path[::-1]
             self.agent_pos = self.env.start
             self.agent_positions.append(tuple(self.agent_pos))
 
             self.initial_path = path
 
+            traversal_time = time.time()
             while tuple(self.agent_pos) != tuple(self.env.goal):
-                print(self.agent_pos)
                 self.move_dynamic_obs()
                 path = self.replan(path)
 
@@ -559,16 +563,16 @@ if __name__ == "__main__":
 
     astar.visualise()
 
-    #path = astar.compute_path()
-    
-   #print(path)
+    # path = astar.compute_path()
 
-    # if path:
-    #     path = path[::-1]
+# print(path)
 
-    # print(path)
-    # # # path = astar.run()
+# if path:
+#     path = path[::-1]
 
-    # # # print(path)
+# print(path)
+# # # path = astar.run()
 
-    # astar.visualise(path)
+# # # print(path)
+
+# astar.visualise(path)

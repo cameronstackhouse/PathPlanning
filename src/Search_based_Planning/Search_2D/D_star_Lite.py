@@ -383,10 +383,10 @@ class DStar:
     def update_object_positions(self):
         self.Env.dynamic_obs_cells = set()
         for i, object in enumerate(self.dynamic_objects):
-            #prev_pos = object.current_pos
+            # prev_pos = object.current_pos
             new_pos = object.update_pos()
 
-            #new_pos = prev_pos
+            # new_pos = prev_pos
 
             object.old_pos = object.current_pos
             object.current_pos = new_pos

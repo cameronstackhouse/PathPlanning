@@ -71,10 +71,7 @@ class AdaptiveAStar(AStar):
     def update_object_positions(self):
         self.Env.dynamic_obs_cells = set()
         for i, object in enumerate(self.dynamic_objects):
-            prev_pos = object.current_pos
             new_pos = object.update_pos()
-
-            # new_pos = prev_pos
 
             object.old_pos = object.current_pos
             object.current_pos = new_pos
@@ -296,6 +293,8 @@ class AdaptiveAStar(AStar):
                 path = self.replan(path)
 
                 if path is None:
+                    traversal_time = time.time() - traversal_time
+                    self.total_time = traversal_time
                     return None
 
                 self.agent_pos = self.move(path)
