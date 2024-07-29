@@ -165,7 +165,6 @@ class RrtEdge(rrt):
             print("Error, can't plot empty path")
 
     def move(self, path, mps=6):
-        # TODO add in future check for future object positions!
         if self.current_index >= len(path) - 1:
             return self.xt
 
@@ -187,52 +186,41 @@ class RrtEdge(rrt):
         )
 
         if getDist(current, new_pos) >= seg_distance:
-            v1 = np.array(next) - np.array(current)
-            v2 = np.array(new_pos) - np.array(next)
-            dot_product = np.dot(v1, v2)
+            self.agent_pos = next
+            self.current_index += 1
+            return next
 
-            mag_v1 = np.linalg.norm(v1)
-            mag_v2 = np.linalg.norm(v2)
+        future_uav_positions = []
+        PREDICTION_HORIZON = 4
+        for t in range(1, PREDICTION_HORIZON):
+            future_pos = (
+                current[0] + direction[0] * mps * t,
+                current[1] + direction[1] * mps * t,
+                current[2] + direction[2] * mps * t,
+            )
 
-            same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
+            if getDist(current, future_pos) >= seg_distance:
+                break
 
-            if same_dir:
-                # Move the agent far forward without turning
-                self.current_index += 1
-                count = 0
-                while self.current_index < len(path) - 1:
-                    next = path[self.current_index + 1][1]
+            future_uav_positions.append(future_pos)
 
-                    seg_distance = getDist(current, next)
-                    direction = (
-                        (next[0] - current[0]) / seg_distance,
-                        (next[1] - current[1]) / seg_distance,
-                        (next[2] - current[2]) / seg_distance,
-                    )
-                    new_pos = (
-                        current[0] + direction[0] * mps,
-                        current[1] + direction[1] * mps,
-                        current[2] + direction[2] * mps,
-                    )
-                    v1 = np.array(next) - np.array(current)
-                    v2 = np.array(new_pos) - np.array(next)
-                    dot_product = np.dot(v1, v2)
-                    mag_v1 = np.linalg.norm(v1)
-                    mag_v2 = np.linalg.norm(v2)
-                    same_dir = np.isclose(dot_product, mag_v1 * mag_v2)
-                    if not same_dir or count >= mps - 1:
-                        break
-                    current = next
-                    self.agent_pos = current
-                    self.current_index += 1
-                    count += 1
-            else:
-                self.agent_pos = next
-                self.current_index += 1
-        else:
-            self.agent_pos = new_pos
+        for future_pos in future_uav_positions:
+            for dynamic_object in self.dynamic_obs:
+                dynamic_future_pos = dynamic_object.predict_future_positions(
+                    PREDICTION_HORIZON
+                )
 
-        return self.agent_pos
+                for pos in dynamic_future_pos:
+                    original_pos = dynamic_object.current_pos
+                    dynamic_object.current_pos = pos
+
+                    if self.in_dynamic_obj(future_pos, dynamic_object):
+                        dynamic_object.current_pos = original_pos
+                        return [None, None, None]
+
+                    dynamic_object.current_pos = original_pos
+
+        return new_pos
 
     def run(self):
         self.x0 = tuple(self.env.start)
