@@ -179,7 +179,9 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         self.dynamic_obs = []
 
         start_time = time.time()
+        print("initial planning")
         path = self.planning()
+        print("finish initial planning")
         start_time = time.time() - start_time
 
         if self.dobs_dir:
@@ -241,6 +243,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
                     prev = current
 
+            print(f"final path: {self.agent_positions}")
             return self.agent_positions
 
         else:
