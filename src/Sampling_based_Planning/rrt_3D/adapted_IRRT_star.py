@@ -36,6 +36,12 @@ class AnytimeIRRTTStar(IRRT):
             and (z0 <= z <= z0 + depth)
         )
 
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x1, y1, z1, x2, y2, z2)
+
     def change_env(self, map_name, obs_name=None, size=100):
         data = None
         with open(map_name) as f:
@@ -301,8 +307,12 @@ class AnytimeIRRTTStar(IRRT):
 
 
 if __name__ == "__main__":
-    rrt = AnytimeIRRTTStar(time=5)
-    rrt.change_env("Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json", size=28)
+    rrt = AnytimeIRRTTStar(time=1)
+    rrt.change_env(
+        "Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json",
+        "Evaluation/Maps/3D/obs.json",
+        size=100,
+    )
 
     path = rrt.run()
 

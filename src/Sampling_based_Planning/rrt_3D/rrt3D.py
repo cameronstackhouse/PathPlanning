@@ -64,6 +64,12 @@ class rrt:
         self.dynamic_obs = []
 
         self.replanning_time = []
+    
+    def corner_coords(self, x1, y1, z1, width, height, depth):
+        x2 = x1 + width
+        y2 = y1 + height
+        z2 = z1 + depth
+        return (x1, y1, z1, x2, y2, z2)
 
     def in_dynamic_obj(self, pos, obj):
         x, y, z = pos
@@ -167,7 +173,7 @@ class rrt:
 
         return new_pos
 
-    def change_env(self, map_name, obs_name=None):
+    def change_env(self, map_name, obs_name=None, size=None):
         data = None
         with open(map_name) as f:
             data = json.load(f)
@@ -179,7 +185,10 @@ class rrt:
             self.Path = []
             self.Parent = {}
 
-            self.env = CustomEnv(data)
+            if size:
+                self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
+            else:
+                self.env = CustomEnv(data)
 
             self.x0 = tuple(self.env.start)
             self.xt = tuple(self.env.goal)

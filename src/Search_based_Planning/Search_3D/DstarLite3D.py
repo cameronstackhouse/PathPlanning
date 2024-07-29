@@ -379,7 +379,9 @@ class D_star_Lite(object):
 
         plt.show()
 
-    def move_dynamic_obs(self):
+    def move_dynamic_obs(self, path):
+        # TODO record replanning in here
+        # TODO maybe update sight here too!
         changed = None
         for obj in self.dynamic_obs:
             old, new = self.env.move_block(
@@ -397,7 +399,11 @@ class D_star_Lite(object):
                 self.UpdateVertex(u)
             self.ComputeShortestPath()
 
-            self.Path = self.path(self.x0)
+            self.Path = self.path(self.agent_pos)
+            self.current_index = 0
+            return self.Path
+        else:
+            return path
 
     def move(self, path, mps=6):
         if self.current_index >= len(path) - 1:
@@ -468,12 +474,6 @@ class D_star_Lite(object):
 
         return self.agent_pos
 
-    def update_costs(self):
-        current_pos = self.agent_pos
-        SIGHT = 3
-        
-        # TODO
-
     def run(self):
         start_time = time.time()
         path = self.ComputeShortestPath()
@@ -492,13 +492,12 @@ class D_star_Lite(object):
 
             while tuple(self.agent_pos) != tuple(GOAL):
                 print(self.agent_pos)
-                self.move_dynamic_obs()
-                path = self.update_costs()
+                path = self.move_dynamic_obs(path)
+                self.move(path)
 
-                if path is None:
+                if self.agent_pos in self.env.dynamic_obs_cells:
                     return None
 
-                self.move(path)
                 self.agent_positions.append(self.agent_pos)
 
                 self.x0 = self.agent_pos
