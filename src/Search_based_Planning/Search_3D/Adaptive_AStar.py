@@ -1,5 +1,4 @@
 import json
-import queue
 import time
 
 from matplotlib import pyplot as plt
@@ -10,6 +9,7 @@ from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
 from Search_3D.plot_util3D import visualization
 from Search_3D.DynamicObj import DynamicObj
+from Search_3D.queue import MinheapPQ
 
 
 class AdaptiveAStar(Weighted_A_star):
@@ -50,14 +50,17 @@ class AdaptiveAStar(Weighted_A_star):
         self.time_steps = 0
         self.total_time = 0
         self.compute_time = 0
+        self.replan_time = []
 
         self.time = time
+
+        self.settings = "CollisionChecking"
 
     def plot_traversal(self):
         # TODO
         pass
 
-    def visualise(self, path):
+    def visualise(self, path=None):
         fig = plt.figure()
         ax = fig.add_subplot(111, projection="3d")
 
@@ -74,18 +77,20 @@ class AdaptiveAStar(Weighted_A_star):
             ax.bar3d(x, y, z, dx, dy, dz, color="r", alpha=0.5)
 
         # Plot the path
-        path_points = np.array([point[0] for point in path])
-        # print(f"path: {path}")
-        path_points = np.vstack([path_points, self.env.goal])
 
-        # print(f"path points: {path_points}")
-        ax.plot(
-            path_points[:, 0],
-            path_points[:, 1],
-            path_points[:, 2],
-            color="g",
-            marker="o",
-        )
+        if path:
+            path_points = np.array([point[0] for point in path])
+            # print(f"path: {path}")
+            path_points = np.vstack([path_points, self.env.goal])
+
+            # print(f"path points: {path_points}")
+            ax.plot(
+                path_points[:, 0],
+                path_points[:, 1],
+                path_points[:, 2],
+                color="g",
+                marker="o",
+            )
 
         ax.scatter(
             self.env.start[0],
@@ -108,7 +113,7 @@ class AdaptiveAStar(Weighted_A_star):
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
         ax.set_zlabel("Z")
-        ax.set_title("Adatptive A* Path visualisation")
+        ax.set_title("Adaptive A* Path visualisation")
         ax.legend()
 
         plt.show()
@@ -119,7 +124,7 @@ class AdaptiveAStar(Weighted_A_star):
         z2 = z1 + depth
         return (x1, y1, z1, x2, y2, z2)
 
-    def change_env(self, map_name, obs_name=None):
+    def change_env(self, map_name, obs_name=None, size=None):
         self.dobs_dir = obs_name
         data = None
         with open(map_name) as f:
@@ -130,7 +135,10 @@ class AdaptiveAStar(Weighted_A_star):
             self.agent_pos = None
             self.dynamic_obs = []
 
-            self.env = CustomEnv(data)
+            if size:
+                self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
+            else:
+                self.env = CustomEnv(data)
             self.octree = Octree(self.env)
 
             self.leaf_nodes = {}
@@ -152,7 +160,7 @@ class AdaptiveAStar(Weighted_A_star):
             self.Path = []
             self.ind = 0
             self.x0, self.xt = self.start, self.goal
-            self.OPEN = queue.MinheapPQ()
+            self.OPEN = MinheapPQ()
             self.OPEN.put(self.x0, self.g[self.x0] + heuristic_fun(self, self.x0))
             self.lastpoint = self.x0
 
@@ -230,7 +238,7 @@ class AdaptiveAStar(Weighted_A_star):
                         or any([isinbound(i, neighbor_center) for i in self.env.blocks])
                     )
 
-                    if not in_obj and isinbound(self.env.boundary, neighbor_center):
+                    if not in_obj:
                         allchild.append(neighbor_center)
                         distance = np.linalg.norm(
                             np.array(current_center) - np.array(neighbor_center)
@@ -480,7 +488,7 @@ class AdaptiveAStar(Weighted_A_star):
             self.Path = []
             self.ind = 0
             self.x0 = self.start
-            self.OPEN = queue.MinheapPQ()
+            self.OPEN = MinheapPQ()
             self.OPEN.put(self.x0, self.g[self.x0] + heuristic_fun(self, self.x0))
             self.lastpoint = self.x0
 
@@ -538,17 +546,24 @@ class AdaptiveAStar(Weighted_A_star):
 
 if __name__ == "__main__":
     astar = AdaptiveAStar()
-    # Check with this, going through objects
     astar.change_env(
-        "Evaluation/Maps/3D/house_25_3d/0_3d.json", "Evaluation/Maps/3D/obs.json"
+        "Evaluation/Maps/3D/house_25_3d/house_17_3d.json",
+        "Evaluation/Maps/3D/obs.json",
+        size=28,
     )
 
-    # path = astar.compute_path()
+    # astar.octree.visualize()
 
-    path = astar.run()
+    # astar.visualise()
+
+    path = astar.compute_path()
+    
+    if path:
+        path = path[::-1]
 
     print(path)
+    # path = astar.run()
 
-    # if path:
-    #     # path = path[::-1]
-    #     astar.visualise(path)
+    # print(path)
+
+    astar.visualise(path)

@@ -106,6 +106,24 @@ class aabb(object):
         ]  # extents
         self.O = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
+    def contains_point(self, point):
+        min_x, min_y, min_z = (
+            self.P[0] - self.E[0],
+            self.P[1] - self.E[1],
+            self.P[2] - self.E[2],
+        )
+        max_x, max_y, max_z = (
+            self.P[0] + self.E[0],
+            self.P[1] + self.E[1],
+            self.P[2] + self.E[2],
+        )
+
+        return (
+            min_x <= point[0] <= max_x
+            and min_y <= point[1] <= max_y
+            and min_z <= point[2] <= max_z
+        )
+
 
 class obb(object):
     # P: center point

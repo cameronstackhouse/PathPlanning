@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from Search_2D.Astar import AStar
+from Astar import AStar
 from Search_2D.Quadtree import QuadTree
 from Search_2D.plotting import DynamicPlotting
 
@@ -316,6 +316,8 @@ if __name__ == "__main__":
         "Evaluation/Maps/2D/main/house_14.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
+
+    # s.quadtree.visualize()
 
     path = s.run()
 

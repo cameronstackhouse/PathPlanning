@@ -10,7 +10,7 @@ import math
 import heapq
 import time
 
-from Search_2D.DynamicObj import DynamicObj
+from DynamicObj import DynamicObj
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
@@ -193,6 +193,7 @@ class AStar:
         return [(s[0] + u[0], s[1] + u[1]) for u in self.u_set]
 
     def cost(self, s_start, s_goal):
+        # NOTE, uses this for not expanding into neighbours!
         """
         Calculate Cost for this motion
         :param s_start: starting node

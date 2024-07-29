@@ -45,6 +45,13 @@ class TreeNode:
             and self.eight is None
         )
 
+    def is_within_block(self, block, x, y, z):
+        return (
+            block[0] <= x <= block[3]
+            and block[1] <= y <= block[4]
+            and block[2] <= z <= block[5]
+        )
+
     def is_uniform(self):
         def is_within_block(block, x, y, z):
             return (
@@ -265,7 +272,26 @@ class Octree:
         ax.set_zlim([0, self.root.depth])
 
         for leaf in self.leafs:
-            self._draw_cube(ax, leaf)
+            colour = None
+            if leaf.contains_point(self.env.start):
+                colour = "blue"
+                print("HERE")
+            elif leaf.contains_point(self.env.goal):
+                print("GOAL")
+                colour = "red"
+            elif leaf.is_uniform():
+                colour = (
+                    "black"
+                    if any(
+                        leaf.is_within_block(block, leaf.x, leaf.y, leaf.z)
+                        for block in self.env.blocks
+                    )
+                    else "white"
+                )
+            else:
+                colour = "white"
+
+            self._draw_cube(ax, leaf, colour)
 
         if path is not None:
             path_points = [point[0] for point in path] + [path[-1][1]]
@@ -288,22 +314,22 @@ class Octree:
                 marker="o",
             )
 
-            ax.scatter(
-                self.env.start[0],
-                self.env.start[1],
-                self.env.start[2],
-                color="g",
-                s=100,
-                label="Start",
-            )
-            ax.scatter(
-                self.env.goal[0],
-                self.env.goal[1],
-                self.env.goal[2],
-                color="r",
-                s=100,
-                label="Goal",
-            )
+            # ax.scatter(
+            #     self.env.start[0],
+            #     self.env.start[1],
+            #     self.env.start[2],
+            #     color="g",
+            #     s=100,
+            #     label="Start",
+            # )
+            # ax.scatter(
+            #     self.env.goal[0],
+            #     self.env.goal[1],
+            #     self.env.goal[2],
+            #     color="r",
+            #     s=100,
+            #     label="Goal",
+            # )
 
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
@@ -313,7 +339,7 @@ class Octree:
 
         plt.show()
 
-    def _draw_cube(self, ax, node):
+    def _draw_cube(self, ax, node, colour="white"):
         x, y, z = node.x, node.y, node.z
         dx, dy, dz = node.width, node.height, node.depth
         vertices = [
@@ -336,6 +362,6 @@ class Octree:
         ]
         ax.add_collection3d(
             Poly3DCollection(
-                faces, facecolors="white", linewidths=1, edgecolors="r", alpha=0.25
+                faces, facecolors=colour, linewidths=1, edgecolors="b", alpha=0.05
             )
         )
