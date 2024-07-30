@@ -3,7 +3,7 @@ import time
 
 from matplotlib import pyplot as plt
 import numpy as np
-from Search_3D.Astar3D import Weighted_A_star
+from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
@@ -40,7 +40,7 @@ class AdaptiveAStar(Weighted_A_star):
         self.leaf_nodes = {}
 
         self.speed = 6
-        self.name = "Adaptive A*"
+        self.name = f"Adaptive A*: {time}"
         self.dynamic_obs = []
         self.agent_positions = []
         self.agent_pos = None
@@ -140,18 +140,16 @@ class AdaptiveAStar(Weighted_A_star):
             else:
                 self.env = CustomEnv(data)
 
-            # self.octree = Octree(self.env)
+            self.octree = Octree(self.env)
 
-            # self.leaf_nodes = {}
-            # for leaf in self.octree.leafs:
-            #     center = (
-            #         leaf.x + leaf.width // 2,
-            #         leaf.y + leaf.height // 2,
-            #         leaf.z + leaf.depth // 2,
-            #     )
-            #     self.leaf_nodes[center] = leaf
-
-            self.octree = None
+            self.leaf_nodes = {}
+            for leaf in self.octree.leafs:
+                center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+                self.leaf_nodes[center] = leaf
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
@@ -554,16 +552,15 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     astar.change_env(
-        "Evaluation/Maps/3D/house_25_3d/24_3d.json",
-        "Evaluation/Maps/3D/obs.json",
-        size=28,
+        "Evaluation/Maps/3D/main/block_24_3d.json",
+        "Evaluation/Maps/3D/block_obs.json",
     )
 
     # astar.octree.visualize()
 
-    astar.visualise()
+    # astar.visualise()
 
-    # path = astar.compute_path()
+    path = astar.run()
 
 # print(path)
 

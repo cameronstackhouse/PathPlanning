@@ -178,11 +178,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        # AdaptiveAStar(time=5),
+        AdaptiveAStar(),
         # DynamicGuidedSrrtEdge(t=5),
-        DynamicGuidedSrrtEdge(t=1),
-        RrtEdge(time=1),
-        AnytimeIRRTTStar(time=1),
+        # DynamicGuidedSrrtEdge(t=1),
+        # RrtEdge(time=1),
+        # AnytimeIRRTTStar(time=1),
     ]
 
     results = []
@@ -258,7 +258,7 @@ def main():
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "3D Sampling based one second.json")
+    save_results(results, "3D AD A* Unbonded.json")
 
 
 if __name__ == "__main__":
