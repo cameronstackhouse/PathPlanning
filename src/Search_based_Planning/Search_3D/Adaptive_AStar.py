@@ -481,7 +481,7 @@ class AdaptiveAStar(Weighted_A_star):
             self.leaf_nodes[tuple(self.agent_pos)] = self.octree.get(self.agent_pos)
 
             # Replan
-            self.start = self.agent_pos
+            self.start = tuple(self.agent_pos)
             self.g = {self.start: 0, self.goal: np.inf}
             self.Parent = {}
             self.CLOSED = set()
