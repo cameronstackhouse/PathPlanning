@@ -183,6 +183,7 @@ class rrt:
             self.done = False
             self.Path = []
             self.Parent = {}
+            self.current_index = 0
 
             if size:
                 self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
@@ -230,7 +231,7 @@ if __name__ == "__main__":
     p.change_env(
         "Evaluation/Maps/3D/main/house_17_3d.json",
     )
-    
+
     print("1")
 
     print(p.planning())
@@ -238,7 +239,7 @@ if __name__ == "__main__":
     p.change_env(
         "Evaluation/Maps/3D/main/house_19_3d.json",
     )
-    
+
     print("2")
 
     print(p.planning())

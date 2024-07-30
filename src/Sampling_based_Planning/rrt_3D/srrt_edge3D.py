@@ -106,8 +106,15 @@ class SRrtEdge(RrtEdge):
 
 if __name__ == "__main__":
     p = SRrtEdge()
-    p.change_env("Evaluation/Maps/3D/block_map_25_3d/10_3d.json")
-    p.run()
+    p.change_env(
+        "Evaluation/Maps/3D/main/block_19_3d.json",
+        obs_name="src/Evaluation/Maps/3D/block_obs.json"
+    )
+    res = p.run()
 
-    visualization(p)
-    plt.show()
+    print(res)
+    
+    p.change_env(
+        "Evaluation/Maps/3D/main/block_8_3d.json",
+        obs_name="src/Evaluation/Maps/3D/block_obs.json"
+    )

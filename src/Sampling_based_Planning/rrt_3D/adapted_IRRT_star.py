@@ -53,6 +53,7 @@ class AnytimeIRRTTStar(IRRT):
             self.Path = []
             self.Parent = {}
             self.ind = 0
+            self.current_index = 0
 
             self.env = CustomEnv(data, zmax=size, xmax=size, ymax=size)
 
@@ -313,11 +314,18 @@ class AnytimeIRRTTStar(IRRT):
 if __name__ == "__main__":
     rrt = AnytimeIRRTTStar(time=1)
     rrt.change_env(
-        "Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json",
-        "Evaluation/Maps/3D/obs.json",
-        size=100,
+        "Evaluation/Maps/3D/main/block_19_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
     )
+    res = rrt.run()
 
-    path = rrt.run()
+    print(res)
 
-    print(path)
+    rrt.change_env(
+        "Evaluation/Maps/3D/main/block_8_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+    
+    res = rrt.run()
+    
+    print(res)
