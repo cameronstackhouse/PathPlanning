@@ -194,8 +194,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         self.agent_positions.append(tuple(self.x0))
 
-        start_time = time.time()
-
         if path:
             path = path[::-1]
             start = self.env.start
@@ -207,6 +205,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
             prev = self.agent_pos
             same_counter = 0
 
+            start_time = time.time()
             while tuple(self.agent_pos) != tuple(goal):
                 if same_counter == 20:
                     return None
@@ -221,7 +220,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                     replan_time = time.time()
                     if not self.reconnect(path):
                         new_path = self.regrow()
-                        self.replan_time.append(time.time() - replan_time)
                         if not new_path:
                             self.agent_positions.append(tuple(self.agent_pos))
                             return None
@@ -229,9 +227,8 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
                             self.current_index = 0
                             same_counter += 1
                             path = new_path
-                    else:
-                        self.replan_time.append(time.time() - replan_time)
 
+                    self.replan_time.append(time.time() - replan_time)
                     same_counter += 1
                     self.agent_positions.append(tuple(self.agent_pos))
 
@@ -247,6 +244,7 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
                     prev = current
 
+            self.total_time = time.time() - start_time
             return self.agent_positions
 
         else:
