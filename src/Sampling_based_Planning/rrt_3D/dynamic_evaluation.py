@@ -179,9 +179,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
     algorithms = [
         # AdaptiveAStar(time=5),
-        DynamicGuidedSrrtEdge(t=1),
-        # DynamicGuidedSrrtEdge(t=10),
-        # DynamicGuidedSrrtEdge(t=20),
+        DynamicGuidedSrrtEdge(t=5),
+        DynamicGuidedSrrtEdge(t=10),
+        DynamicGuidedSrrtEdge(t=20),
         # AnytimeIRRTTStar(time=5),
         # RrtEdge(time=5),
     ]
