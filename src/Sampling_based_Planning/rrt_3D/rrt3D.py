@@ -63,7 +63,7 @@ class rrt:
 
         self.dynamic_obs = []
 
-        self.replanning_time = []
+        self.replan_time = []
 
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
@@ -185,6 +185,7 @@ class rrt:
             self.Parent = {}
             self.current_index = 0
             self.dynamic_obs = []
+            self.replan_time = []
 
             if size:
                 self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
