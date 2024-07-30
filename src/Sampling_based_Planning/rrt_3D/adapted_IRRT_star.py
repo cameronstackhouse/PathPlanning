@@ -15,6 +15,8 @@ class AnytimeIRRTTStar(IRRT):
         self.N = 50000
         self.stepsize = 10
 
+        self.name = f"Informed RRT*: {time}"
+
         self.agent_pos = None
         self.agent_positions = []
         self.current_index = 0

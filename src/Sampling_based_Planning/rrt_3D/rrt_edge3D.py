@@ -41,6 +41,7 @@ class RrtEdge(rrt):
 
         self.initial_path = None
         self.time = time
+        self.name = f"RRT-Edge: {time}"
 
     def path_from_point(self, point, dist=0):
         path = [np.array([point, self.xt])]
