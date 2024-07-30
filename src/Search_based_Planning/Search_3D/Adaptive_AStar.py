@@ -323,7 +323,7 @@ class AdaptiveAStar(Weighted_A_star):
         xi = self.x0
 
         start_time = time.time()
-        while self.OPEN:
+        while self.OPEN and (self.OPEN.size() > 0):
             current_time = time.time()
 
             # Checks if time limit is reached
