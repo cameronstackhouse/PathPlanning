@@ -178,7 +178,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        AdaptiveAStar(t=5),
+        AdaptiveAStar(time=5),
         AdaptiveAStar(),
         # DynamicGuidedSrrtEdge(t=5),
         # DynamicGuidedSrrtEdge(t=1),
