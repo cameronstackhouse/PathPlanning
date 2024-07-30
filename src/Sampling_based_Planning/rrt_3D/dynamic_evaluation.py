@@ -255,7 +255,7 @@ def main():
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "3D AD A*.json")
+    save_results(results, "DStar.json")
 
 
 if __name__ == "__main__":
