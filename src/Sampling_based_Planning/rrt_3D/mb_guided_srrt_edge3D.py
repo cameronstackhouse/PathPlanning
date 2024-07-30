@@ -37,6 +37,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.E = []
         self.V = []
         self.i = 0
+        self.done = False
 
     def planning(self):
         self.V.append(self.x0)
@@ -111,10 +112,10 @@ if __name__ == "__main__":
     p = MbGuidedSrrtEdge(TIME)
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_2_3d.json")
     a = p.planning()
-    
+
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json")
 
     p.planning()
-    
+
     visualization(p)
     plt.show()

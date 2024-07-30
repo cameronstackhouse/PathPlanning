@@ -36,6 +36,12 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
         super().change_env(map_name, obs_name, size)
         self.agent_positions = []
         self.current_index = 0
+        self.Path = None
+        self.ellipsoid = None
+        self.replan_time = []
+        self.flag = {}
+        self.E = []
+        self.V = []
 
     def corner_coords(self, x1, y1, z1, width, height, depth):
         x2 = x1 + width
@@ -249,45 +255,12 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
 if __name__ == "__main__":
     rrt = DynamicGuidedSrrtEdge(t=5)
-    # rrt.change_env(
-    #     "Evaluation/Maps/3D/main/house_17_3d.json",
-    #     size=28,
-    # )
-
-    # res = rrt.run()
-
-    # print(res)
 
     rrt.change_env(
         map_name="Evaluation/Maps/3D/main/block_20_3d.json",
         obs_name="Evaluation/Maps/3D/block_obs.json",
     )
 
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_10_3d.json",
-        obs_name="Evaluation/Maps/3D/block_obs.json",
-    )
+    path = rrt.run()
 
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_15_3d.json",
-        obs_name="Evaluation/Maps/3D/block_obs.json",
-    )
-
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_2_3d.json",
-        obs_name="Evaluation/Maps/3D/block_obs.json",
-    )
-
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_5_3d.json",
-        obs_name="Evaluation/Maps/3D/block_obs.json",
-    )
-
-    rrt.change_env(
-        map_name="Evaluation/Maps/3D/main/block_20_3d.json",
-        obs_name="Evaluation/Maps/3D/block_obs.json",
-    )
-
-    res = rrt.run()
-
-    print(res)
+    print(path)
