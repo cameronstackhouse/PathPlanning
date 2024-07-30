@@ -291,7 +291,7 @@ class AnytimeIRRTTStar(IRRT):
 
                     self.replan_time.append(end_replan)
 
-                    if path:
+                    if new_path:
                         path = new_path[::-1]
                         self.current_index = 0
                         self.agent_positions.append(tuple(self.agent_pos))
