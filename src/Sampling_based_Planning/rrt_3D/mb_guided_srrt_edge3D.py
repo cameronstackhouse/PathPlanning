@@ -48,7 +48,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.flag = {}
 
         self.V.append(self.x0)
-        self.flag[self.x0] = "Valid"
+        self.flag[tuple(self.x0)] = "Valid"
         best_path = None
         best_path_dist = float("inf")
         start_time = time.time()
