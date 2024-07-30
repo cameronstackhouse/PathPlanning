@@ -46,7 +46,7 @@ class RrtEdge(rrt):
         path = [np.array([point, self.xt])]
         dist += getDist(point, self.xt)
         x = point
-        while x != self.x0:
+        while tuple(x) != tuple(self.x0):
             x2 = self.Parent[x]
             path.append(np.array([x2, x]))
             dist += getDist(x, x2)
