@@ -323,7 +323,7 @@ class AdaptiveAStar(Weighted_A_star):
         xi = self.x0
 
         start_time = time.time()
-        while self.OPEN and (self.OPEN.size() > 0):
+        while self.OPEN:
             current_time = time.time()
 
             # Checks if time limit is reached
@@ -333,7 +333,12 @@ class AdaptiveAStar(Weighted_A_star):
             if (self.OPEN.size()) == 0:
                 return None
 
-            xi = self.OPEN.get()
+            xi = None
+            try:
+                xi = self.OPEN.get()
+            except KeyError:
+                return None
+
             if xi not in self.CLOSED:
                 self.V.append(np.array(xi))
             self.CLOSED.add(xi)
