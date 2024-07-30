@@ -153,7 +153,7 @@ class AdaptiveAStar(Weighted_A_star):
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
-            self.g = {self.start: 0, self.goal: np.inf}
+            self.g = {tuple(self.start): 0, tuple(self.goal): np.inf}
             self.Parent = {}
             self.CLOSED = set()
             self.V = []
