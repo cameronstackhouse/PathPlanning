@@ -134,6 +134,7 @@ class AdaptiveAStar(Weighted_A_star):
             self.current_index = 0
             self.agent_pos = None
             self.dynamic_obs = []
+            self.replan_time = []
 
             if size:
                 self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
@@ -573,7 +574,7 @@ if __name__ == "__main__":
     # astar.visualise()
 
     path = astar.run()
-    
+
     print(path)
 
 # print(path)
