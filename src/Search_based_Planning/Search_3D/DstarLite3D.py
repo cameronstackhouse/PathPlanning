@@ -19,49 +19,15 @@ from Search_3D.utils3D import (
     children,
     StateSpace,
 )
+from Search_3D.DynamicObj import DynamicObj
 from Search_3D.plot_util3D import visualization
 from Search_3D import queue
 import time
 
 
-class DynamicObj:
-    def __init__(self) -> None:
-        self.velocity = []
-        self.size = []
-        self.known = False
-        self.current_pos = []
-        self.index = 0
-        self.init_pos = None
-        self.old_pos = None
-        self.corners = []
-
-    def update_pos(self):
-        velocity = self.velocity
-        new_pos = [
-            self.current_pos[0] + (velocity[0]),
-            self.current_pos[1] + (velocity[1]),
-            self.current_pos[2] + (velocity[2]),
-        ]
-
-        return new_pos
-
-    def contains_point(self, point):
-        px, py = point
-        x1, y1 = self.corners[0]
-        x2, y2 = self.corners[1]
-        x3, y3 = self.corners[2]
-        x4, y4 = self.corners[3]
-
-        if min(x1, x2, x3, x4) <= px <= max(x1, x2, x3, x4) and min(
-            y1, y2, y3, y4
-        ) <= py <= max(y1, y2, y3, y4):
-            return True
-        return False
-
-
 class D_star_Lite(object):
     # Original version of the D*lite
-    def __init__(self, resolution=1):
+    def __init__(self, resolution=1, time=float("inf")):
         self.Alldirec = {
             (1, 0, 0): 1,
             (0, 1, 0): 1,
@@ -121,6 +87,9 @@ class D_star_Lite(object):
         self.speed = 6
         self.dobs_dir = None
         self.traversed_path = []
+        self.total_time = None
+        self.replan_time = []
+        self.time = time
 
     def updatecost(self, range_changed=None, new=None, old=None, mode=False):
         # scan graph for changed Cost, if Cost is changed update it
@@ -190,9 +159,16 @@ class D_star_Lite(object):
             self.OPEN.put(u, self.CalculateKey(u))
 
     def ComputeShortestPath(self):
-        while self.OPEN.top_key() < self.CalculateKey(self.x0) or self.getrhs(
-            self.x0
-        ) != self.getg(self.x0):
+        start_time = time.time()
+        while (
+            self.OPEN.size() > 0
+            and self.OPEN.top_key() < self.CalculateKey(self.x0)
+            or self.getrhs(self.x0) != self.getg(self.x0)
+        ):
+
+            if time.time() - start_time > self.time:
+                break
+
             kold = self.OPEN.top_key()
             u = self.OPEN.get()
             self.V.add(u)
@@ -214,10 +190,7 @@ class D_star_Lite(object):
             self.ind += 1
         return self.path()
 
-    def change_env(self, map_name, obs_name=None):
-        """
-        TODO
-        """
+    def change_env(self, map_name, obs_name=None, size=None):
         self.dobs_dir = obs_name
         data = None
         with open(map_name) as f:
@@ -233,8 +206,12 @@ class D_star_Lite(object):
             self.Path = []
             self.Parent = {}
             self.km = 0
+            self.replan_time = []
 
-            self.env = CustomEnv(data)
+            if size:
+                self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
+            else:
+                self.env = CustomEnv(data)
 
             self.x0 = tuple(self.env.start)
             self.xt = tuple(self.env.goal)
@@ -250,9 +227,6 @@ class D_star_Lite(object):
             self.CHILDREN = {}
 
             self.COST = defaultdict(lambda: defaultdict(dict))
-
-            # if obs_name:
-            #     self.set_dynamic_obs(obs_name)
 
             return self.env
         else:
@@ -313,11 +287,17 @@ class D_star_Lite(object):
                 ]
             else:
                 children = list(self.CHILDREN[s])
-            snext = children[
-                np.argmin([self.getcost(s, s_p) + self.getg(s_p) for s_p in children])
-            ]
-            path.append([s, snext])
-            s = snext
+
+            if len(children) > 0:
+                snext = children[
+                    np.argmin(
+                        [self.getcost(s, s_p) + self.getg(s_p) for s_p in children]
+                    )
+                ]
+                path.append([s, snext])
+                s = snext
+            else:
+                return None
             if ind > 100:
                 break
             ind += 1
@@ -380,8 +360,6 @@ class D_star_Lite(object):
         plt.show()
 
     def move_dynamic_obs(self, path):
-        # TODO record replanning in here
-        # TODO maybe update sight here too!
         changed = None
         for obj in self.dynamic_obs:
             old, new = self.env.move_block(
@@ -393,24 +371,51 @@ class D_star_Lite(object):
             else:
                 changed = changed.union(n_changed)
 
-        self.V = set()
         if changed is not None:
-            for u in changed:
-                self.UpdateVertex(u)
-            self.ComputeShortestPath()
+            # See if any of the changed cells are in sight range of the UAV
+            in_view = set()
+            SIGHT = 3
+            sight_range = range(-SIGHT, SIGHT + 1)
 
-            self.Path = self.path(self.agent_pos)
-            self.current_index = 0
-            return self.Path
+            for dx in sight_range:
+                for dy in sight_range:
+                    for dz in sight_range:
+                        if dx == 0 and dy == 0 and dz == 0:
+                            continue
+
+                        pos = (
+                            self.agent_pos[0] + dx,
+                            self.agent_pos[1] + dy,
+                            self.agent_pos[2] + dz,
+                        )
+
+                        if pos in changed:
+                            in_view.add(pos)
+
+            if len(in_view) > 0:
+                self.V = set()
+                start_replan = time.time()
+                for u in in_view:
+                    self.UpdateVertex(u)
+                self.ComputeShortestPath()
+
+                self.Path = self.path(self.agent_pos)
+                self.current_index = 0
+                end_replan = time.time() - start_replan
+                self.replan_time.append(end_replan)
+                return self.Path
+            else:
+                return path
         else:
             return path
 
     def move(self, path, mps=6):
-        if self.current_index >= len(path) - 1:
+        if self.current_index >= len(path):
+            print("HERE")
             return self.xt
 
         current = self.agent_pos
-        next = path[self.current_index + 1][1]
+        next = path[self.current_index][1]
 
         seg_distance = getDist(current, next)
 
@@ -441,7 +446,7 @@ class D_star_Lite(object):
                 self.current_index += 1
                 count = 0
                 while self.current_index < len(path) - 1:
-                    next = path[self.current_index + 1][1]
+                    next = path[self.current_index][1]
 
                     seg_distance = getDist(current, next)
                     direction = (
@@ -475,50 +480,56 @@ class D_star_Lite(object):
         return self.agent_pos
 
     def run(self):
+        self.agent_positions = []
+
         start_time = time.time()
         path = self.ComputeShortestPath()
         end_time = time.time() - start_time
-        self.compute_time = end_time
 
-        self.initial_path = path
+        self.compute_time = end_time
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
 
-        start_time = time.time()
-
         if path:
+            print(path)
+            self.agent_pos = tuple(self.env.start)
+            self.agent_positions.append(self.agent_pos)
             GOAL = self.xt
 
+            traversal_time = time.time()
             while tuple(self.agent_pos) != tuple(GOAL):
                 print(self.agent_pos)
                 path = self.move_dynamic_obs(path)
-                self.move(path)
 
-                if self.agent_pos in self.env.dynamic_obs_cells:
-                    return None
+                if path is None:
+                    traversal_time = time.time() - traversal_time
+                    self.total_time = traversal_time
+
+                new_pos = self.move(path)
+                self.agent_pos = new_pos
+
+                for dob in self.dynamic_obs:
+                    if dob.contains_point(self.agent_pos):
+                        return None
 
                 self.agent_positions.append(self.agent_pos)
 
                 self.x0 = self.agent_pos
+
+            traversal_time = time.time() - traversal_time
+            self.total_time = traversal_time
+            return self.agent_positions
         else:
             return None
 
 
 if __name__ == "__main__":
 
-    D_lite = D_star_Lite(1)
-    # TODO Error with map 5!! CHECK FOR QUEUE LENGTH!
+    D_lite = D_star_Lite(1, 5)
     a = time.time()
-    D_lite.change_env("Evaluation/Maps/3D/block_map_25_3d/block_4_3d.json")
-    # D_lite.run()
-    # print("used time (s) is " + str(time.time() - a))
+    D_lite.change_env("Evaluation/Maps/3D/house_25_3d/house_0_3d.json", size=28)
 
     path = D_lite.run()
 
     print(path)
-
-    # print(time.time() - a)
-
-    # D_lite.visualise(path)
-    # print(path)

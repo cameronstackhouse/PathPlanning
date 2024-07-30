@@ -23,6 +23,7 @@ sys.path.append(
 )
 
 from Search_3D.Adaptive_AStar import AdaptiveAStar
+from Search_3D.DStarLite3D import D_star_Lite
 
 from glob import glob
 from pathlib import Path
@@ -95,8 +96,6 @@ def turn_energy(turn_power, degrees, speed):
 
 
 def path_energy(path):
-    # TODO in 2D utils.py
-
     x = np.array([0, 2, 4, 6])
     # Power required (W) for each at 0, 2, 4, 6 m/s
     P_acc = np.array([242, 235, 239, 249])
@@ -178,8 +177,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     NUM_MAPS = len(map_name_list)
 
     algorithms = [
-        AdaptiveAStar(time=5),
-        AdaptiveAStar(),
+        # D_star_Lite(),
+        D_star_Lite(time=5),
         # DynamicGuidedSrrtEdge(t=5),
         # DynamicGuidedSrrtEdge(t=1),
         # RrtEdge(time=1),
