@@ -84,13 +84,11 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
                 for partition_point in partition_points:
+                    self.wireup(tuple(partition_point), tuple(new_edge.node_1))
                     goal_partition_collide, _ = isCollide(
                         self, partition_point, self.xt, goal_dist
                     )
                     if not goal_partition_collide:
-                        self.Parent[tuple(partition_point)] = tuple(new_edge.node_1)
-                        self.flag[tuple(self.xt)] = "Valid"
-                        self.flag[tuple(partition_point)] = "Valid"
                         self.wireup(tuple(self.xt), tuple(partition_point))
                         current_path, D = self.path_from_point(tuple(partition_point))
 
