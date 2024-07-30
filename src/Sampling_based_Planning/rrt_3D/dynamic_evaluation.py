@@ -28,9 +28,20 @@ from glob import glob
 from pathlib import Path
 
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
+
+
 def save_results(results, name):
     with open(name, "w") as f:
-        json.dump(results, f, indent=4)
+        json.dump(results, f, indent=4, cls=NumpyEncoder)
 
     print(f"Results saved to {name}")
 
@@ -168,8 +179,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
     algorithms = [
         # AdaptiveAStar(time=5),
-        DynamicGuidedSrrtEdge(t=5),
-        #DynamicGuidedSrrtEdge(t=10),
+        DynamicGuidedSrrtEdge(t=1),
+        # DynamicGuidedSrrtEdge(t=10),
         # DynamicGuidedSrrtEdge(t=20),
         # AnytimeIRRTTStar(time=5),
         # RrtEdge(time=5),
