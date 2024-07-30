@@ -149,7 +149,7 @@ class AdaptiveAStar(Weighted_A_star):
                     leaf.y + leaf.height // 2,
                     leaf.z + leaf.depth // 2,
                 )
-                self.leaf_nodes[center] = leaf
+                self.leaf_nodes[tuple(center)] = leaf
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
@@ -204,7 +204,7 @@ class AdaptiveAStar(Weighted_A_star):
         allchild = []
         allcost = []
 
-        current_leaf = self.leaf_nodes[x]
+        current_leaf = self.leaf_nodes[tuple(x)]
         current_center = (
             current_leaf.x + current_leaf.width // 2,
             current_leaf.y + current_leaf.height // 2,
@@ -476,9 +476,9 @@ class AdaptiveAStar(Weighted_A_star):
                     leaf.z + leaf.depth // 2,
                 )
 
-                self.leaf_nodes[center] = leaf
+                self.leaf_nodes[tuple(center)] = leaf
 
-            self.leaf_nodes[self.agent_pos] = self.octree.get(self.agent_pos)
+            self.leaf_nodes[tuple(self.agent_pos)] = self.octree.get(self.agent_pos)
 
             # Replan
             self.start = self.agent_pos
