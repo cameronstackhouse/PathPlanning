@@ -165,18 +165,21 @@ class RrtEdge(rrt):
             print("Error, can't plot empty path")
 
     def move(self, path, mps=6):
-        if self.current_index >= len(path) - 1:
-            return self.xt
+        if self.current_index >= len(path):
+            return self.agent_pos
 
         current = self.agent_pos
-        next = path[self.current_index + 1][1]
 
-        seg_distance = getDist(current, next)
+        current_segment = path[self.current_index]
+
+        next_pos = current_segment[1]
+
+        seg_distance = getDist(current, next_pos)
 
         direction = (
-            (next[0] - current[0]) / seg_distance,
-            (next[1] - current[1]) / seg_distance,
-            (next[2] - current[2]) / seg_distance,
+            (next_pos[0] - current[0]) / seg_distance,
+            (next_pos[1] - current[1]) / seg_distance,
+            (next_pos[2] - current[2]) / seg_distance,
         )
 
         new_pos = (
@@ -186,12 +189,12 @@ class RrtEdge(rrt):
         )
 
         if getDist(current, new_pos) >= seg_distance:
-            self.agent_pos = next
+            self.agent_pos = next_pos
             self.current_index += 1
-            return next
+            return next_pos
 
         future_uav_positions = []
-        PREDICTION_HORIZON = 4
+        PREDICTION_HORIZON = 3
         for t in range(1, PREDICTION_HORIZON):
             future_pos = (
                 current[0] + direction[0] * mps * t,
@@ -219,7 +222,7 @@ class RrtEdge(rrt):
                         return [None, None, None]
 
                     dynamic_object.current_pos = original_pos
-
+        self.agent_pos = new_pos
         return new_pos
 
     def run(self):
@@ -284,7 +287,7 @@ if __name__ == "__main__":
     p = RrtEdge(5)
     p.change_env(
         "Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json",
-        "Evaluation/Maps/3D/obs.json",
+        "Evaluation/Maps/3D/block_obs.json"
     )
     starttime = time.time()
     a = p.run()

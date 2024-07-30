@@ -95,7 +95,7 @@ class AnytimeIRRTTStar(IRRT):
         path = [np.array([point, self.xt])]
         dist += getDist(point, self.xt)
         x = point
-        while x != self.x0:
+        while tuple(x) != tuple(self.x0):
             x2 = self.Parent[x]
             path.append(np.array([x2, x]))
             dist += getDist(x, x2)
@@ -110,18 +110,21 @@ class AnytimeIRRTTStar(IRRT):
             obj.current_pos = obj.update_pos()
 
     def move(self, path, mps=6):
-        if self.current_index >= len(path) - 1:
-            return self.xt
+        if self.current_index >= len(path):
+            return self.agent_pos
 
         current = self.agent_pos
-        next = path[self.current_index + 1][1]
 
-        seg_distance = getDist(current, next)
+        current_segment = path[self.current_index]
+
+        next_pos = current_segment[1]
+
+        seg_distance = getDist(current, next_pos)
 
         direction = (
-            (next[0] - current[0]) / seg_distance,
-            (next[1] - current[1]) / seg_distance,
-            (next[2] - current[2]) / seg_distance,
+            (next_pos[0] - current[0]) / seg_distance,
+            (next_pos[1] - current[1]) / seg_distance,
+            (next_pos[2] - current[2]) / seg_distance,
         )
 
         new_pos = (
@@ -131,12 +134,12 @@ class AnytimeIRRTTStar(IRRT):
         )
 
         if getDist(current, new_pos) >= seg_distance:
-            self.agent_pos = next
+            self.agent_pos = next_pos
             self.current_index += 1
-            return next
+            return next_pos
 
         future_uav_positions = []
-        PREDICTION_HORIZON = 4
+        PREDICTION_HORIZON = 3
         for t in range(1, PREDICTION_HORIZON):
             future_pos = (
                 current[0] + direction[0] * mps * t,
@@ -164,7 +167,7 @@ class AnytimeIRRTTStar(IRRT):
                         return [None, None, None]
 
                     dynamic_object.current_pos = original_pos
-
+        self.agent_pos = new_pos
         return new_pos
 
     def planning(self):
@@ -178,6 +181,7 @@ class AnytimeIRRTTStar(IRRT):
         self.E = set()
         self.Xsoln = set()
         self.T = (self.V, self.E)
+        self.ind = 0
 
         best_path = None
         best_path_dist = float("inf")
