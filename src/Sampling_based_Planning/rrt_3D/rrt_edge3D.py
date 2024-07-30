@@ -42,6 +42,7 @@ class RrtEdge(rrt):
         self.initial_path = None
         self.time = time
         self.name = f"RRT-Edge: {time}"
+        self.maxiter = float("inf")
 
     def path_from_point(self, point, dist=0):
         path = [np.array([point, self.xt])]
@@ -55,6 +56,12 @@ class RrtEdge(rrt):
         return path, dist
 
     def planning(self):
+        self.Parent = {}
+        self.done = False
+        self.E = []
+        self.V = []
+        self.flag = {}
+
         self.V.append(self.x0)
         best_path = None
         best_path_dist = float("inf")
@@ -82,7 +89,7 @@ class RrtEdge(rrt):
                 goal_collide, _ = isCollide(self, xnew, self.xt, goal_dist)
                 if not goal_collide:
                     self.wireup(tuple(self.xt), tuple(xnew))
-                    new_path, D = self.path_from_point(xnew)
+                    new_path, D = self.path_from_point(tuple(xnew))
 
                     if D < best_path_dist:
                         best_path = new_path
@@ -262,7 +269,7 @@ class RrtEdge(rrt):
 
                     new_path = self.planning()
                     end_replan = time.time() - start_replan
-                    self.replanning_time.append(end_replan)
+                    self.replan_time.append(end_replan)
 
                     if not new_path:
                         self.agent_positions.append(self.agent_pos)
@@ -288,7 +295,7 @@ if __name__ == "__main__":
     p = RrtEdge(5)
     p.change_env(
         "Evaluation/Maps/3D/block_map_25_3d/block_18_3d.json",
-        "Evaluation/Maps/3D/block_obs.json"
+        "Evaluation/Maps/3D/block_obs.json",
     )
     starttime = time.time()
     a = p.run()
