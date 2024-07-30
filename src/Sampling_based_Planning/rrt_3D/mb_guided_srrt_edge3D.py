@@ -38,6 +38,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.V = []
         self.i = 0
         self.done = False
+        self.Parent = {}
 
     def planning(self):
         self.V.append(self.x0)
