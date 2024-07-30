@@ -201,7 +201,7 @@ class AnytimeIRRTTStar(IRRT):
             if len(self.Xsoln) == 0:
                 cbest = np.inf
             else:
-                cbest = min({self.cost(xsln) for xsln in self.Xsoln})
+                cbest = min({self.cost(tuple(xsln)) for xsln in self.Xsoln})
             xrand = self.Sample(self.xstart, self.xgoal, cbest)
             xnearest = nearest(self, xrand)
             xnew, dist = steer(self, xnearest, xrand)
@@ -211,10 +211,10 @@ class AnytimeIRRTTStar(IRRT):
                 self.V.append(xnew)
                 Xnear = near(self, xnew)
                 xmin = xnearest
-                cmin = self.cost(xmin) + c * self.line(xnearest, xnew)
+                cmin = self.cost(tuple(xmin)) + c * self.line(xnearest, xnew)
                 for xnear in Xnear:
                     xnear = tuple(xnear)
-                    cnew = self.cost(xnear) + c * self.line(xnear, xnew)
+                    cnew = self.cost(tuple(xnear)) + c * self.line(xnear, xnew)
                     if cnew < cmin:
                         collide, _ = isCollide(self, xnear, xnew)
                         if not collide:
@@ -225,8 +225,8 @@ class AnytimeIRRTTStar(IRRT):
 
                 for xnear in Xnear:
                     xnear = tuple(xnear)
-                    cnear = self.cost(xnear)
-                    cnew = self.cost(xnew) + c * self.line(xnew, xnear)
+                    cnear = self.cost(tuple(xnear))
+                    cnew = self.cost(tuple(xnew)) + c * self.line(xnew, xnear)
                     # rewire
                     if cnew < cnear:
                         collide, _ = isCollide(self, xnew, xnear)
