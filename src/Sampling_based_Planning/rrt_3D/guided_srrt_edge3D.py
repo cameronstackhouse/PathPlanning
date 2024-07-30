@@ -114,7 +114,7 @@ class GuidedSrrtEdge(SRrtEdge):
 
     def planning(self):
         self.V.append(self.x0)
-        
+
         best_path = None
         best_path_dist = float("inf")
         for _ in range(self.maxiter):
@@ -146,7 +146,7 @@ class GuidedSrrtEdge(SRrtEdge):
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
                 for partition_point in partition_points:
-                    self.wireup(tuple(new_edge.node_1), tuple(partition_point))
+                    self.wireup(tuple(partition_point), tuple(new_edge.node_1))
                     goal_partition_collide, _ = isCollide(
                         self, partition_point, self.xt, goal_dist
                     )
@@ -174,10 +174,7 @@ class GuidedSrrtEdge(SRrtEdge):
 if __name__ == "__main__":
     p = GuidedSrrtEdge()
 
-    p.change_env(
-        "Evaluation/Maps/3D/main/house_17_3d.json",
-        size=28
-    )
+    p.change_env("Evaluation/Maps/3D/main/house_17_3d.json", size=28)
 
     # visualization(p)
     # plt.show()
@@ -185,10 +182,7 @@ if __name__ == "__main__":
     print("1")
     p.planning()
 
-    p.change_env(
-        "Evaluation/Maps/3D/main/house_19_3d.json",
-        size=28
-    )
+    p.change_env("Evaluation/Maps/3D/main/house_19_3d.json", size=28)
 
     # visualization(p)
     # plt.show()
