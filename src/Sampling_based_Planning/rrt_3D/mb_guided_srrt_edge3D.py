@@ -84,7 +84,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                 k = self.calculate_k(new_edge)
                 partition_points = self.get_k_partitions(k, new_edge)
                 for partition_point in partition_points:
-                    self.wireup(tuple(partition_point), tuple(new_edge.node_1))
+                    self.wireup(tuple(partition_point), tuple(xnearest))
                     goal_partition_collide, _ = isCollide(
                         self, partition_point, self.xt, goal_dist
                     )
