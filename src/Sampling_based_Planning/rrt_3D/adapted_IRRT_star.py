@@ -23,7 +23,7 @@ class AnytimeIRRTTStar(IRRT):
         self.dynamic_obs = []
         self.time = time
         self.compute_time = None
-        self.replanning_time = []
+        self.replan_time = []
         self.total_time = None
 
     def in_dynamic_obj(self, pos, obj):
@@ -287,7 +287,7 @@ class AnytimeIRRTTStar(IRRT):
                     new_path = self.planning()
                     end_replan = time.time() - start_replan
 
-                    self.replanning_time.append(end_replan)
+                    self.replan_time.append(end_replan)
 
                     if path:
                         path = new_path[::-1]
