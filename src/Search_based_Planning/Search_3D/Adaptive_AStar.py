@@ -3,7 +3,7 @@ import time
 
 from matplotlib import pyplot as plt
 import numpy as np
-from Search_3D.Astar3D import Weighted_A_star
+from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
@@ -199,6 +199,13 @@ class AdaptiveAStar(Weighted_A_star):
                 self.dynamic_obs.append(new_obj)
 
                 self.env.new_block_corners(new_obj.corners)
+
+    def in_dynamic_obj(self, point):
+        for dob in self.dynamic_obs:
+            if dob.contains_point(point):
+                return True
+
+        return False
 
     def children_non_uniform(self, x, settings=0):
         allchild = []
@@ -451,14 +458,13 @@ class AdaptiveAStar(Weighted_A_star):
                         round(current_pos[2] + dz),
                     )
 
-                    # Checks if in object
+                    # Checks if in dynamic object
                     in_obj = (
                         any([isinobb(i, check_pos) for i in self.env.OBB])
                         or any([isinball(i, check_pos) for i in self.env.balls])
                         or any([isinbound(i, check_pos) for i in self.env.blocks])
-                    )
+                    ) and self.in_dynamic_obj(check_pos)
 
-                    # TODO Change to only be dynamic obs!
                     if in_obj and isinbound(self.env.boundary, check_pos):
                         dynamic_obj_in_sight = True
                         leaf_containing_point = self.octree.get(check_pos)
@@ -557,8 +563,9 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     astar.change_env(
-        "Evaluation/Maps/3D/main/block_24_3d.json",
-        "Evaluation/Maps/3D/block_obs.json",
+        "Evaluation/Maps/3D/main/house_17_3d.json",
+        "Evaluation/Maps/3D/house_obs.json",
+        size=28,
     )
 
     # astar.octree.visualize()
@@ -566,6 +573,8 @@ if __name__ == "__main__":
     # astar.visualise()
 
     path = astar.run()
+    
+    print(path)
 
 # print(path)
 

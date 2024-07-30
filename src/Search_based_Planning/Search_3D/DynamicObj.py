@@ -20,14 +20,11 @@ class DynamicObj:
         return new_pos
 
     def contains_point(self, point):
-        px, py = point
-        x1, y1 = self.corners[0]
-        x2, y2 = self.corners[1]
-        x3, y3 = self.corners[2]
-        x4, y4 = self.corners[3]
+        px, py, pz = point
 
-        if min(x1, x2, x3, x4) <= px <= max(x1, x2, x3, x4) and min(
-            y1, y2, y3, y4
-        ) <= py <= max(y1, y2, y3, y4):
+        x_min, y_min, z_min, x_max, y_max, z_max = self.corners
+
+        if x_min <= px <= x_max and y_min <= py <= y_max and z_min <= pz <= z_max:
             return True
+
         return False
