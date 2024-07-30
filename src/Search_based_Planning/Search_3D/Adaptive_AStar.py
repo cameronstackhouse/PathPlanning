@@ -3,7 +3,7 @@ import time
 
 from matplotlib import pyplot as plt
 import numpy as np
-from Astar3D import Weighted_A_star
+from Search_3D.Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
