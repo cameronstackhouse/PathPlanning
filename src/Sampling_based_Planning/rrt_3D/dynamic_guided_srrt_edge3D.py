@@ -186,7 +186,8 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         start_time = time.time()
         path = self.planning()
-        start_time = time.time() - start_time
+        end_time = time.time() - start_time
+        self.compute_time = end_time
 
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
@@ -197,7 +198,6 @@ class DynamicGuidedSrrtEdge(MbGuidedSrrtEdge):
 
         if path:
             path = path[::-1]
-            self.compute_time = start_time
             start = self.env.start
             goal = self.env.goal
 
@@ -264,7 +264,7 @@ if __name__ == "__main__":
     path = rrt.run()
 
     print(path)
-    
+
     rrt.change_env(
         map_name="Evaluation/Maps/3D/main/block_2_3d.json",
         obs_name="Evaluation/Maps/3D/block_obs.json",

@@ -45,16 +45,16 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
         start_time = time.time()
         global_path = self.planning()
-        end_time = time.time() - start_time
+        end_time = time.time()
 
-        self.compute_time = end_time
+        self.compute_time = end_time - start_time
 
         self.initial_path = global_path
 
         start_time = time.time()
         if self.dobs_dir:
             self.set_dynamic_obs(self.dobs_dir)
-
+    
         if global_path:
             global_path = global_path[::-1]
             GOAL = global_path[-1]
