@@ -41,6 +41,12 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
         self.Parent = {}
 
     def planning(self):
+        self.Parent = {}
+        self.done = False
+        self.E = []
+        self.V = []
+        self.flag = {}
+
         self.V.append(self.x0)
         self.flag[self.x0] = "Valid"
         best_path = None
@@ -66,6 +72,7 @@ class MbGuidedSrrtEdge(GuidedSrrtEdge):
                 self.E.append(new_edge)
                 self.V.append(xnew)
                 self.flag[tuple(xnew)] = "valid"
+
                 self.wireup(tuple(xnew), tuple(xnearest))
 
                 goal_dist = getDist(xnew, self.xt)

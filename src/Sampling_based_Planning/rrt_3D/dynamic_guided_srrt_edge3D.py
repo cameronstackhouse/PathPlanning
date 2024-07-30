@@ -264,3 +264,12 @@ if __name__ == "__main__":
     path = rrt.run()
 
     print(path)
+    
+    rrt.change_env(
+        map_name="Evaluation/Maps/3D/main/block_2_3d.json",
+        obs_name="Evaluation/Maps/3D/block_obs.json",
+    )
+
+    path = rrt.run()
+
+    print(path)
