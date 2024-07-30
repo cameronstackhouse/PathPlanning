@@ -54,6 +54,7 @@ class AnytimeIRRTTStar(IRRT):
             self.Parent = {}
             self.ind = 0
             self.current_index = 0
+            self.dynamic_obs = []
 
             self.env = CustomEnv(data, zmax=size, xmax=size, ymax=size)
 
@@ -325,7 +326,7 @@ if __name__ == "__main__":
         "Evaluation/Maps/3D/main/block_8_3d.json",
         obs_name="Evaluation/Maps/3D/block_obs.json",
     )
-    
+
     res = rrt.run()
-    
+
     print(res)

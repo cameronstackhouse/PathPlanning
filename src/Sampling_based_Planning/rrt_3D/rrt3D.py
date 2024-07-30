@@ -184,6 +184,7 @@ class rrt:
             self.Path = []
             self.Parent = {}
             self.current_index = 0
+            self.dynamic_obs = []
 
             if size:
                 self.env = CustomEnv(data, xmax=size, ymax=size, zmax=size)
