@@ -79,7 +79,7 @@ class D_star_Lite(object):
         self.Path = []
         self.done = False
 
-        self.name = "D* Lite"
+        self.name = f"D* Lite: {time}"
 
         self.current_index = 0
         self.agent_pos = None
@@ -411,7 +411,6 @@ class D_star_Lite(object):
 
     def move(self, path, mps=6):
         if self.current_index >= len(path):
-            print("HERE")
             return self.xt
 
         current = self.agent_pos
@@ -492,14 +491,12 @@ class D_star_Lite(object):
             self.set_dynamic_obs(self.dobs_dir)
 
         if path:
-            print(path)
             self.agent_pos = tuple(self.env.start)
             self.agent_positions.append(self.agent_pos)
             GOAL = self.xt
 
             traversal_time = time.time()
             while tuple(self.agent_pos) != tuple(GOAL):
-                print(self.agent_pos)
                 path = self.move_dynamic_obs(path)
 
                 if path is None:
