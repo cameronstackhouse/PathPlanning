@@ -181,7 +181,7 @@ class AnytimeIRRTTStar(IRRT):
         The planning algorithm is now an anytime algorithm, bounded
         by either time or max iteraions.
         """
-        self.V = [self.xstart]
+        self.V = [tuple(self.xstart)]
         self.E = set()
         self.Xsoln = set()
         self.T = (self.V, self.E)
@@ -283,7 +283,7 @@ class AnytimeIRRTTStar(IRRT):
                     # Replan from current pos
                     self.Parent = {}
 
-                    self.xstart = self.agent_pos
+                    self.xstart = tuple(self.agent_pos)
                     self.x0 = self.agent_pos
                     self.ind = 0
                     self.i = 0
