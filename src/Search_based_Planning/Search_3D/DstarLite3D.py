@@ -21,7 +21,7 @@ from Search_3D.utils3D import (
 )
 from Search_3D.DynamicObj import DynamicObj
 from Search_3D.plot_util3D import visualization
-from Search_3D import queue
+from Search_3D import custom_queue
 import time
 
 
@@ -60,7 +60,7 @@ class D_star_Lite(object):
         self.env = env(resolution=resolution)
         self.settings = "CollisionChecking"  # for collision checking
         self.x0, self.xt = tuple(self.env.start), tuple(self.env.goal)
-        self.OPEN = queue.MinheapPQ()
+        self.OPEN = custom_queue.MinheapPQ()
         self.km = 0
         self.g = {}  # all g initialized at inf
         self.rhs = {self.xt: 0}  # rhs(x0) = 0
@@ -71,7 +71,8 @@ class D_star_Lite(object):
         # init children set:
         self.CHILDREN = {}
         # init Cost set
-        self.COST = defaultdict(lambda: defaultdict(dict))
+        # self.COST = defaultdict(lambda: defaultdict(dict))
+        self.COST = {}
 
         # for visualization
         self.V = set()  # vertice in closed
@@ -99,7 +100,7 @@ class D_star_Lite(object):
                 newchildren = set(children(self, xi))  # B
                 self.CHILDREN[xi] = newchildren
                 for xj in newchildren:
-                    self.COST[xi][xj] = cost(self, xi, xj)
+                    self.COST.setdefault(xi, {})[xj] = cost(self, xi, xj)
                 CHANGED.add(xi)
         return CHANGED
 
@@ -107,7 +108,7 @@ class D_star_Lite(object):
         # use a LUT for getting the costd
         if xi not in self.COST:
             for xj, xjcost in children(self, xi, settings=1):
-                self.COST[xi][xj] = cost(self, xi, xj, xjcost)
+                self.COST.setdefault(xi, {})[xj] = cost(self, xi, xj, xjcost)
         # this might happen when there is a node changed.
         if xj not in self.COST[xi]:
             self.COST[xi][xj] = cost(self, xi, xj)
@@ -218,7 +219,7 @@ class D_star_Lite(object):
 
             self.rhs = {self.xt: 0}  # rhs(x0) = 0
 
-            self.OPEN = queue.MinheapPQ()
+            self.OPEN = custom_queue.MinheapPQ()
             self.OPEN.put(self.xt, self.CalculateKey(self.xt))
 
             self.g = {}
@@ -226,7 +227,7 @@ class D_star_Lite(object):
             self.CLOSED = set()
             self.CHILDREN = {}
 
-            self.COST = defaultdict(lambda: defaultdict(dict))
+            self.COST = {}
 
             return self.env
         else:

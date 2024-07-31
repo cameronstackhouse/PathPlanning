@@ -27,7 +27,7 @@ from Search_3D.utils3D import (
     heuristic_fun,
 )
 from Search_3D.plot_util3D import visualization
-import queue
+import custom_queue
 import time
 
 
@@ -74,7 +74,7 @@ class Weighted_A_star(object):
         self.Path = []
         self.ind = 0
         self.x0, self.xt = self.start, self.goal
-        self.OPEN = queue.MinheapPQ()  # store [point,priority]
+        self.OPEN = custom_queue.MinheapPQ()  # store [point,priority]
         self.OPEN.put(
             self.x0, self.g[self.x0] + heuristic_fun(self, self.x0)
         )  # item, priority = g + h

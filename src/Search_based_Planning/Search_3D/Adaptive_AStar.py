@@ -3,13 +3,13 @@ import time
 
 from matplotlib import pyplot as plt
 import numpy as np
-from Astar3D import Weighted_A_star
+from Search_3D.Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
 from Search_3D.plot_util3D import visualization
 from Search_3D.DynamicObj import DynamicObj
-from Search_3D.queue import MinheapPQ
+from Search_3D.custom_queue import MinheapPQ
 
 
 class AdaptiveAStar(Weighted_A_star):
@@ -141,19 +141,19 @@ class AdaptiveAStar(Weighted_A_star):
             else:
                 self.env = CustomEnv(data)
 
-            # TODO add back in
-            # self.octree = Octree(self.env)
+            # TODO comment out if need to just look at env struct
+            self.octree = Octree(self.env)
 
-            # self.leaf_nodes = {}
-            # for leaf in self.octree.leafs:
-            #     center = (
-            #         leaf.x + leaf.width // 2,
-            #         leaf.y + leaf.height // 2,
-            #         leaf.z + leaf.depth // 2,
-            #     )
-            #     self.leaf_nodes[tuple(center)] = leaf
-            
-            self.octree = None
+            self.leaf_nodes = {}
+            for leaf in self.octree.leafs:
+                center = (
+                    leaf.x + leaf.width // 2,
+                    leaf.y + leaf.height // 2,
+                    leaf.z + leaf.depth // 2,
+                )
+                self.leaf_nodes[tuple(center)] = leaf
+
+            # self.octree = None
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
@@ -379,7 +379,7 @@ class AdaptiveAStar(Weighted_A_star):
             return self.xt
 
         current = self.agent_pos
-        # TODO check
+        # TODO check
         next = path[self.current_index + 1][1]
 
         seg_distance = getDist(current, next)
@@ -410,7 +410,7 @@ class AdaptiveAStar(Weighted_A_star):
                 # Move the agent far forward without turning
                 self.current_index += 1
                 count = 0
-                # TODO this might not be right...
+                # TODO this might not be right...
                 while self.current_index < len(path) - 1:
                     next = path[self.current_index + 1][1]
 
@@ -569,9 +569,9 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     astar.change_env(
-        "Evaluation/Maps/test/87_3d.json",
+        "Evaluation/Maps/3D/main/house_19_3d.json",
         "Evaluation/Maps/3D/house_obs.json",
-        size=28
+        size=28,
     )
 
     # astar.octree.visualize()

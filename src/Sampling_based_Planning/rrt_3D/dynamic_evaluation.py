@@ -4,6 +4,7 @@ import sys
 import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from threading import Thread
+import time
 from scipy.integrate import quad
 import tracemalloc
 
@@ -202,6 +203,7 @@ def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, HOUSE_OBJ_DIR):
 
 
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
+    s_time = time.time()
     START = (0, 0)
     END = (0, 0)
 
@@ -212,7 +214,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
     algorithms = [
         # D_star_Lite(),
-        # D_star_Lite(time=5), # TODO fix lambda issue
+        D_star_Lite(time=5),
+        AdaptiveAStar(time=5),
         DynamicGuidedSrrtEdge(t=5),
         RrtEdge(time=5),
         AnytimeIRRTTStar(time=5),
@@ -251,17 +254,17 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
             "Success Rate": success_rate,
         }
         results.append(result)
-
+    print(f"TIME: {time.time() - s_time}")
     return results
 
 
 def main():
-    MAP_DIR = "src/Evaluation/Maps/3D/block_map_250_3d/"
+    MAP_DIR = "src/Evaluation/Maps/3D/main/"
     OBJ_DIR = "src/Evaluation/Maps/3D/block_obs.json"
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "TEST.json")
+    save_results(results, "3D-5-seconds.json")
 
 
 if __name__ == "__main__":
