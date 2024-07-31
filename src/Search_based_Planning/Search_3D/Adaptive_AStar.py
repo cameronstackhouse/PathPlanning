@@ -141,16 +141,19 @@ class AdaptiveAStar(Weighted_A_star):
             else:
                 self.env = CustomEnv(data)
 
-            self.octree = Octree(self.env)
+            # TODO add back in
+            # self.octree = Octree(self.env)
 
-            self.leaf_nodes = {}
-            for leaf in self.octree.leafs:
-                center = (
-                    leaf.x + leaf.width // 2,
-                    leaf.y + leaf.height // 2,
-                    leaf.z + leaf.depth // 2,
-                )
-                self.leaf_nodes[tuple(center)] = leaf
+            # self.leaf_nodes = {}
+            # for leaf in self.octree.leafs:
+            #     center = (
+            #         leaf.x + leaf.width // 2,
+            #         leaf.y + leaf.height // 2,
+            #         leaf.z + leaf.depth // 2,
+            #     )
+            #     self.leaf_nodes[tuple(center)] = leaf
+            
+            self.octree = None
 
             self.start, self.goal = tuple(self.env.start), tuple(self.env.goal)
 
@@ -566,18 +569,17 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     astar.change_env(
-        "Evaluation/Maps/3D/main/house_17_3d.json",
+        "Evaluation/Maps/3D/block_map_250_3d/227_3d.json",
         "Evaluation/Maps/3D/house_obs.json",
-        size=28,
     )
 
     # astar.octree.visualize()
 
-    # astar.visualise()
+    astar.visualise()
 
-    path = astar.run()
+    # path = astar.run()
 
-    print(path)
+    # print(path)
 
 # print(path)
 

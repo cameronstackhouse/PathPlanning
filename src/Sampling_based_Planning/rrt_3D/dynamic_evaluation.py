@@ -2,6 +2,7 @@ import json
 import math
 import sys
 import os
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from threading import Thread
 from scipy.integrate import quad
 import tracemalloc
@@ -164,6 +165,42 @@ def measure_cpu_usage(func, *args, **kwargs):
     return (result, cpu_load)
 
 
+def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, HOUSE_OBJ_DIR):
+    if str(map).startswith("src/Evaluation/Maps/3D/main/house_"):
+        algorithm.change_env(map_name=map, obs_name=HOUSE_OBJ_DIR, size=28)
+    else:
+        algorithm.change_env(map, OBJ_DIR)
+
+    tracemalloc.start()
+
+    path, avg_cpu_load = measure_cpu_usage(algorithm.run)
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    traversal_time = algorithm.total_time
+    compute_time = algorithm.compute_time
+    replan_time = algorithm.replan_time
+
+    if path is not None:
+        path_len = path_cost(path)
+        energy = path_energy(path)
+    else:
+        path_len = None
+        energy = None
+
+    return {
+        "path": path,
+        "path_len": path_len,
+        "energy": energy,
+        "compute_time": compute_time,
+        "traversal_time": traversal_time,
+        "cpu_usage": avg_cpu_load,
+        "memory_used": peak,
+        "replan_time": replan_time,
+    }
+
+
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     START = (0, 0)
     END = (0, 0)
@@ -175,7 +212,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
     algorithms = [
         # D_star_Lite(),
-        D_star_Lite(time=5),
+        # D_star_Lite(time=5), # TODO fix lambda issue
+        DynamicGuidedSrrtEdge(t=5),
+        RrtEdge(time=5),
+        AnytimeIRRTTStar(time=5),
         # DynamicGuidedSrrtEdge(t=5),
         # DynamicGuidedSrrtEdge(t=1),
         # RrtEdge(time=1),
@@ -186,76 +226,42 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     for algorithm in algorithms:
         print(algorithm)
         algorithm.speed = 6
-        path_len = []
-        compute_time = []
-        traversal_time = []
-        energy = []
-        replan_time = []
         success = 0
-        traversed_path = []
+        map_results = []
 
-        cpu_usage = []
-        memory_used = []
+        with ProcessPoolExecutor() as executor:
+            futures = [
+                executor.submit(
+                    evaluate_algorithm_on_map, algorithm, map, OBJ_DIR, HOUSE_OBJ_DIR
+                )
+                for map in map_name_list
+            ]
 
-        for map in map_name_list:
-            print(map)
+            for future in as_completed(futures):
+                result = future.result()
+                map_results.append(result)
+                if result["path"] is not None:
+                    success += 1
 
-            if str(map).startswith("src/Evaluation/Maps/3D/main/house_"):
-                algorithm.change_env(map_name=map, obs_name=HOUSE_OBJ_DIR, size=28)
-            else:
-                algorithm.change_env(map, OBJ_DIR)
-
-            tracemalloc.start()
-
-            path, avg_cpu_load = measure_cpu_usage(algorithm.run)
-
-            _, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-
-            traversal_time.append(algorithm.total_time)
-            compute_time.append(algorithm.compute_time)
-
-            cpu_usage.append(avg_cpu_load)
-            memory_used.append(peak)
-
-            replan_time.append(algorithm.replan_time)
-
-            if path is not None:
-                success += 1
-                path_len.append(path_cost(path))
-                energy.append(path_energy(path))
-                traversed_path.append(path)
-            else:
-                path_len.append(None)
-                energy.append(None)
-                traversed_path.append(None)
-
-        success /= NUM_MAPS
+        success_rate = success / NUM_MAPS
         result = {
             "Algorithm": algorithm.name,
             "Map Names": map_names,
-            "Path": traversed_path,
-            "Success Rate": success,
-            "Path Length": path_len,
-            "Initial Calculation Time": compute_time,
-            "Traversal Time": traversal_time,
-            "CPU Usage": cpu_usage,
-            "Memory Used": memory_used,
-            "Energy To Traverse": energy,
-            "Replan Time": replan_time,
+            "Results": map_results,
+            "Success Rate": success_rate,
         }
-
         results.append(result)
+
     return results
 
 
 def main():
-    MAP_DIR = "src/Evaluation/Maps/3D/main/"
+    MAP_DIR = "src/Evaluation/Maps/3D/block_map_250_3d/"
     OBJ_DIR = "src/Evaluation/Maps/3D/block_obs.json"
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "DStar.json")
+    save_results(results, "TEST.json")
 
 
 if __name__ == "__main__":
