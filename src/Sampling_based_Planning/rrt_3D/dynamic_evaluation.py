@@ -258,7 +258,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
 
 def main():
-    MAP_DIR = "src/Evaluation/Maps/3D/house_25_3d/"
+    MAP_DIR = "src/Evaluation/Maps/3D/main/"
     OBJ_DIR = "src/Evaluation/Maps/3D/block_obs.json"
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
