@@ -204,8 +204,6 @@ def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, HOUSE_OBJ_DIR):
 
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
     s_time = time.time()
-    START = (0, 0)
-    END = (0, 0)
 
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
 
@@ -230,19 +228,20 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
         print(algorithm)
         algorithm.speed = 6
         success = 0
-        map_results = []
+        map_results = [None] * len(map_name_list)
 
         with ProcessPoolExecutor() as executor:
-            futures = [
+            futures = {
                 executor.submit(
                     evaluate_algorithm_on_map, algorithm, map, OBJ_DIR, HOUSE_OBJ_DIR
-                )
-                for map in map_name_list
-            ]
+                ): index
+                for index, map in enumerate(map_name_list)
+            }
 
             for future in as_completed(futures):
+                index = futures[future]
                 result = future.result()
-                map_results.append(result)
+                map_results[index] = result
                 if result["path"] is not None:
                     success += 1
 
@@ -259,7 +258,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
 
 def main():
-    MAP_DIR = "src/Evaluation/Maps/3D/main/"
+    MAP_DIR = "src/Evaluation/Maps/3D/house_25_3d/"
     OBJ_DIR = "src/Evaluation/Maps/3D/block_obs.json"
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
