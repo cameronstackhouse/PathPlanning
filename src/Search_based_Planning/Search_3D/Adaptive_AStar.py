@@ -3,7 +3,7 @@ import time
 
 from matplotlib import pyplot as plt
 import numpy as np
-from Search_3D.Astar3D import Weighted_A_star
+from Astar3D import Weighted_A_star
 from Search_3D.Octree import Octree
 from Search_3D.env3D import CustomEnv
 from Search_3D.utils3D import heuristic_fun, getDist, cost, isinobb, isinball, isinbound
@@ -569,8 +569,9 @@ class AdaptiveAStar(Weighted_A_star):
 if __name__ == "__main__":
     astar = AdaptiveAStar()
     astar.change_env(
-        "Evaluation/Maps/3D/block_map_250_3d/227_3d.json",
+        "Evaluation/Maps/test/87_3d.json",
         "Evaluation/Maps/3D/house_obs.json",
+        size=28
     )
 
     # astar.octree.visualize()
