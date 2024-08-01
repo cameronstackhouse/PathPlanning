@@ -535,6 +535,8 @@ class IRrtStar:
 
         start_time = time.time()
 
+        TIMEOUT = 60
+
         if global_path:
             global_path = global_path[::-1]
             current = global_path[self.current_index]
@@ -544,6 +546,9 @@ class IRrtStar:
             GOAL = np.array(GOAL)
 
             while not np.array_equal(self.agent_pos, GOAL):
+                if TIMEOUT - start_time <= 0:
+                    return None
+
                 self.update_object_positions()
                 new_coords = self.move(global_path, self.speed)
 
