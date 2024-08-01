@@ -14,7 +14,7 @@ class TreeNode:
         self.parent = None
         self.env = env
         self.coords = [x, y]
-    
+
     def clear(self):
         self.left_top = None
         self.right_top = None
@@ -119,6 +119,20 @@ class TreeNode:
             self.right_top.partition(leafs)
             self.left_bottom.partition(leafs)
             self.right_bottom.partition(leafs)
+
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, TreeNode):
+            return False
+
+        return (
+            self.x == value.x
+            and self.y == value.y
+            and self.width == value.width
+            and self.height == value.height
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y, self.width, self.height))
 
 
 class QuadTree:

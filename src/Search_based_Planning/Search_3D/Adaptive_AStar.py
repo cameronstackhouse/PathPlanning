@@ -379,7 +379,6 @@ class AdaptiveAStar(Weighted_A_star):
             return self.xt
 
         current = self.agent_pos
-        # TODO check
         next = path[self.current_index + 1][1]
 
         seg_distance = getDist(current, next)
@@ -410,7 +409,6 @@ class AdaptiveAStar(Weighted_A_star):
                 # Move the agent far forward without turning
                 self.current_index += 1
                 count = 0
-                # TODO this might not be right...
                 while self.current_index < len(path) - 1:
                     next = path[self.current_index + 1][1]
 

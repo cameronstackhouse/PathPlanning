@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from Search_2D.Astar import AStar
+from Astar import AStar
 from Search_2D.Quadtree import QuadTree
 from Search_2D.plotting import DynamicPlotting
 
@@ -47,6 +47,9 @@ class AdaptiveAStar(AStar):
 
         plotter.animation(self.agent_positions, "D* Lite Original Path vs Path Taken")
 
+    def super_change_env(self, map_name):
+        return super().change_env(map_name)
+    
     def change_env(self, map_name, dobs=None):
         new_env = super().change_env(map_name)
 
