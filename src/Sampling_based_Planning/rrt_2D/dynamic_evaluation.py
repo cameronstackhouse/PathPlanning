@@ -89,9 +89,9 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
         # DStar(START, END, "euclidian"),
         # DStar(START, END, "euclidian", 5.0),
         # AdaptiveAStar(START, END, "euclidian"),
-        AdaptiveAStar(START, END, "euclidian", time=5),
-        IRrtStar(START, END, 10, 0.05, 5, float("inf"), time=5),
         RrtEdge(START, END, 0.05, float("inf"), time=5),
+        AdaptiveAStar(START, END, "euclidian", time=5),
+        #IRrtStar(START, END, 10, 0.05, 5, iter_max=float("inf"), time=5),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
         DStar(START, END, "euclidian", time=5),
     ]
