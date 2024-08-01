@@ -89,7 +89,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     algorithms = [
         # DStar(START, END, "euclidian"),
         # DStar(START, END, "euclidian", 5.0),
-        # AdaptiveAStar(START, END, "euclidian"),
+        #AdaptiveAStar(START, END, "euclidian"),
         #IRrtStar(START, END, 10, 0.05, 1, iter_max=PSEUDO_INF, time=5),
         #RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
@@ -116,9 +116,10 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
             for future in as_completed(futures):
                 count += 1
-                if count % 10 == 0:
-                    print(f"completed: {count}")
                 index = futures[future]
+                
+                print(f"{count}:{map_names[index]}")
+                
                 result = future.result()
                 map_results[index] = result
                 if result["path"] is not None:
