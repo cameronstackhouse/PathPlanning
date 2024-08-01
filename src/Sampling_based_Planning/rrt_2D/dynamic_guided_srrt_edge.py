@@ -61,7 +61,12 @@ class DynamicGuidedSRrtEdge(MBGuidedSRrtEdge):
 
             GOAL = np.array(GOAL)
             # While the final node has not been reached
-            while not np.array_equal(self.agent_pos, GOAL):
+            while not np.array_equal(self.agent_pos, GOAL):     
+                
+                if time.time() - start_time > 60:
+                    self.agent_positions.append(self.agent_pos)
+                    return None
+                           
                 self.update_object_positions()
                 self.update_world_view()
 

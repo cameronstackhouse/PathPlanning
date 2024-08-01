@@ -528,7 +528,6 @@ class DStar:
             GOAL = self.s_goal
 
             while self.agent_pos != GOAL:
-                print(self.agent_pos)
                 if self.g[self.agent_pos] == float("inf"):
                     return None
 

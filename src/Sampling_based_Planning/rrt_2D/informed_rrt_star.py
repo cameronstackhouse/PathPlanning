@@ -113,6 +113,10 @@ class IRrtStar:
                 break
 
             x_rand = self.Sample(c_best, dist, x_center, C)
+
+            if not x_rand:
+                return None
+
             x_nearest = self.Nearest(self.V, x_rand)
             x_new = self.Steer(x_nearest, x_rand)
 
@@ -175,6 +179,9 @@ class IRrtStar:
         return X_near
 
     def Sample(self, c_max, c_min, x_center, C):
+        if c_max**2 - c_min**2 < 0:
+            return None
+
         if c_max < np.inf:
             r = [
                 c_max / 2.0,
@@ -546,7 +553,9 @@ class IRrtStar:
             GOAL = np.array(GOAL)
 
             while not np.array_equal(self.agent_pos, GOAL):
-                if TIMEOUT - start_time <= 0:
+
+                if time.time() - start_time > 60:
+                    self.agent_positions.append(self.agent_pos)
                     return None
 
                 self.update_object_positions()

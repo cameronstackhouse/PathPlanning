@@ -73,29 +73,13 @@ def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, dummy_algo):
     }
 
 
-def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
+def evaluate(algorithms, dummy_algo, MAP_DIR: str, OBJ_DIR: str = None):
     s_time = time.time()
 
-    START = (0, 0)
-    END = (0, 0)
-    PSEUDO_INF = 10000000
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
 
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
-
-    dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
-
-    algorithms = [
-        # DStar(START, END, "euclidian"),
-        # DStar(START, END, "euclidian", 5.0),
-        #AdaptiveAStar(START, END, "euclidian"),
-        #IRrtStar(START, END, 10, 0.05, 1, iter_max=PSEUDO_INF, time=5),
-        #RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        AdaptiveAStar(START, END, "euclidian", time=5),
-        DStar(START, END, "euclidian", time=5),
-    ]
 
     results = []
 
@@ -139,10 +123,34 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
 
 def main():
+    START = (0, 0)
+    END = (0, 0)
+    PSEUDO_INF = 10000000
+    
+    dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
+    
+    algorithms = [
+        DStar(START, END, "euclidian", time=5),
+        IRrtStar(START, END, 10, 0.05, 5, iter_max=PSEUDO_INF, time=5),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
+        RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
+        AdaptiveAStar(START, END, "euclidian", time=5),
+    ]
+    
+    different_time_algos = [
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=2),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=3),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=4),
+    ]
+
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_obs.json"
-    results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "5-seconds-2D-srrt-Adaptive-dynamic.json")
+    results = evaluate(algorithms, dummy_algo, MAP_DIR, OBJ_DIR)
+    save_results(results, "5-seconds-2D-dynamic.json")
+    
+    diff_time = evaluate(different_time_algos, dummy_algo, MAP_DIR, OBJ_DIR)
+    save_results(diff_time, "2d-different-time-srrt-edge.json")
 
 
 if __name__ == "__main__":

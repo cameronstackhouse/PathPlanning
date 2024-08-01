@@ -13,7 +13,8 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
 )
 
-from rrt_2D import env, plotting, utils, queue
+from Sampling_based_Planning.rrt_2D import custom_queue
+from rrt_2D import env, plotting, utils
 
 
 class DynamicObj:
@@ -210,7 +211,7 @@ class RrtStar:
         return cost
 
     def update_cost(self, parent_node):
-        OPEN = queue.QueueFIFO()
+        OPEN = custom_queue.QueueFIFO()
         OPEN.put(parent_node)
 
         while not OPEN.empty():
