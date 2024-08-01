@@ -326,11 +326,14 @@ def main():
         x_start,
         x_goal,
         0.05,
-        1000,
-        obj_dir="Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+        100000,
+        time=5,
     )
 
-    rrt_edge.change_env("Evaluation/Maps/2D/block_map_25/block_20.json")
+    rrt_edge.change_env(
+        "Evaluation/Maps/2D/main/block_20.json",
+        obj_dir="Evaluation/Maps/2D/dynamic_obs.json",
+    )
 
     success = rrt_edge.run()
 
