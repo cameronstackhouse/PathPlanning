@@ -116,9 +116,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
 
             for future in as_completed(futures):
                 count += 1
-
-                if count % 10 == 0:
-                    print(f"completed: {count}")
+                print(f"completed: {count}")
                 index = futures[future]
                 result = future.result()
                 map_results[index] = result
