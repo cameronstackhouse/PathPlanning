@@ -88,10 +88,6 @@ class ExtendedQuadtree(QuadTree):
         return adjacent
 
     def _are_adjacent(self, node1, node2):
-        node1_center = (node1.x + node1.width // 2, node1.y + node1.height // 2)
-
-        node2_center = (node2.x + node2.width // 2, node2.y + node2.height // 2)
-
         # Check if nodes are horizontally adjacent
         horizontal_adj = (
             node1.y <= node2.y + node2.height and node2.y <= node1.y + node1.height
@@ -173,13 +169,10 @@ class AdaptiveAStarExtended(AdaptiveAStar):
 
 
 if __name__ == "__main__":
-    a = AdaptiveAStarExtended((0, 0), (0, 0), "euclidian")
-    a.change_env("Evaluation/Maps/2D/main/block_10.json")
+    a = AdaptiveAStar((0, 0), (0, 0), "euclidian")
+    a.change_env("Evaluation/Maps/2D/block_map_250/169.json")
     # b.change_env("Evaluation/Maps/2D/main/block_14.json")
 
-    # a.quadtree.visualize()
+    a.quadtree.visualize()
     # b.quadtree.visualize()
     
-    path = a.planning()
-    
-    print(path)
