@@ -1,7 +1,11 @@
 import json
 import sys
 import os
+import time
 import tracemalloc
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from threading import Thread
+
 
 from evaluate import save_results, measure_cpu_usage
 
@@ -36,7 +40,42 @@ def save_data(file_path, data):
         json.dump(data, file, indent=4)
 
 
+def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, dummy_algo):
+    algorithm.change_env(map, OBJ_DIR)
+
+    tracemalloc.start()
+
+    path, avg_cpu_load = measure_cpu_usage(algorithm.run)
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    traversal_time = algorithm.total_time
+    compute_time = algorithm.compute_time
+    replan_time = algorithm.replan_time
+
+    if path is not None:
+        path_len = dummy_algo.utils.path_cost(path)
+        energy = dummy_algo.utils.path_energy(path)
+    else:
+        path_len = None
+        energy = None
+
+    return {
+        "path": path,
+        "path_len": path_len,
+        "energy": energy,
+        "compute_time": compute_time,
+        "traversal_time": traversal_time,
+        "cpu_usage": avg_cpu_load,
+        "memory_used": peak,
+        "replan_time": replan_time,
+    }
+
+
 def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
+    s_time = time.time()
+
     START = (0, 0)
     END = (0, 0)
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
@@ -49,82 +88,55 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     algorithms = [
         # DStar(START, END, "euclidian"),
         # DStar(START, END, "euclidian", 5.0),
-        AdaptiveAStar(START, END, "euclidian"),
+        # AdaptiveAStar(START, END, "euclidian"),
         AdaptiveAStar(START, END, "euclidian", time=5),
+        IRrtStar(START, END, 10, 0.05, 5, float("inf"), time=5),
+        RrtEdge(START, END, 0.05, float("inf"), time=5),
+        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
+        DStar(START, END, "euclidian", time=5),
     ]
 
     results = []
+
     for algorithm in algorithms:
         print(algorithm)
         algorithm.speed = 6
-        path_len = []
-        compute_time = []
-        traversal_time = []
-        energy = []
-        replan_time = []
         success = 0
-        traversed_path = []
+        map_results = [None] * len(map_name_list)
 
-        cpu_usage = []
-        memory_used = []
+        with ProcessPoolExecutor() as executor:
+            futures = {
+                executor.submit(
+                    evaluate_algorithm_on_map, algorithm, map, OBJ_DIR, dummy_algo
+                ): index
+                for index, map in enumerate(map_name_list)
+            }
 
-        for map in map_name_list:
-            print(map)
-            algorithm.change_env(map)
-            algorithm.dobs_dir = OBJ_DIR
+            for future in as_completed(futures):
+                index = futures[future]
+                result = future.result()
+                map_results[index] = result
+                if result["path"] is not None:
+                    success += 1
 
-            tracemalloc.start()
-
-            path, avg_cpu_load = measure_cpu_usage(algorithm.run)
-
-            _, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-
-            traversal_time.append(algorithm.total_time)
-            compute_time.append(algorithm.compute_time)
-
-            cpu_usage.append(avg_cpu_load)
-            memory_used.append(peak)
-
-            replan_time.append(algorithm.replan_time)
-
-            if path is not None:
-                success += 1
-                path_len.append(dummy_algo.utils.path_cost(path))
-                energy.append(dummy_algo.utils.path_energy(path))
-                traversed_path.append(path)
-            else:
-                path_len.append(None)
-                energy.append(None)
-                traversed_path.append(None)
-
-        success /= NUM_MAPS
+        success_rate = success / NUM_MAPS
         result = {
             "Algorithm": algorithm.name,
             "Map Names": map_names,
-            "Path": traversed_path,
-            "Success Rate": success,
-            "Path Length": path_len,
-            "Initial Calculation Time": compute_time,
-            "Traversal Time": traversal_time,
-            "CPU Usage": cpu_usage,
-            "Memory Used": memory_used,
-            "Energy To Traverse": energy,
-            "Replan Time": replan_time,
+            "Results": map_results,
+            "Success Rate": success_rate,
         }
-
-        # results = load_existing_data("dynamic_eval_2D_results_2.json")
         results.append(result)
-        # save_data("dynamic_eval_2D_results_2.json", results)
 
+    print(f"TIME: {time.time() - s_time}")
     return results
 
 
 def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
-    OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
+    OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "AD A*.json")
+    save_results(results, "5-seconds-2D-dynamic.json")
 
 
 if __name__ == "__main__":
