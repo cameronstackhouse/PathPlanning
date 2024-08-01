@@ -99,6 +99,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
     results = []
 
     for algorithm in algorithms:
+        count = 0
         print(algorithm)
         algorithm.speed = 6
         success = 0
@@ -113,6 +114,8 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
             }
 
             for future in as_completed(futures):
+                count += 1
+                print(f"COMPLETED: {count}")
                 index = futures[future]
                 result = future.result()
                 map_results[index] = result
