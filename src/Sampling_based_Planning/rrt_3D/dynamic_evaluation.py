@@ -212,11 +212,11 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None, HOUSE_OBJ_DIR: str = None):
 
     algorithms = [
         # D_star_Lite(),
-        D_star_Lite(time=5),
-        AdaptiveAStar(time=5),
-        DynamicGuidedSrrtEdge(t=5),
-        RrtEdge(time=5),
-        AnytimeIRRTTStar(time=5),
+        # D_star_Lite(time=5),
+        AdaptiveAStar(time=1),
+        DynamicGuidedSrrtEdge(t=1),
+        RrtEdge(time=1),
+        AnytimeIRRTTStar(time=1),
         # DynamicGuidedSrrtEdge(t=5),
         # DynamicGuidedSrrtEdge(t=1),
         # RrtEdge(time=1),
@@ -263,7 +263,7 @@ def main():
     HOUSE_OBJ_DIR = "src/Evaluation/Maps/3D/house_obs.json"
 
     results = evaluate(MAP_DIR, OBJ_DIR, HOUSE_OBJ_DIR)
-    save_results(results, "3D-5-seconds.json")
+    save_results(results, "3D-1-seconds.json")
 
 
 if __name__ == "__main__":
