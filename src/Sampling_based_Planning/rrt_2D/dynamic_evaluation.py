@@ -91,7 +91,7 @@ def evaluate(MAP_DIR: str, OBJ_DIR: str = None):
         # DStar(START, END, "euclidian", 5.0),
         # AdaptiveAStar(START, END, "euclidian"),
         #IRrtStar(START, END, 10, 0.05, 1, iter_max=PSEUDO_INF, time=5),
-        RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
+        #RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
         DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
         AdaptiveAStar(START, END, "euclidian", time=5),
         DStar(START, END, "euclidian", time=5),
@@ -141,7 +141,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_obs.json"
     results = evaluate(MAP_DIR, OBJ_DIR)
-    save_results(results, "5-seconds-2D-dynamic.json")
+    save_results(results, "5-seconds-2D-srrt-Adaptive-dynamic.json")
 
 
 if __name__ == "__main__":
