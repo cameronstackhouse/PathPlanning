@@ -170,7 +170,7 @@ class AdaptiveAStarExtended(AdaptiveAStar):
 
 if __name__ == "__main__":
     a = AdaptiveAStar((0, 0), (0, 0), "euclidian")
-    a.change_env("Evaluation/Maps/2D/block_map_250/169.json")
+    a.change_env("Evaluation/Maps/2D/test/0.json")
     # b.change_env("Evaluation/Maps/2D/main/block_14.json")
 
     a.quadtree.visualize()

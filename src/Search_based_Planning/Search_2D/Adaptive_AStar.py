@@ -315,13 +315,16 @@ if __name__ == "__main__":
     s = AdaptiveAStar((0, 0), (0, 0), "euclidian")
     # 23 best example to show
     s.change_env(
-        "Evaluation/Maps/2D/main/house_14.json",
+        "Evaluation/Maps/2D/house_100/13.json",
         "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
+    
+    path = s.planning()
+    
+    s.quadtree.visualize(path)
 
-    # s.quadtree.visualize()
 
-    path = s.run()
+    # path = s.run()
 
-    if path:
-        s.plot_traversal()
+    # if path:
+    #     s.plot_traversal()
