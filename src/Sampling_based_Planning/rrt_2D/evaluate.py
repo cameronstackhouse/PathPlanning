@@ -6,10 +6,12 @@ import json
 import os
 import sys
 import time
+import numpy as np
 import psutil
 import matplotlib.pyplot as plt
 import seaborn as sns
 import tracemalloc
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from threading import Thread
 
 sys.path.append(
@@ -36,101 +38,98 @@ from glob import glob
 from pathlib import Path
 
 
-def evaluate(MAP_DIR: str, OBJ_DIR: str = None, TYPE: str = "2D") -> dict:
-    """
-    TODO
-    """
-    START = (0, 0)
-    END = (0, 0)
+def evaluate_algorithm_on_map(algorithm, map, dummy_algo):
+    algorithm.change_env(map)
+
+    tracemalloc.start()
+
+    if algorithm.name == "D* Lite":
+        path, avg_cpu_load = measure_cpu_usage(algorithm.ComputePath)
+    else:
+        path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
+
+    _, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    traversal_time = algorithm.total_time
+    compute_time = algorithm.compute_time
+
+    if path is not None and len(path) != 0:
+        path_len = dummy_algo.utils.path_cost(path)
+        energy = dummy_algo.utils.path_energy(path)
+    else:
+        path_len = None
+        energy = None
+
+    return {
+        "path": path,
+        "path_len": path_len,
+        "energy": energy,
+        "compute_time": compute_time,
+        "traversal_time": traversal_time,
+        "cpu_usage": avg_cpu_load,
+        "memory_used": peak,
+    }
+
+
+def evaluate(algorithms, dummy_algo, MAP_DIR: str, OBJ_DIR: str = None):
+    s_time = time.time()
+
     map_name_list = list(Path(MAP_DIR).glob("*.json"))
 
     map_names = [map.stem for map in map_name_list]
     NUM_MAPS = len(map_name_list)
 
-    algorithms = []
-
-    if TYPE == "2D":
-        algorithms = [
-            # DStar(START, END, "euclidean", time=5),
-            MBGuidedSRrtEdge(START, END, 0.05, 10),
-            MBGuidedSRrtEdge(START, END, 0.05, 20),
-            MBGuidedSRrtEdge(START, END, 0.05, 30),
-            # RrtEdge(START, END, 0.05, 2000, time=5),
-            # IRrtStar(START, END, 5, 0.05, 5, 2000, time=5),
-        ]
-
     results = []
 
     for algorithm in algorithms:
+        count = 0
         print(algorithm)
-        # Measured metrics
-        traversed_paths = []
-        path_len = []
-        times = []
-        energy = []
+        algorithm.speed = 6
         success = 0
+        map_results = [None] * len(map_name_list)
 
-        # TODO
-        cpu_usage = []
-        memory_used = []  # psutil.virtual_memory()
-        first_successes = []
+        with ProcessPoolExecutor() as executor:
+            futures = {
+                executor.submit(
+                    evaluate_algorithm_on_map, algorithm, map, dummy_algo
+                ): index
+                for index, map in enumerate(map_name_list)
+            }
 
-        # Load and evaluate each map
-        for i, map in enumerate(map_name_list):
-            print(map)
-            # Checks if the algorithm is to be evaluated dynamically
-            algorithm.change_env(map)
+            for future in as_completed(futures):
+                count += 1
+                index = futures[future]
 
-            path = None
-            tracemalloc.start()
+                print(f"{count}:{map_names[index]}")
 
-            start_time = time.time()
-            if OBJ_DIR:
-                # Run the dynamic algorithm
-                path = algorithm.run()
-            else:
-                if algorithm.name == "D* Lite":
-                    path, avg_cpu_load = measure_cpu_usage(algorithm.ComputePath)
-                else:
-                    path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
+                result = future.result()
+                map_results[index] = result
+                if result["path"] is not None:
+                    success += 1
 
-            cpu_usage.append(avg_cpu_load)
-            first_successes.append(algorithm.first_success)
-
-            total_time = time.time() - start_time
-            _, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
-
-            memory_used.append(peak)
-
-            if path:
-                success += 1
-                traversed_paths.append(path)
-                path_len.append(algorithms[0].utils.path_cost(path))
-                energy.append(algorithms[0].utils.path_energy(path))
-                times.append(total_time)
-            else:
-                path_len.append(None)
-                energy.append(None)
-                times.append(None)
-
-        success /= NUM_MAPS
+        success_rate = success / NUM_MAPS
         result = {
             "Algorithm": algorithm.name,
             "Map Names": map_names,
-            "Success Rate": success,
-            "Path Length": path_len,
-            "Time Taken To Calculate": times,
-            "Energy To Traverse": energy,
-            "CPU Usage": cpu_usage,
-            "First success": first_successes,
-            "Memory Used": memory_used,
-            "Travesed Path": traversed_paths,
+            "Results": map_results,
+            "Success Rate": success_rate,
         }
-
         results.append(result)
 
+    print(f"TIME: {time.time() - s_time}")
     return results
+
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
 
 
 def save_results(results, name):
@@ -138,7 +137,7 @@ def save_results(results, name):
     Saves the results obtained from the evaluation script in JSON format.
     """
     with open(name, "w") as file:
-        json.dump(results, file, indent=4)
+        json.dump(results, file, indent=4, cls=NumpyEncoder)
 
     print(f"Results saved to {name}")
 
@@ -171,9 +170,18 @@ def measure_cpu_usage(func, *args, **kwargs):
 
 
 def main():
-    OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json"
-    results = evaluate("src/Evaluation/Maps/2D/main", TYPE="2D")
-    save_results(results, "10_20_30_srrt_edge_results.json")
+    START = (0, 0)
+    END = (0, 0)
+    PSEUDO_INF = 10000000
+
+    dummy_algo = MBGuidedSRrtEdge(START, END, 0.05, time=1)
+
+    algorithms = [
+        DStar(START, END, "euclidian")
+        #IRrtStar(START, END, 10, 0.05, 5, iter_max=PSEUDO_INF, time=5)
+    ]
+    results = evaluate(algorithms, dummy_algo, "src/Evaluation/Maps/2D/main")
+    save_results(results, "2D-static-optimal.json")
 
 
 if __name__ == "__main__":
