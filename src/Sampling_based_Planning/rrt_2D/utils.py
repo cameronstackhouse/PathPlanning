@@ -248,6 +248,7 @@ class Utils:
 
             total_energy += energy_accel + energy_cruise + energy_decel
 
+            print(total_energy)
             if i < len(path) - 1:
                 p_3 = path[i + 1]
                 angle = Utils.calculate_turn_angle(p_1, p_2, p_3)
