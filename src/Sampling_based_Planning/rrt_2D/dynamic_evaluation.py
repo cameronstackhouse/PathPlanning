@@ -9,7 +9,7 @@ from threading import Thread
 import numpy as np
 
 
-from evaluate import save_results, measure_cpu_usage
+from evaluate import measure_cpu_usage
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Sampling_based_Planning/"
@@ -46,6 +46,11 @@ def load_existing_data(file_path):
             return json.load(file)
     return []
 
+def save_results(results, name):
+    with open(name, "w") as f:
+        json.dump(results, f, indent=4, cls=NumpyEncoder)
+
+    print(f"Results saved to {name}")
 
 def save_data(file_path, data):
     with open(file_path, "w") as file:
