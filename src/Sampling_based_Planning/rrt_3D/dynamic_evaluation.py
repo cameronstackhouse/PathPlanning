@@ -115,7 +115,6 @@ def path_energy(path):
     def integrand_dec(x):
         return cubic_poly_dec(x)
 
-    fixed_speed = 6  # 6 m/s
     total_energy = 0
 
     for i in range(1, len(path)):
@@ -123,13 +122,33 @@ def path_energy(path):
         p_2 = path[i]
 
         distance = getDist(p_1, p_2)
-        time_uniform = distance / fixed_speed
+        
+        accel_time = 2
+        decel_time = 2 
+        fixed_speed = 6 
+        
+        # Too short to reach full speed
+        if distance <= fixed_speed * (accel_time + decel_time):
+            time_accel = np.sqrt(distance / (0.5 * fixed_speed))  
+            time_decel = time_accel
+            time_cruise = 0
+        else:
+            time_accel = accel_time
+            time_decel = decel_time
+            time_cruise = (distance - (fixed_speed * (accel_time + decel_time))) / fixed_speed
 
-        energy_acc, _ = quad(integrand_acc, 0, fixed_speed)
-        energy_unform, _ = quad(integrand_dec, 0, fixed_speed)
-        energy_dec = time_uniform * P_v[-1]
+        # Energy for acceleration
+        energy_accel, _ = quad(integrand_acc, 0, fixed_speed * (time_accel / accel_time))
+        energy_accel *= (time_accel / accel_time)
 
-        total_energy += energy_acc + energy_unform + energy_dec
+        # Energy for constant speed
+        energy_cruise = time_cruise * np.interp(fixed_speed, x, P_v)
+
+        # Energy for deceleration
+        energy_decel, _ = quad(integrand_dec, 0, fixed_speed * (time_decel / decel_time))
+        energy_decel *= (time_decel / decel_time)
+        
+        total_energy += energy_accel + energy_cruise + energy_decel
 
         if i < len(path) - 1:
             p_3 = path[i + 1]
