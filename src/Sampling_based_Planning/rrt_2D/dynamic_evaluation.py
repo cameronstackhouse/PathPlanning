@@ -6,6 +6,8 @@ import tracemalloc
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from threading import Thread
 
+import numpy as np
+
 
 from evaluate import save_results, measure_cpu_usage
 
@@ -27,6 +29,16 @@ from Search_2D.Adaptive_AStar import AdaptiveAStar
 from glob import glob
 from pathlib import Path
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.floating):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
+
 
 def load_existing_data(file_path):
     if os.path.exists(file_path):
@@ -37,7 +49,7 @@ def load_existing_data(file_path):
 
 def save_data(file_path, data):
     with open(file_path, "w") as file:
-        json.dump(data, file, indent=4)
+        json.dump(data, file, indent=4, cls=NumpyEncoder)
 
 
 def evaluate_algorithm_on_map(algorithm, map, OBJ_DIR, dummy_algo):
