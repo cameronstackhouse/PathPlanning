@@ -18,6 +18,7 @@ sys.path.append(
 from rrt_2D.dynamic_guided_srrt_edge import DynamicGuidedSRrtEdge
 from rrt_2D.rrt_edge import RrtEdge
 from rrt_2D.informed_rrt_star import IRrtStar
+from rrt_2D.adaptive_srrt_edge import AdaptiveSRRTEdge
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
@@ -147,18 +148,12 @@ def main():
     dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
     
     algorithms = [
-        DStar(START, END, "euclidian", time=5),
-        IRrtStar(START, END, 10, 0.05, 5, iter_max=PSEUDO_INF, time=5),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=5),
-        RrtEdge(START, END, 0.05, PSEUDO_INF, time=5),
-        AdaptiveAStar(START, END, "euclidian", time=5),
-    ]
-    
-    different_time_algos = [
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=2),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=3),
-        DynamicGuidedSRrtEdge(START, END, 0.05, global_time=4),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=25),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=25),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=50),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=50),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=100),
+        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=100)
     ]
 
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
@@ -166,8 +161,8 @@ def main():
     results = evaluate(algorithms, dummy_algo, MAP_DIR, OBJ_DIR)
     save_results(results, "5-seconds-2D-dynamic.json")
     
-    diff_time = evaluate(different_time_algos, dummy_algo, MAP_DIR, OBJ_DIR)
-    save_results(diff_time, "2d-different-time-srrt-edge.json")
+    # diff_time = evaluate(different_time_algos, dummy_algo, MAP_DIR, OBJ_DIR)
+    # save_results(diff_time, "2d-different-time-srrt-edge.json")
 
 
 if __name__ == "__main__":

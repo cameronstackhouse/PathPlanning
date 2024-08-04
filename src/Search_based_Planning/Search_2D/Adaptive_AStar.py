@@ -2,7 +2,7 @@ import cProfile
 import pstats
 import time
 import numpy as np
-from Astar import AStar
+from Search_2D.Astar import AStar
 from Search_2D.Quadtree import QuadTree
 from Search_2D.plotting import DynamicPlotting
 
