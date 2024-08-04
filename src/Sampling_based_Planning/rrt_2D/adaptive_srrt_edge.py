@@ -149,6 +149,12 @@ class AdaptiveSRRTEdge(DynamicGuidedSRrtEdge):
 
         return self.b_path
 
+    def change_env(self, map_name, obj_dir=None):
+        super().change_env(map_name, obj_dir)
+        self.step_len = float("inf")
+        self.reject_count = 0
+        self.b_path = None
+        self.path_cost = float("inf")
 
 if __name__ == "__main__":
     start = (906, 2)

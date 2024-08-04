@@ -148,6 +148,7 @@ def main():
     dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
     
     algorithms = [
+        DynamicGuidedSRrtEdge(START, END, 0.05, 5, 5, min_edge_length=1),
         AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=25),
         AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=25),
         AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=50),

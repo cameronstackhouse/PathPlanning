@@ -216,7 +216,7 @@ class Utils:
             p_2 = path[i]
 
             # If hovering, add hover energy
-            if p_1 == p_2:
+            if tuple(p_1) == tuple(p_2):
                 total_energy += HOVER
                 continue
 
