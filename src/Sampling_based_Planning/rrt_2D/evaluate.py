@@ -44,7 +44,7 @@ def evaluate_algorithm_on_map(algorithm, map, dummy_algo):
 
     tracemalloc.start()
 
-    if algorithm.name == "D* Lite":
+    if algorithm.name == "D* Lite: 5":
         path, avg_cpu_load = measure_cpu_usage(algorithm.ComputePath)
     else:
         path, avg_cpu_load = measure_cpu_usage(algorithm.planning)
