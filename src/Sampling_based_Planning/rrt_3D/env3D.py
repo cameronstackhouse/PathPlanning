@@ -137,6 +137,9 @@ class env:
                 obb([12.0, 4.0, 2.5], [0.5, 2.0, 2.5], R_matrix(45, 0, 0)),
             ]
         )
+        self.xmax = xmax
+        self.ymax = ymax
+        self.zmax = zmax
         self.start = np.array([17.0, 5.0, 4.0])
         self.goal = np.array([6.0, 16.0, 0.0])
         self.t = 0  # time
