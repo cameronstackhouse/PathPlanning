@@ -193,6 +193,7 @@ class Utils:
         P_v = [242, 245, 246, 268]
         TURN_POWER = 260
         TURN_SPEED = 2.07
+        HOVER = 240
 
         # Fits curve and defines integrand
         cubic_coeffs_acc = np.polyfit(x, P_acc, 3)
@@ -213,6 +214,11 @@ class Utils:
         for i in range(1, len(path)):
             p_1 = path[i - 1]
             p_2 = path[i]
+
+            # If hovering, add hover energy
+            if p_1 == p_2:
+                total_energy += HOVER
+                continue
 
             distance = Utils.euclidian_distance(p_1, p_2)
 
@@ -248,7 +254,6 @@ class Utils:
 
             total_energy += energy_accel + energy_cruise + energy_decel
 
-            print(total_energy)
             if i < len(path) - 1:
                 p_3 = path[i + 1]
                 angle = Utils.calculate_turn_angle(p_1, p_2, p_3)

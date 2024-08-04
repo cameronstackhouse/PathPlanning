@@ -1,9 +1,11 @@
 import os
+import pstats
 import sys
 import time
 from matplotlib import pyplot as plt
 import numpy as np
 import psutil
+import cProfile
 
 
 sys.path.append(
@@ -117,11 +119,14 @@ if __name__ == "__main__":
     TIME = 5
     p = MbGuidedSrrtEdge(TIME)
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_2_3d.json")
-    a = p.planning()
+    # a = p.planning()
 
     p.change_env("Evaluation/Maps/3D/block_map_25_3d/block_10_3d.json")
 
-    p.planning()
+    cProfile.run("p.planning()", "profile_output.prof")
 
-    visualization(p)
-    plt.show()
+    stats = pstats.Stats("profile_output.prof")
+    stats.strip_dirs().sort_stats(pstats.SortKey.TIME).print_stats(10)
+
+    # visualization(p)
+    # plt.show()

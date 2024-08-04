@@ -1,5 +1,7 @@
+import cProfile
 import json
 import os
+import pstats
 import sys
 import time
 import psutil
@@ -108,27 +110,36 @@ class MBGuidedSRrtEdge(GuidedSRrtEdge):
 
 
 def main():
-    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.0, 10.3)
+    srrt_edge = MBGuidedSRrtEdge((0, 0), (0, 0), 0.0, 5)
 
-    srrt_edge.change_env("Evaluation/Maps/2D/house_25/6.json")
+    srrt_edge.change_env("Evaluation/Maps/2D/block_map_250/200.json")
+    
+    globals_ = globals().copy() 
+    locals_ = locals() 
+    
+    globals_['srrt_edge'] = srrt_edge
+    
+    cProfile.runctx('srrt_edge.planning()', globals_, locals_, 'profile_output.prof')    
+    
+    stats = pstats.Stats("profile_output.prof")
+    stats.strip_dirs().sort_stats(pstats.SortKey.TIME).print_stats(10)
 
-    path = srrt_edge.planning()
 
-    print(srrt_edge.peak_cpu)
+    # print(srrt_edge.peak_cpu)
 
-    if path:
-        print(f"Number of nodes: {len(srrt_edge.vertex)}")
-        print(f"Path length: {srrt_edge.utils.path_cost(path)}")
+    # if path:
+    #     print(f"Number of nodes: {len(srrt_edge.vertex)}")
+    #     print(f"Path length: {srrt_edge.utils.path_cost(path)}")
 
-        srrt_edge.plotting.animation(
-            srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False
-        )
-    else:
-        print("No Path Found!")
-        srrt_edge.plotting.animation(
-            srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False
-        )
-        # pass
+    #     srrt_edge.plotting.animation(
+    #         srrt_edge.vertex, path, "Bounded Guided SRRT-Edge", False
+    #     )
+    # else:
+    #     print("No Path Found!")
+    #     srrt_edge.plotting.animation(
+    #         srrt_edge.vertex, [], "Bounded Guided SRRT-Edge", False
+    #     )
+    #     # pass
 
 
 if __name__ == "__main__":

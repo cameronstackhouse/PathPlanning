@@ -102,6 +102,7 @@ def path_energy(path):
     P_v = [242, 245, 246, 268]
     TURN_POWER = 260
     TURN_SPEED = 2.07
+    HOVER = 240
 
     cubic_coeffs_acc = np.polyfit(x, P_acc, 3)
     cubic_poly_acc = np.poly1d(cubic_coeffs_acc)
@@ -120,6 +121,10 @@ def path_energy(path):
     for i in range(1, len(path)):
         p_1 = path[i - 1]
         p_2 = path[i]
+        
+        if p_1 == p_2:
+            total_energy += HOVER
+            continue
 
         distance = getDist(p_1, p_2)
         
