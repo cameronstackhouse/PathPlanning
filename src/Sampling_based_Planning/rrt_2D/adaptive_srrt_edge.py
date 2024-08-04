@@ -94,7 +94,6 @@ class AdaptiveSRRTEdge(DynamicGuidedSRrtEdge):
     def planning(self):
         start_time = time.time()
         while True:
-            print(self.step_len)
             cpu_usage = psutil.cpu_percent(interval=None)
             self.peak_cpu = max(self.peak_cpu, cpu_usage)
             elapsed_time = time.time() - start_time
