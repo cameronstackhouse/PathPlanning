@@ -1,6 +1,8 @@
+import cProfile
+import pstats
 import time
 import numpy as np
-from Search_2D.Astar import AStar
+from Astar import AStar
 from Search_2D.Quadtree import QuadTree
 from Search_2D.plotting import DynamicPlotting
 
@@ -315,13 +317,18 @@ if __name__ == "__main__":
     s = AdaptiveAStar((0, 0), (0, 0), "euclidian")
     # 23 best example to show
     s.change_env(
-        "Evaluation/Maps/2D/house_100/13.json",
-        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+        "Evaluation/Maps/2D/main/block_0.json",
+        # "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
     
-    path = s.planning()
+    globals_ = globals().copy() 
+    locals_ = locals() 
     
-    s.quadtree.visualize(path)
+    globals_['s'] = s
+    
+    cProfile.runctx('s.planning()', globals_, locals_, 'profile_output.prof')
+    stats = pstats.Stats("profile_output.prof")
+    stats.strip_dirs().sort_stats(pstats.SortKey.TIME).print_stats(10)
 
 
     # path = s.run()

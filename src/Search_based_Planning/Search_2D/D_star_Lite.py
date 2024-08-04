@@ -3,8 +3,10 @@ D_star_Lite 2D
 @author: huiming zhou
 """
 
+import cProfile
 import json
 import os
+import pstats
 import sys
 import math
 import time
@@ -579,16 +581,24 @@ def main():
         s_start,
         s_goal,
         "euclidian",
+        time=5
     )
-    # Block 12 to debug!
     dstar.change_env(
-        "Evaluation/Maps/2D/main/block_2.json",
-        "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
+        "Evaluation/Maps/2D/main/block_0.json",
+        # "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
+    
+    globals_ = globals().copy() 
+    locals_ = locals() 
+    
+    globals_['dstar'] = dstar
 
-    path = dstar.run()
+    cProfile.runctx('dstar.ComputePath()', globals_, locals_, 'profile_output.prof')
+    stats = pstats.Stats("profile_output.prof")
+    stats.strip_dirs().sort_stats(pstats.SortKey.TIME).print_stats(10)
+    
 
-    dstar.plot_traversal()
+    #dstar.plot_traversal()
 
 
 if __name__ == "__main__":

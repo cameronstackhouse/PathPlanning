@@ -10,7 +10,7 @@ import math
 import heapq
 import time
 
-from Search_2D.DynamicObj import DynamicObj
+from DynamicObj import DynamicObj
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"
