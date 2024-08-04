@@ -10,8 +10,8 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "../Sampling_based_Planning/"
 )
 
-from rrt_edge3D import Edge
-from srrt_edge3D import SRrtEdge
+from rrt_3D.rrt_edge3D import Edge
+from rrt_3D.srrt_edge3D import SRrtEdge
 from rrt_3D.env3D import env
 from rrt_3D.utils3D import getDist, sampleFree, steer, isCollide, visualization
 

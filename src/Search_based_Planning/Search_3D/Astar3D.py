@@ -27,7 +27,7 @@ from Search_3D.utils3D import (
     heuristic_fun,
 )
 from Search_3D.plot_util3D import visualization
-import custom_queue
+import Search_3D.custom_queue
 import time
 
 

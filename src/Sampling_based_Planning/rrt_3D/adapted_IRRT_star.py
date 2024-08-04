@@ -2,10 +2,10 @@ import json
 import time
 
 import numpy as np
-from utils3D import getDist, isCollide, near, nearest, steer
-from informed_rrt_star3D import IRRT
-from env3D import CustomEnv
-from DynamicObj import DynamicObj
+from rrt_3D.utils3D import getDist, isCollide, near, nearest, steer
+from rrt_3D.informed_rrt_star3D import IRRT
+from rrt_3D.env3D import CustomEnv
+from rrt_3D.DynamicObj import DynamicObj
 
 
 class AnytimeIRRTTStar(IRRT):

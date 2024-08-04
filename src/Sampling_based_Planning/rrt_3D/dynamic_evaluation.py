@@ -12,10 +12,10 @@ import numpy as np
 import psutil
 
 
-from dynamic_guided_srrt_edge3D import DynamicGuidedSrrtEdge
-from adapted_IRRT_star import AnytimeIRRTTStar
-from rrt_edge3D import RrtEdge
-from utils3D import getDist
+from rrt_3D.dynamic_guided_srrt_edge3D import DynamicGuidedSrrtEdge
+from rrt_3D.adapted_IRRT_star import AnytimeIRRTTStar
+from rrt_3D.rrt_edge3D import RrtEdge
+from rrt_3D.utils3D import getDist
 
 sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "/../../Search_based_Planning/"

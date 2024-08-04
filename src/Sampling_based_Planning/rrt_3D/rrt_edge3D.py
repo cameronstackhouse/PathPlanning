@@ -10,7 +10,7 @@ sys.path.append(
     os.path.dirname(os.path.abspath(__file__)) + "../Sampling_based_Planning/"
 )
 
-from rrt3D import rrt
+from rrt_3D.rrt3D import rrt
 from rrt_3D.env3D import env
 from rrt_3D.utils3D import (
     getDist,

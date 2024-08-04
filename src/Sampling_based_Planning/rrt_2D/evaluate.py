@@ -178,18 +178,18 @@ def main():
     dummy_algo = MBGuidedSRrtEdge(START, END, 0.05, time=1)
 
     algorithms = [
-        # DStar(START, END, "euclidian")
+        DStar(START, END, "euclidian", time=5)
         # AdaptiveAStar(START, END, "euclidian", time=5),
         # IRrtStar(START, END, 10, 0.05, 5, iter_max=PSEUDO_INF, time=5),
         # MBGuidedSRrtEdge(START, END, 0.05, time=5),
         # RrtEdge(START, END, 0.05, iter_max=PSEUDO_INF, time=5),
-        MBGuidedSRrtEdge(START, END, 0.05, time=10),
-        MBGuidedSRrtEdge(START, END, 0.05, time=15),
-        MBGuidedSRrtEdge(START, END, 0.05, time=20),
+        # MBGuidedSRrtEdge(START, END, 0.05, time=10),
+        # MBGuidedSRrtEdge(START, END, 0.05, time=15),
+        # MBGuidedSRrtEdge(START, END, 0.05, time=20),
         # IRrtStar(START, END, 10, 0.05, 5, iter_max=PSEUDO_INF, time=5)
     ]
     results = evaluate(algorithms, dummy_algo, "src/Evaluation/Maps/2D/main")
-    save_results(results, "2D-static-rest-5.json")
+    save_results(results, "2D-static-dstar-5.json")
 
 
 if __name__ == "__main__":
