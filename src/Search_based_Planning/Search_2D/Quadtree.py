@@ -71,7 +71,7 @@ class TreeNode:
             and self.y <= point[1] < self.y + self.height
         )
 
-    def partition(self, leafs):
+    def partition(self, leafs, created_nodes=None):
         if self.width == 1 and self.height == 1:
             return
 
@@ -115,6 +115,12 @@ class TreeNode:
                 [self.left_top, self.right_top, self.left_bottom, self.right_bottom]
             )
 
+            if created_nodes:
+                created_nodes.remove(self)
+                created_nodes.extend(
+                    [self.left_top, self.right_top, self.left_bottom, self.right_bottom]
+                )
+
             self.left_top.partition(leafs)
             self.right_top.partition(leafs)
             self.left_bottom.partition(leafs)
@@ -143,8 +149,12 @@ class QuadTree:
         self.partition(self.root)
 
     def partition(self, node):
+        created_nodes = []
+
         if node.is_leaf() and not node.is_uniform():
-            node.partition(self.leafs)
+            node.partition(self.leafs, created_nodes)
+
+        return created_nodes
 
     def update_leafs(self):
         self.leafs = []

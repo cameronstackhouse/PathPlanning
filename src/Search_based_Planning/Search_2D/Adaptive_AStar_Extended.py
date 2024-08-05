@@ -1,22 +1,22 @@
-from Adaptive_AStar import AdaptiveAStar
+import time
+from Search_2D.Adaptive_AStar import AdaptiveAStar
 from Quadtree import QuadTree, TreeNode
 
 
 class ExtendedQuadtree(QuadTree):
     def __init__(self, env) -> None:
         super().__init__(env)
-    
+
     def visualize(self, path=None):
-        # TODO
+        # TODO
         raise NotImplementedError
 
-    def merge_leafs(self):
-        self.update_leafs()
+    def merge_leafs(self, created_nodes):
 
         nodes_to_remove = set()
         nodes_to_add = set()
 
-        for node in self.leafs:
+        for node in created_nodes:
             if node.is_leaf() and node.is_uniform():
                 adjacent_nodes = self._get_adjacent_leafs(node)
                 for adj_node in adjacent_nodes:
@@ -37,7 +37,6 @@ class ExtendedQuadtree(QuadTree):
                         break
 
         self.leafs = [node for node in self.leafs if node not in nodes_to_remove]
-        print(len(nodes_to_add))
         self.leafs.extend(nodes_to_add)
 
     def _get_adjacent_leafs(self, node):
@@ -134,8 +133,9 @@ class ExtendedQuadtree(QuadTree):
         )
 
     def partition(self, node):
-        super().partition(node)
-        self.merge_leafs()
+        created_nodes = []
+        super().partition(node, created_nodes)
+        self.merge_leafs(created_nodes)
 
 
 class AdaptiveAStarExtended(AdaptiveAStar):
@@ -167,12 +167,72 @@ class AdaptiveAStarExtended(AdaptiveAStar):
 
         self.dobs_dir = dobs
 
+    def replan(self, path):
+        # 1. Check for objects
+        current_pos = self.agent_pos
+        SIGHT = 3
+        sight_range = range(-SIGHT, SIGHT + 1)
+        dynamic_obj_in_sight = False
+
+        affected_leafs = set()
+        for dx in sight_range:
+            for dy in sight_range:
+                if dx == 0 and dy == 0:
+                    continue
+
+                check_pos = (round(current_pos[0] + dx), round(current_pos[1] + dy))
+                if self.Env.in_dynamic_object(check_pos[0], check_pos[1]):
+                    dynamic_obj_in_sight = True
+                    leaf_containing_point = self.quadtree.find_leaf_contaning_point(
+                        check_pos
+                    )
+                    if leaf_containing_point:
+                        affected_leafs.add(leaf_containing_point)
+
+        # 2. If changed, repartition affected nodes and replan
+        if dynamic_obj_in_sight:
+            replan_time = time.time()
+            # Repartition
+            for leaf in affected_leafs:
+                leaf.clear()
+                self.quadtree.partition(leaf)
+
+            for leaf in self.quadtree.leafs:
+                center = (leaf.x + leaf.width // 2, leaf.y + leaf.height // 2)
+                self.leaf_nodes[center] = leaf
+
+            self.leaf_nodes[self.agent_pos] = self.quadtree.find_leaf_contaning_point(
+                self.agent_pos
+            )
+
+            # Replan
+            self.s_start = self.agent_pos
+            self.PARENT = dict()
+            self.OPEN = []
+            self.CLOSED = []
+            self.g = dict()
+            path = self.planning()
+
+            if path:
+                path = path[::-1]
+            else:
+                replan_time = time.time() - replan_time
+                self.replan_time.append(replan_time)
+                return None
+
+            replan_time = time.time() - replan_time
+            self.replan_time.append(replan_time)
+            self.current_index = 0
+
+        return path
+
 
 if __name__ == "__main__":
     a = AdaptiveAStar((0, 0), (0, 0), "euclidian")
-    a.change_env("Evaluation/Maps/2D/test/0.json")
+    a.change_env(
+        "Evaluation/Maps/2D/main/house_0.json", "Evaluation/Maps/2D/dynamic_obs.json"
+    )
     # b.change_env("Evaluation/Maps/2D/main/block_14.json")
 
-    a.quadtree.visualize()
+    a.run()
     # b.quadtree.visualize()
-    

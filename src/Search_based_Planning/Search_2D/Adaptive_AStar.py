@@ -51,7 +51,7 @@ class AdaptiveAStar(AStar):
 
     def super_change_env(self, map_name):
         return super().change_env(map_name)
-    
+
     def change_env(self, map_name, dobs=None):
         new_env = super().change_env(map_name)
 
@@ -242,7 +242,7 @@ class AdaptiveAStar(AStar):
                 leaf.clear()
                 self.quadtree.partition(leaf)
 
-            self.quadtree.update_leafs()
+            self.quadtree.update_leafs()  # TODO change for adaptive A Star or wont work!
 
             for leaf in self.quadtree.leafs:
                 center = (leaf.x + leaf.width // 2, leaf.y + leaf.height // 2)
@@ -320,16 +320,15 @@ if __name__ == "__main__":
         "Evaluation/Maps/2D/main/block_0.json",
         # "Evaluation/Maps/2D/dynamic_block_map_25/0_obs.json",
     )
-    
-    globals_ = globals().copy() 
-    locals_ = locals() 
-    
-    globals_['s'] = s
-    
-    cProfile.runctx('s.planning()', globals_, locals_, 'profile_output.prof')
+
+    globals_ = globals().copy()
+    locals_ = locals()
+
+    globals_["s"] = s
+
+    cProfile.runctx("s.planning()", globals_, locals_, "profile_output.prof")
     stats = pstats.Stats("profile_output.prof")
     stats.strip_dirs().sort_stats(pstats.SortKey.TIME).print_stats(10)
-
 
     # path = s.run()
 

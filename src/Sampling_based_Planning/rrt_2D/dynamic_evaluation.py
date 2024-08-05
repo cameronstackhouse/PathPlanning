@@ -26,9 +26,11 @@ sys.path.append(
 
 from Search_2D.D_star_Lite import DStar
 from Search_2D.Adaptive_AStar import AdaptiveAStar
+from Search_2D.Adaptive_AStar_Extended import AdaptiveAStarExtended
 
 from glob import glob
 from pathlib import Path
+
 
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -47,11 +49,13 @@ def load_existing_data(file_path):
             return json.load(file)
     return []
 
+
 def save_results(results, name):
     with open(name, "w") as f:
         json.dump(results, f, indent=4, cls=NumpyEncoder)
 
     print(f"Results saved to {name}")
+
 
 def save_data(file_path, data):
     with open(file_path, "w") as file:
@@ -119,9 +123,9 @@ def evaluate(algorithms, dummy_algo, MAP_DIR: str, OBJ_DIR: str = None):
             for future in as_completed(futures):
                 count += 1
                 index = futures[future]
-                
+
                 print(f"{count}:{map_names[index]}")
-                
+
                 result = future.result()
                 map_results[index] = result
                 if result["path"] is not None:
@@ -144,23 +148,16 @@ def main():
     START = (0, 0)
     END = (0, 0)
     PSEUDO_INF = 10000000
-    
+
     dummy_algo = DynamicGuidedSRrtEdge(START, END, 0.05, global_time=1)
-    
-    algorithms = [
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=25),
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=25),
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=50),
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=50),
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=100, t=100),
-        AdaptiveSRRTEdge(START, END, 0.05, 5, 5, min_edge_length=1, x=200, t=100)
-    ]
+
+    algorithms = [AdaptiveAStarExtended(START, END, "euclidian", time=5)]
 
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_obs.json"
     results = evaluate(algorithms, dummy_algo, MAP_DIR, OBJ_DIR)
-    save_results(results, "adaptive-srrt-edge-2D.json")
-    
+    save_results(results, "adaptive-ad-star-2D.json")
+
     # diff_time = evaluate(different_time_algos, dummy_algo, MAP_DIR, OBJ_DIR)
     # save_results(diff_time, "2d-different-time-srrt-edge.json")
 
