@@ -12,7 +12,6 @@ class ExtendedQuadtree(QuadTree):
         raise NotImplementedError
 
     def merge_leafs(self, created_nodes):
-
         nodes_to_remove = set()
         nodes_to_add = set()
 
