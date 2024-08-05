@@ -148,13 +148,9 @@ class QuadTree:
         self.leafs = [self.root]
         self.partition(self.root)
 
-    def partition(self, node):
-        created_nodes = []
-
+    def partition(self, node, created_nodes):
         if node.is_leaf() and not node.is_uniform():
             node.partition(self.leafs, created_nodes)
-
-        return created_nodes
 
     def update_leafs(self):
         self.leafs = []
