@@ -1,6 +1,6 @@
 import time
 from Search_2D.Adaptive_AStar import AdaptiveAStar
-from Quadtree import QuadTree, TreeNode
+from Search_2D.Quadtree import QuadTree, TreeNode
 
 
 class ExtendedQuadtree(QuadTree):
