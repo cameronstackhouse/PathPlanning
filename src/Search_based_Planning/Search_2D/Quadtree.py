@@ -110,7 +110,8 @@ class TreeNode:
             ]:
                 child.parent = self
 
-            leafs.remove(self)
+            if self in leafs:
+                leafs.remove(self)
             leafs.extend(
                 [self.left_top, self.right_top, self.left_bottom, self.right_bottom]
             )

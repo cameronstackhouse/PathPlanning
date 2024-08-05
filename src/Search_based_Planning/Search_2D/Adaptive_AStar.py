@@ -242,7 +242,7 @@ class AdaptiveAStar(AStar):
                 leaf.clear()
                 self.quadtree.partition(leaf)
 
-            self.quadtree.update_leafs()  # TODO change for adaptive A Star or wont work!
+            self.quadtree.update_leafs()
 
             for leaf in self.quadtree.leafs:
                 center = (leaf.x + leaf.width // 2, leaf.y + leaf.height // 2)
