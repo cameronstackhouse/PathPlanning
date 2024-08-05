@@ -156,7 +156,7 @@ def main():
     MAP_DIR = "src/Evaluation/Maps/2D/main/"
     OBJ_DIR = "src/Evaluation/Maps/2D/dynamic_obs.json"
     results = evaluate(algorithms, dummy_algo, MAP_DIR, OBJ_DIR)
-    save_results(results, "adaptive-ad-star-2D.json")
+    save_results(results, "extended-adaptive-ad-star-2D.json")
 
     # diff_time = evaluate(different_time_algos, dummy_algo, MAP_DIR, OBJ_DIR)
     # save_results(diff_time, "2d-different-time-srrt-edge.json")
