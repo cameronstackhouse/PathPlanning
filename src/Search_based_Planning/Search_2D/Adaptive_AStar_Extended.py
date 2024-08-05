@@ -133,9 +133,9 @@ class ExtendedQuadtree(QuadTree):
         )
 
     def partition(self, node):
-        created_nodes = []
-        super().partition(node, created_nodes)
-        self.merge_leafs(created_nodes)
+        self.created_nodes = []
+        super().partition(node)
+        self.merge_leafs(self.created_nodes)
 
 
 class AdaptiveAStarExtended(AdaptiveAStar):
